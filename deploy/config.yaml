@@ -1,0 +1,3 @@
+port: 8090
+ollama_url: "http://localhost:11434"
+prompt_path: "/etc/pollex/polish.txt"

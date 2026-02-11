@@ -1,0 +1,22 @@
+[Unit]
+Description=Pollex API — text polishing service
+After=network.target ollama.service
+Wants=ollama.service
+
+[Service]
+Type=simple
+User=manu
+ExecStart=/usr/local/bin/pollex --config /etc/pollex/config.yaml
+Restart=on-failure
+RestartSec=5
+Environment=POLLEX_PROMPT_PATH=/etc/pollex/polish.txt
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/log
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

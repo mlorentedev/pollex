@@ -1,0 +1,8 @@
+# Pollex API Configuration
+port: 8090
+ollama_url: "http://localhost:11434"
+prompt_path: "prompts/polish.txt"
+
+# Claude API (optional, for comparison)
+# claude_api_key: "sk-ant-..."
+# claude_model: "claude-sonnet-4-5-20250929"

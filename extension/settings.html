@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 14px;
+      color: #1a1a1a;
+      padding: 16px;
+    }
+    h2 { font-size: 15px; margin-bottom: 12px; }
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #888;
+      margin-bottom: 4px;
+    }
+    input {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: monospace;
+    }
+    input:focus {
+      outline: none;
+      border-color: #4a90d9;
+      box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.15);
+    }
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    button {
+      padding: 6px 14px;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      background: #f0f0f0;
+    }
+    button:hover { background: #e0e0e0; }
+    #btn-save {
+      background: #4a90d9;
+      color: #fff;
+      border: none;
+    }
+    #btn-save:hover { background: #3a7bc8; }
+    #status {
+      margin-top: 10px;
+      font-size: 12px;
+      min-height: 18px;
+    }
+    .ok { color: #27ae60; }
+    .err { color: #c0392b; }
+  </style>
+</head>
+<body>
+  <h2>Pollex Settings</h2>
+
+  <label for="api-url">API URL</label>
+  <input id="api-url" type="url" placeholder="http://localhost:8090">
+
+  <div class="actions">
+    <button id="btn-test">Test Connection</button>
+    <button id="btn-save">Save</button>
+  </div>
+
+  <div id="status"></div>
+
+  <script src="api.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>

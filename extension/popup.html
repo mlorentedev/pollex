@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Pollex</h1>
+      <button id="btn-settings" class="icon-btn" title="Settings">&#9881;</button>
+    </header>
+
+    <textarea id="input" placeholder="Paste your English text here..." rows="6"></textarea>
+
+    <div class="controls">
+      <select id="model-select">
+        <option value="">Loading models...</option>
+      </select>
+      <button id="btn-polish" disabled>Polish</button>
+    </div>
+
+    <div id="status" class="status hidden"></div>
+
+    <div id="result-section" class="hidden">
+      <label>Result</label>
+      <div id="result" class="result-box"></div>
+      <div class="result-footer">
+        <span id="elapsed"></span>
+        <button id="btn-copy">Copy</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="api.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
