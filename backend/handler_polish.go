@@ -2,10 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 )
+
+const maxTextLength = 10000
 
 type polishRequest struct {
 	Text    string `json:"text"`
@@ -31,12 +34,21 @@ func handlePolish(adapters map[string]LLMAdapter, systemPrompt string) http.Hand
 
 		var req polishRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			var maxBytesErr *http.MaxBytesError
+			if errors.As(err, &maxBytesErr) {
+				writeError(w, http.StatusRequestEntityTooLarge, "request body too large")
+				return
+			}
 			writeError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
 
 		if req.Text == "" {
 			writeError(w, http.StatusBadRequest, "text is required")
+			return
+		}
+		if len(req.Text) > maxTextLength {
+			writeError(w, http.StatusBadRequest, fmt.Sprintf("text too long: %d characters (max %d)", len(req.Text), maxTextLength))
 			return
 		}
 		if req.ModelID == "" {

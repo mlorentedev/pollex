@@ -5,14 +5,19 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
 func TestHandleHealth(t *testing.T) {
+	adapters := map[string]LLMAdapter{
+		"mock": &MockAdapter{},
+	}
+
 	req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
 	w := httptest.NewRecorder()
 
-	handleHealth().ServeHTTP(w, req)
+	handleHealth(adapters).ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("status: got %d, want %d", w.Code, http.StatusOK)
@@ -24,6 +29,68 @@ func TestHandleHealth(t *testing.T) {
 	}
 	if resp.Status != "ok" {
 		t.Errorf("status: got %q, want %q", resp.Status, "ok")
+	}
+	if resp.Adapters == nil {
+		t.Fatal("adapters: got nil")
+	}
+	mockStatus, ok := resp.Adapters["mock"]
+	if !ok {
+		t.Fatal("adapters: missing mock")
+	}
+	if !mockStatus.Available {
+		t.Error("mock adapter: got unavailable, want available")
+	}
+}
+
+func TestHandleHealthUnavailableClaude(t *testing.T) {
+	adapters := map[string]LLMAdapter{
+		"mock":  &MockAdapter{},
+		"claude": &ClaudeAdapter{APIKey: "", Model: "claude-sonnet"},
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
+	w := httptest.NewRecorder()
+
+	handleHealth(adapters).ServeHTTP(w, req)
+
+	var resp healthResponse
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+
+	claudeStatus := resp.Adapters["claude"]
+	if claudeStatus.Available {
+		t.Error("claude adapter: got available, want unavailable")
+	}
+	if claudeStatus.Reason != "no API key" {
+		t.Errorf("claude reason: got %q, want %q", claudeStatus.Reason, "no API key")
+	}
+}
+
+func TestHandleHealthMixedAdapters(t *testing.T) {
+	adapters := map[string]LLMAdapter{
+		"mock":           &MockAdapter{},
+		"claude-sonnet":  &ClaudeAdapter{APIKey: "sk-test", Model: "claude-sonnet"},
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
+	w := httptest.NewRecorder()
+
+	handleHealth(adapters).ServeHTTP(w, req)
+
+	var resp healthResponse
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+
+	if len(resp.Adapters) != 2 {
+		t.Fatalf("adapters count: got %d, want 2", len(resp.Adapters))
+	}
+	if !resp.Adapters["mock"].Available {
+		t.Error("mock: got unavailable")
+	}
+	if !resp.Adapters["claude-sonnet"].Available {
+		t.Error("claude-sonnet: got unavailable")
 	}
 }
 
@@ -144,6 +211,43 @@ func TestHandlePolish(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestHandlePolishTextTooLong(t *testing.T) {
+	adapters := map[string]LLMAdapter{"mock": &MockAdapter{}}
+
+	t.Run("over limit", func(t *testing.T) {
+		longText := strings.Repeat("a", maxTextLength+1)
+		body, _ := json.Marshal(polishRequest{Text: longText, ModelID: "mock"})
+		req := httptest.NewRequest(http.MethodPost, "/api/polish", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+
+		handlePolish(adapters, "prompt").ServeHTTP(w, req)
+
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("status: got %d, want %d", w.Code, http.StatusBadRequest)
+		}
+		var resp errorResponse
+		json.NewDecoder(w.Body).Decode(&resp)
+		if !strings.Contains(resp.Error, "too long") {
+			t.Errorf("error: got %q, want to contain 'too long'", resp.Error)
+		}
+	})
+
+	t.Run("at limit", func(t *testing.T) {
+		exactText := strings.Repeat("b", maxTextLength)
+		body, _ := json.Marshal(polishRequest{Text: exactText, ModelID: "mock"})
+		req := httptest.NewRequest(http.MethodPost, "/api/polish", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+
+		handlePolish(adapters, "prompt").ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("status: got %d, want %d", w.Code, http.StatusOK)
+		}
+	})
 }
 
 func TestHandlePolishInvalidJSON(t *testing.T) {

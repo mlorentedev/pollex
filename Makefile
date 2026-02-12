@@ -1,6 +1,6 @@
 # Pollex — Makefile
 # Configurable variables
-JETSON_HOST ?= jetson.local
+JETSON_HOST ?= nvidia
 JETSON_USER ?= manu
 API_PORT    ?= 8090
 
@@ -54,10 +54,10 @@ ext-pack: ## Package extension into dist/pollex-ext.zip
 .PHONY: deploy deploy-setup deploy-models
 
 deploy: build-arm64 ## Build + deploy binary, config, and prompt to Jetson
-	scp dist/pollex-arm64 $(JETSON_USER)@$(JETSON_HOST):/usr/local/bin/pollex
-	scp deploy/config.yaml $(JETSON_USER)@$(JETSON_HOST):/etc/pollex/config.yaml
-	scp prompts/polish.txt $(JETSON_USER)@$(JETSON_HOST):/etc/pollex/polish.txt
-	ssh $(JETSON_USER)@$(JETSON_HOST) 'sudo systemctl restart pollex-api'
+	scp dist/pollex-arm64 $(JETSON_USER)@$(JETSON_HOST):/tmp/pollex
+	scp deploy/config.yaml $(JETSON_USER)@$(JETSON_HOST):/tmp/pollex-config.yaml
+	scp prompts/polish.txt $(JETSON_USER)@$(JETSON_HOST):/tmp/pollex-polish.txt
+	ssh $(JETSON_USER)@$(JETSON_HOST) 'sudo mv /tmp/pollex /usr/local/bin/pollex && sudo chmod +x /usr/local/bin/pollex && sudo mv /tmp/pollex-config.yaml /etc/pollex/config.yaml && sudo mv /tmp/pollex-polish.txt /etc/pollex/polish.txt && sudo systemctl restart pollex-api'
 
 deploy-setup: ## First-time setup: install Ollama + models + systemd on Jetson
 	scp deploy/pollex-api.service $(JETSON_USER)@$(JETSON_HOST):/tmp/pollex-api.service
@@ -67,7 +67,7 @@ deploy-models: ## Pull/update models on Jetson
 	ssh $(JETSON_USER)@$(JETSON_HOST) 'bash -s' < deploy/ollama-models.sh
 
 # ─── Utilities ──────────────────────────────────────────────
-.PHONY: clean jetson-ssh jetson-logs jetson-status
+.PHONY: clean jetson-ssh jetson-logs jetson-status jetson-test
 
 clean: ## Remove dist/ directory
 	rm -rf dist/
@@ -78,8 +78,11 @@ jetson-ssh: ## SSH into Jetson
 jetson-logs: ## Tail pollex-api service logs on Jetson
 	ssh $(JETSON_USER)@$(JETSON_HOST) 'sudo journalctl -u pollex-api -f'
 
-jetson-status: ## Remote health check
-	curl -s http://$(JETSON_HOST):$(API_PORT)/api/health
+jetson-status: ## Remote health check (via SSH, works through jump host)
+	@ssh $(JETSON_USER)@$(JETSON_HOST) 'curl -s localhost:$(API_PORT)/api/health' | python3 -m json.tool
+
+jetson-test: ## Test polish request on Jetson (end-to-end)
+	@ssh $(JETSON_USER)@$(JETSON_HOST) 'curl -s -X POST localhost:$(API_PORT)/api/polish -H "Content-Type: application/json" -d '"'"'{"text":"This is a test to see if pollex works end to end on the jetson nano.","model_id":"qwen2.5:1.5b"}'"'"'' | python3 -m json.tool
 
 # ─── Help ───────────────────────────────────────────────────
 .DEFAULT_GOAL := help

@@ -22,14 +22,39 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// loggingMiddleware logs each request's method, path, status, and duration.
+// requestIDMiddleware generates a unique request ID, sets it as a response header,
+// and stores it in the request context.
+func requestIDMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id := generateRequestID()
+		w.Header().Set("X-Request-ID", id)
+		ctx := contextWithRequestID(r.Context(), id)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// loggingMiddleware logs each request's ID, method, path, status, and duration.
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		sw := &statusWriter{ResponseWriter: w, status: http.StatusOK}
 		next.ServeHTTP(sw, r)
-		log.Printf("%s %s %d %s", r.Method, r.URL.Path, sw.status, time.Since(start).Round(time.Millisecond))
+		id := requestIDFromContext(r.Context())
+		if id == "" {
+			id = "-"
+		}
+		log.Printf("[%s] %s %s %d %s", id, r.Method, r.URL.Path, sw.status, time.Since(start).Round(time.Millisecond))
 	})
+}
+
+// maxBytesMiddleware limits the request body to the specified number of bytes.
+func maxBytesMiddleware(maxBytes int64) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r.Body = http.MaxBytesReader(w, r.Body, maxBytes)
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 type statusWriter struct {

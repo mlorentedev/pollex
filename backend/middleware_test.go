@@ -1,8 +1,10 @@
 package main
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -40,6 +42,49 @@ func TestCORSMiddleware(t *testing.T) {
 	})
 }
 
+func TestRequestIDMiddleware(t *testing.T) {
+	t.Run("sets X-Request-ID header", func(t *testing.T) {
+		inner := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		})
+
+		handler := requestIDMiddleware(inner)
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+
+		id := w.Header().Get("X-Request-ID")
+		if id == "" {
+			t.Error("X-Request-ID header not set")
+		}
+		if len(id) != 32 {
+			t.Errorf("X-Request-ID length: got %d, want 32", len(id))
+		}
+	})
+
+	t.Run("stores request ID in context", func(t *testing.T) {
+		var gotID string
+		inner := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			gotID = requestIDFromContext(r.Context())
+			w.WriteHeader(http.StatusOK)
+		})
+
+		handler := requestIDMiddleware(inner)
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+
+		if gotID == "" {
+			t.Error("request ID not stored in context")
+		}
+		// Context ID should match header
+		headerID := w.Header().Get("X-Request-ID")
+		if gotID != headerID {
+			t.Errorf("context ID %q != header ID %q", gotID, headerID)
+		}
+	})
+}
+
 func TestLoggingMiddleware(t *testing.T) {
 	inner := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
@@ -64,4 +109,48 @@ func TestStatusWriterCapturesStatus(t *testing.T) {
 	if sw.status != http.StatusNotFound {
 		t.Errorf("status: got %d, want %d", sw.status, http.StatusNotFound)
 	}
+}
+
+func TestMaxBytesMiddleware(t *testing.T) {
+	t.Run("allows small body", func(t *testing.T) {
+		inner := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_, err := io.ReadAll(r.Body)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusRequestEntityTooLarge)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+		})
+
+		handler := maxBytesMiddleware(1024)(inner)
+		body := strings.NewReader("small body")
+		req := httptest.NewRequest(http.MethodPost, "/", body)
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("status: got %d, want %d", w.Code, http.StatusOK)
+		}
+	})
+
+	t.Run("rejects oversized body", func(t *testing.T) {
+		inner := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_, err := io.ReadAll(r.Body)
+			if err != nil {
+				http.Error(w, "body too large", http.StatusRequestEntityTooLarge)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+		})
+
+		handler := maxBytesMiddleware(10)(inner)
+		body := strings.NewReader(strings.Repeat("x", 100))
+		req := httptest.NewRequest(http.MethodPost, "/", body)
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusRequestEntityTooLarge {
+			t.Errorf("status: got %d, want %d", w.Code, http.StatusRequestEntityTooLarge)
+		}
+	})
 }
