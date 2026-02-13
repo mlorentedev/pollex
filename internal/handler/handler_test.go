@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"bytes"
@@ -7,17 +7,19 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/mlorentedev/pollex/internal/adapter"
 )
 
 func TestHandleHealth(t *testing.T) {
-	adapters := map[string]LLMAdapter{
-		"mock": &MockAdapter{},
+	adapters := map[string]adapter.LLMAdapter{
+		"mock": &adapter.MockAdapter{},
 	}
 
 	req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
 	w := httptest.NewRecorder()
 
-	handleHealth(adapters).ServeHTTP(w, req)
+	Health(adapters).ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("status: got %d, want %d", w.Code, http.StatusOK)
@@ -43,15 +45,15 @@ func TestHandleHealth(t *testing.T) {
 }
 
 func TestHandleHealthUnavailableClaude(t *testing.T) {
-	adapters := map[string]LLMAdapter{
-		"mock":  &MockAdapter{},
-		"claude": &ClaudeAdapter{APIKey: "", Model: "claude-sonnet"},
+	adapters := map[string]adapter.LLMAdapter{
+		"mock":   &adapter.MockAdapter{},
+		"claude": &adapter.ClaudeAdapter{APIKey: "", Model: "claude-sonnet"},
 	}
 
 	req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
 	w := httptest.NewRecorder()
 
-	handleHealth(adapters).ServeHTTP(w, req)
+	Health(adapters).ServeHTTP(w, req)
 
 	var resp healthResponse
 	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
@@ -68,15 +70,15 @@ func TestHandleHealthUnavailableClaude(t *testing.T) {
 }
 
 func TestHandleHealthMixedAdapters(t *testing.T) {
-	adapters := map[string]LLMAdapter{
-		"mock":           &MockAdapter{},
-		"claude-sonnet":  &ClaudeAdapter{APIKey: "sk-test", Model: "claude-sonnet"},
+	adapters := map[string]adapter.LLMAdapter{
+		"mock":          &adapter.MockAdapter{},
+		"claude-sonnet": &adapter.ClaudeAdapter{APIKey: "sk-test", Model: "claude-sonnet"},
 	}
 
 	req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
 	w := httptest.NewRecorder()
 
-	handleHealth(adapters).ServeHTTP(w, req)
+	Health(adapters).ServeHTTP(w, req)
 
 	var resp healthResponse
 	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
@@ -95,7 +97,7 @@ func TestHandleHealthMixedAdapters(t *testing.T) {
 }
 
 func TestHandleModels(t *testing.T) {
-	models := []ModelInfo{
+	models := []adapter.ModelInfo{
 		{ID: "mock", Name: "Mock", Provider: "mock"},
 		{ID: "qwen2.5:1.5b", Name: "Qwen 2.5 1.5B", Provider: "ollama"},
 	}
@@ -103,13 +105,13 @@ func TestHandleModels(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/models", nil)
 	w := httptest.NewRecorder()
 
-	handleModels(models).ServeHTTP(w, req)
+	Models(models).ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("status: got %d, want %d", w.Code, http.StatusOK)
 	}
 
-	var resp []ModelInfo
+	var resp []adapter.ModelInfo
 	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
@@ -122,8 +124,8 @@ func TestHandleModels(t *testing.T) {
 }
 
 func TestHandlePolish(t *testing.T) {
-	adapters := map[string]LLMAdapter{
-		"mock": &MockAdapter{},
+	adapters := map[string]adapter.LLMAdapter{
+		"mock": &adapter.MockAdapter{},
 	}
 
 	tests := []struct {
@@ -131,7 +133,7 @@ func TestHandlePolish(t *testing.T) {
 		method    string
 		body      any
 		wantCode  int
-		wantField string // field to check in response
+		wantField string
 		wantValue string
 	}{
 		{
@@ -191,7 +193,7 @@ func TestHandlePolish(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
 
-			handlePolish(adapters, "system prompt").ServeHTTP(w, req)
+			Polish(adapters, "system prompt").ServeHTTP(w, req)
 
 			if w.Code != tt.wantCode {
 				t.Errorf("status: got %d, want %d", w.Code, tt.wantCode)
@@ -214,7 +216,7 @@ func TestHandlePolish(t *testing.T) {
 }
 
 func TestHandlePolishTextTooLong(t *testing.T) {
-	adapters := map[string]LLMAdapter{"mock": &MockAdapter{}}
+	adapters := map[string]adapter.LLMAdapter{"mock": &adapter.MockAdapter{}}
 
 	t.Run("over limit", func(t *testing.T) {
 		longText := strings.Repeat("a", maxTextLength+1)
@@ -223,7 +225,7 @@ func TestHandlePolishTextTooLong(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 
-		handlePolish(adapters, "prompt").ServeHTTP(w, req)
+		Polish(adapters, "prompt").ServeHTTP(w, req)
 
 		if w.Code != http.StatusBadRequest {
 			t.Errorf("status: got %d, want %d", w.Code, http.StatusBadRequest)
@@ -242,7 +244,7 @@ func TestHandlePolishTextTooLong(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 
-		handlePolish(adapters, "prompt").ServeHTTP(w, req)
+		Polish(adapters, "prompt").ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("status: got %d, want %d", w.Code, http.StatusOK)
@@ -251,13 +253,13 @@ func TestHandlePolishTextTooLong(t *testing.T) {
 }
 
 func TestHandlePolishInvalidJSON(t *testing.T) {
-	adapters := map[string]LLMAdapter{"mock": &MockAdapter{}}
+	adapters := map[string]adapter.LLMAdapter{"mock": &adapter.MockAdapter{}}
 
 	req := httptest.NewRequest(http.MethodPost, "/api/polish", bytes.NewReader([]byte("{invalid")))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	handlePolish(adapters, "prompt").ServeHTTP(w, req)
+	Polish(adapters, "prompt").ServeHTTP(w, req)
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("status: got %d, want %d", w.Code, http.StatusBadRequest)
@@ -265,14 +267,14 @@ func TestHandlePolishInvalidJSON(t *testing.T) {
 }
 
 func TestHandlePolishResponseHasElapsedMs(t *testing.T) {
-	adapters := map[string]LLMAdapter{"mock": &MockAdapter{}}
+	adapters := map[string]adapter.LLMAdapter{"mock": &adapter.MockAdapter{}}
 
 	body, _ := json.Marshal(polishRequest{Text: "hello", ModelID: "mock"})
 	req := httptest.NewRequest(http.MethodPost, "/api/polish", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	handlePolish(adapters, "prompt").ServeHTTP(w, req)
+	Polish(adapters, "prompt").ServeHTTP(w, req)
 
 	var resp polishResponse
 	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {

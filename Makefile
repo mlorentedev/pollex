@@ -8,16 +8,16 @@ API_PORT    ?= 8090
 .PHONY: dev dev-ollama test lint
 
 dev: ## Start API with mock adapter on :$(API_PORT)
-	cd backend && go run . --mock --port $(API_PORT)
+	go run ./cmd/pollex --mock --port $(API_PORT)
 
 dev-ollama: ## Start API connected to local Ollama (Docker)
-	cd backend && go run . --port $(API_PORT)
+	go run ./cmd/pollex --port $(API_PORT)
 
-test: ## Run all backend tests with race detector
-	cd backend && go test -v -race ./...
+test: ## Run all tests with race detector
+	go test -v -race ./...
 
 lint: ## Run go vet + check formatting
-	cd backend && go vet ./... && gofmt -l .
+	go vet ./... && gofmt -l internal/ cmd/
 
 # ─── Local Ollama (Docker) ──────────────────────────────────
 .PHONY: ollama-up ollama-down ollama-pull
@@ -42,16 +42,16 @@ ollama-pull: ## Pull/update model in local Ollama (Docker)
 .PHONY: build build-arm64 ext-pack
 
 build: ## Build binary for current platform
-	cd backend && go build -o ../dist/pollex .
+	go build -o dist/pollex ./cmd/pollex
 
 build-arm64: ## Cross-compile for ARM64 (Jetson Nano)
-	cd backend && GOOS=linux GOARCH=arm64 go build -o ../dist/pollex-arm64 .
+	GOOS=linux GOARCH=arm64 go build -o dist/pollex-arm64 ./cmd/pollex
 
 ext-pack: ## Package extension into dist/pollex-ext.zip
 	cd extension && zip -r ../dist/pollex-ext.zip . -x '*.gitkeep'
 
 # ─── Deploy (Jetson) ────────────────────────────────────────
-.PHONY: deploy deploy-setup deploy-models
+.PHONY: deploy deploy-setup deploy-models deploy-llamacpp
 
 deploy: build-arm64 ## Build + deploy binary, config, and prompt to Jetson
 	scp dist/pollex-arm64 $(JETSON_USER)@$(JETSON_HOST):/tmp/pollex
@@ -65,6 +65,11 @@ deploy-setup: ## First-time setup: install Ollama + models + systemd on Jetson
 
 deploy-models: ## Pull/update models on Jetson
 	ssh $(JETSON_USER)@$(JETSON_HOST) 'bash -s' < deploy/ollama-models.sh
+
+deploy-llamacpp: ## Build llama.cpp with CUDA on Jetson (~85 min)
+	scp deploy/build-llamacpp.sh $(JETSON_USER)@$(JETSON_HOST):/tmp/build-llamacpp.sh
+	scp deploy/llama-server.service $(JETSON_USER)@$(JETSON_HOST):/tmp/llama-server.service
+	ssh $(JETSON_USER)@$(JETSON_HOST) 'bash /tmp/build-llamacpp.sh'
 
 # ─── Utilities ──────────────────────────────────────────────
 .PHONY: clean jetson-ssh jetson-logs jetson-status jetson-test

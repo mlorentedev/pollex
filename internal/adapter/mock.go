@@ -1,4 +1,4 @@
-package main
+package adapter
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 )
 
 // MockAdapter returns simulated responses with a configurable delay.
-// Used for development and testing without a real LLM backend.
 type MockAdapter struct {
 	Delay time.Duration
 }
@@ -24,7 +23,6 @@ func (m *MockAdapter) Polish(ctx context.Context, text, systemPrompt string) (st
 		}
 	}
 
-	// Simple mock: capitalize first letter of each sentence, trim whitespace.
 	polished := strings.TrimSpace(text)
 	if len(polished) > 0 && polished[0] >= 'a' && polished[0] <= 'z' {
 		polished = strings.ToUpper(polished[:1]) + polished[1:]

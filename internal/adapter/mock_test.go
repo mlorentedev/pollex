@@ -1,4 +1,4 @@
-package main
+package adapter
 
 import (
 	"context"
@@ -37,7 +37,7 @@ func TestMockAdapterContextCancel(t *testing.T) {
 	m := &MockAdapter{Delay: 5 * time.Second}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	cancel() // cancel immediately
+	cancel()
 
 	_, err := m.Polish(ctx, "hello", "prompt")
 	if err == nil {

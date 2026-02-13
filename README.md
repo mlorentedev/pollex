@@ -83,7 +83,7 @@ make dev            # Start API with mock adapter (no LLM needed)
 ### Run Tests
 
 ```sh
-make test           # 33 tests with race detector
+make test           # 63 tests with race detector
 make lint           # go vet + gofmt
 ```
 
@@ -109,23 +109,26 @@ curl -X POST http://localhost:8090/api/polish \
 
 ```
 pollex/
-├── backend/              # Go API (package main, ~700 lines)
-│   ├── main.go           # Entry point, wiring, --mock flag
-│   ├── config.go         # YAML config + env var overrides
-│   ├── adapter.go        # LLMAdapter interface
-│   ├── adapter_mock.go   # Mock adapter for development
-│   ├── adapter_ollama.go # Ollama (local LLM)
-│   ├── adapter_claude.go # Claude API (optional)
-│   ├── handler_*.go      # HTTP handlers
-│   ├── middleware.go      # CORS, logging, timeout
-│   └── *_test.go         # Table-driven tests
+├── cmd/pollex/           # Entry point (composition root)
+│   └── main.go           # Flags, config, wiring, graceful shutdown
+├── internal/
+│   ├── adapter/          # LLMAdapter interface + implementations
+│   │   ├── adapter.go    # Interface + ModelInfo
+│   │   ├── mock.go       # Mock adapter (dev/testing)
+│   │   ├── ollama.go     # Ollama (local LLM)
+│   │   ├── claude.go     # Claude API (optional)
+│   │   └── llamacpp.go   # llama.cpp (GPU acceleration)
+│   ├── config/           # YAML config + env overrides (POLLEX_*)
+│   ├── handler/          # HTTP handlers (health, models, polish)
+│   ├── middleware/        # CORS, RequestID, Logging, RateLimit, MaxBytes
+│   └── server/           # SetupMux + integration tests
 ├── extension/            # Browser extension (Manifest V3)
 │   ├── popup.*           # Main UI
 │   ├── settings.*        # API URL configuration
 │   └── api.js            # HTTP client
 ├── prompts/
 │   └── polish.txt        # System prompt (9 rules)
-├── deploy/               # systemd, install scripts
+├── deploy/               # systemd, install scripts, config example
 └── Makefile              # All targets
 ```
 

@@ -31,3 +31,19 @@
 - **SCP a `/usr/local/bin` falla por permisos** — SCP a `/tmp/` primero, luego `sudo mv` vía SSH. Mismo patrón para `/etc/pollex/`.
 - **`zstd` necesario para Ollama** — el instalador de Ollama usa zstd para descomprimir. Añadir al `install.sh` junto con `curl`.
 - **`curl` directo al Jetson no funciona** — está detrás de NAT. `jetson-status` debe hacer `ssh nvidia 'curl -s localhost:8090/...'`.
+
+## Phase 9 — llama.cpp GPU Acceleration
+
+- **llama.cpp repo migró de `ggerganov` a `ggml-org`** — la imagen Docker es `ghcr.io/ggml-org/llama.cpp:server`, no `ghcr.io/ggerganov/llama.cpp:server`.
+- **Probar con Docker real antes de desplegar** — un fake/mock server no valida el contrato real de la API (edge cases, headers, latencia). Usar la imagen oficial de llama-server en CPU para smoke test local.
+- **Docker image es `ghcr.io/ggml-org/llama.cpp:server`** — no `ggerganov`, el repo migró a `ggml-org`.
+- **CMake 3.14+ necesario** — Ubuntu 18.04 trae 3.10. Instalar binario aarch64 de Kitware: `curl | tar` a `/usr/local/`.
+- **`pip3 install cmake` falla en Python 3.6** — necesita `skbuild` que no está disponible. Usar binario de Kitware.
+- **`-DCMAKE_CUDA_STANDARD=14` es obligatorio** — CUDA 10.2 nvcc no soporta C++17. Sin este flag, cmake falla con "CUDA17 dialect not supported".
+- **Flags completos de cmake para Jetson Nano**: `-DGGML_CUDA=ON -DCMAKE_CUDA_STANDARD=14 -DCMAKE_CUDA_STANDARD_REQUIRED=TRUE -DGGML_CPU_ARM_ARCH=armv8-a -DGGML_NATIVE=OFF`.
+- **NEON stubs van en `ggml-cpu-impl.h`, NO en `ggml-cpu-quants.c`** — los macros `ggml_vld1q_s8_x4` etc. están definidos en impl.h. Inyectar stubs en quants.c no funciona porque no incluye arm_neon.h directamente y los macros resuelven antes.
+- **gcc-8.4 le faltan `vld1q_*_x2/x4` intrinsics** — fueron añadidos en gcc-8.5. Hay que proveer implementaciones static inline como fallback, guarded por `__GNUC__ == 8 && __GNUC_MINOR__ < 5`.
+- **WMMA (fattn-wmma-f16.cu) requiere Volta+ (compute 7.0)** — Maxwell (Jetson Nano, compute 5.3) no lo soporta. Hay que vaciar el archivo dejando solo `#include "common.cuh"` para que compile.
+- **`cuda_bf16.h` stub debe hacer `typedef half nv_bfloat16`** — no basta con definir `__nv_bfloat16` como struct, el código usa ambos nombres (`nv_bfloat16` y `__nv_bfloat16`). Incluir `cuda_fp16.h` y hacer typedef de ambos a `half`.
+- **`<charconv>` es C++17, no disponible con nvcc C++14** — gcc-8 solo provee `<charconv>` en modo `-std=c++17`, pero nvcc 10.2 está forzado a C++14. Solución: crear un shim `charconv` con `std::from_chars` implementado sobre `strtol`/`strtof`, e inyectarlo via `-isystem` en `CMAKE_CUDA_FLAGS`.
+- **No reemplazar `static constexpr` en funciones** — `sed 's/static constexpr/static const/'` blanket rompe funciones constexpr que se usan como template args (mmvq.cu, warp_reduce_sum). Solo reemplazar en líneas sin `(` (variables): `sed '/(/ !s/static constexpr/static const/'`.

@@ -1,4 +1,4 @@
-package main
+package middleware
 
 import (
 	"io"
@@ -13,7 +13,7 @@ func TestCORSMiddleware(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	handler := corsMiddleware(inner)
+	handler := CORS(inner)
 
 	t.Run("adds CORS headers", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -48,7 +48,7 @@ func TestRequestIDMiddleware(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		})
 
-		handler := requestIDMiddleware(inner)
+		handler := RequestID(inner)
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		w := httptest.NewRecorder()
 		handler.ServeHTTP(w, req)
@@ -65,11 +65,11 @@ func TestRequestIDMiddleware(t *testing.T) {
 	t.Run("stores request ID in context", func(t *testing.T) {
 		var gotID string
 		inner := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			gotID = requestIDFromContext(r.Context())
+			gotID = RequestIDFromContext(r.Context())
 			w.WriteHeader(http.StatusOK)
 		})
 
-		handler := requestIDMiddleware(inner)
+		handler := RequestID(inner)
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		w := httptest.NewRecorder()
 		handler.ServeHTTP(w, req)
@@ -77,7 +77,6 @@ func TestRequestIDMiddleware(t *testing.T) {
 		if gotID == "" {
 			t.Error("request ID not stored in context")
 		}
-		// Context ID should match header
 		headerID := w.Header().Get("X-Request-ID")
 		if gotID != headerID {
 			t.Errorf("context ID %q != header ID %q", gotID, headerID)
@@ -90,7 +89,7 @@ func TestLoggingMiddleware(t *testing.T) {
 		w.WriteHeader(http.StatusCreated)
 	})
 
-	handler := loggingMiddleware(inner)
+	handler := Logging(inner)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/polish", nil)
 	w := httptest.NewRecorder()
@@ -122,7 +121,7 @@ func TestMaxBytesMiddleware(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		})
 
-		handler := maxBytesMiddleware(1024)(inner)
+		handler := MaxBytes(1024)(inner)
 		body := strings.NewReader("small body")
 		req := httptest.NewRequest(http.MethodPost, "/", body)
 		w := httptest.NewRecorder()
@@ -143,7 +142,7 @@ func TestMaxBytesMiddleware(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		})
 
-		handler := maxBytesMiddleware(10)(inner)
+		handler := MaxBytes(10)(inner)
 		body := strings.NewReader(strings.Repeat("x", 100))
 		req := httptest.NewRequest(http.MethodPost, "/", body)
 		w := httptest.NewRecorder()

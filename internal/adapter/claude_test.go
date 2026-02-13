@@ -1,4 +1,4 @@
-package main
+package adapter
 
 import (
 	"context"
@@ -55,14 +55,14 @@ func TestClaudeAdapterPolish(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	adapter := &ClaudeAdapter{
+	a := &ClaudeAdapter{
 		BaseURL: srv.URL,
 		APIKey:  "sk-test",
 		Model:   "claude-sonnet-4-5-20250929",
 		Client:  &http.Client{Timeout: 5 * time.Second},
 	}
 
-	got, err := adapter.Polish(context.Background(), "i goes to store", "Fix grammar.")
+	got, err := a.Polish(context.Background(), "i goes to store", "Fix grammar.")
 	if err != nil {
 		t.Fatalf("Polish: %v", err)
 	}
@@ -85,14 +85,14 @@ func TestClaudeAdapterPolishServerError(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	adapter := &ClaudeAdapter{
+	a := &ClaudeAdapter{
 		BaseURL: srv.URL,
 		APIKey:  "sk-test",
 		Model:   "claude-sonnet-4-5-20250929",
 		Client:  &http.Client{Timeout: 5 * time.Second},
 	}
 
-	_, err := adapter.Polish(context.Background(), "hello", "prompt")
+	_, err := a.Polish(context.Background(), "hello", "prompt")
 	if err == nil {
 		t.Error("expected error on 400 response, got nil")
 	}
@@ -106,14 +106,14 @@ func TestClaudeAdapterPolishEmptyContent(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	adapter := &ClaudeAdapter{
+	a := &ClaudeAdapter{
 		BaseURL: srv.URL,
 		APIKey:  "sk-test",
 		Model:   "claude-sonnet-4-5-20250929",
 		Client:  &http.Client{Timeout: 5 * time.Second},
 	}
 
-	_, err := adapter.Polish(context.Background(), "hello", "prompt")
+	_, err := a.Polish(context.Background(), "hello", "prompt")
 	if err == nil {
 		t.Error("expected error on empty content, got nil")
 	}
@@ -125,7 +125,7 @@ func TestClaudeAdapterContextCancel(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	adapter := &ClaudeAdapter{
+	a := &ClaudeAdapter{
 		BaseURL: srv.URL,
 		APIKey:  "sk-test",
 		Model:   "claude-sonnet-4-5-20250929",
@@ -135,30 +135,30 @@ func TestClaudeAdapterContextCancel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	_, err := adapter.Polish(ctx, "hello", "prompt")
+	_, err := a.Polish(ctx, "hello", "prompt")
 	if err == nil {
 		t.Error("expected error on cancelled context, got nil")
 	}
 }
 
 func TestClaudeAdapterAvailable(t *testing.T) {
-	adapter := &ClaudeAdapter{APIKey: "sk-test"}
-	if !adapter.Available() {
+	a := &ClaudeAdapter{APIKey: "sk-test"}
+	if !a.Available() {
 		t.Error("expected available when API key is set")
 	}
 }
 
 func TestClaudeAdapterNotAvailable(t *testing.T) {
-	adapter := &ClaudeAdapter{APIKey: ""}
-	if adapter.Available() {
+	a := &ClaudeAdapter{APIKey: ""}
+	if a.Available() {
 		t.Error("expected not available when API key is empty")
 	}
 }
 
 func TestClaudeAdapterName(t *testing.T) {
-	adapter := &ClaudeAdapter{Model: "claude-sonnet-4-5-20250929"}
+	a := &ClaudeAdapter{Model: "claude-sonnet-4-5-20250929"}
 	want := "Claude (claude-sonnet-4-5-20250929)"
-	if adapter.Name() != want {
-		t.Errorf("got %q, want %q", adapter.Name(), want)
+	if a.Name() != want {
+		t.Errorf("got %q, want %q", a.Name(), want)
 	}
 }

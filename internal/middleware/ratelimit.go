@@ -1,4 +1,4 @@
-package main
+package middleware
 
 import (
 	"encoding/json"
@@ -8,32 +8,29 @@ import (
 	"time"
 )
 
-// rateLimiter implements a sliding window rate limiter per IP address.
-type rateLimiter struct {
+// RateLimiter tracks requests per IP using a sliding window.
+type RateLimiter struct {
 	mu       sync.Mutex
 	requests map[string][]time.Time
 	limit    int
 	window   time.Duration
 }
 
-func newRateLimiter(limit int, window time.Duration) *rateLimiter {
-	return &rateLimiter{
+func NewRateLimiter(limit int, window time.Duration) *RateLimiter {
+	return &RateLimiter{
 		requests: make(map[string][]time.Time),
 		limit:    limit,
 		window:   window,
 	}
 }
 
-// allow checks if the given key is within its rate limit.
-// Returns true if the request is allowed, false if rate limited.
-func (rl *rateLimiter) allow(key string) bool {
+func (rl *RateLimiter) Allow(key string) bool {
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
 
 	now := time.Now()
 	cutoff := now.Add(-rl.window)
 
-	// Remove expired entries
 	reqs := rl.requests[key]
 	valid := reqs[:0]
 	for _, t := range reqs {
@@ -51,15 +48,15 @@ func (rl *rateLimiter) allow(key string) bool {
 	return true
 }
 
-// rateLimitMiddleware returns HTTP 429 when the per-IP rate limit is exceeded.
-func rateLimitMiddleware(rl *rateLimiter) func(http.Handler) http.Handler {
+// RateLimit rejects requests exceeding the per-IP limit with 429.
+func RateLimit(rl *RateLimiter) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ip := clientIP(r)
-			if !rl.allow(ip) {
+			if !rl.Allow(ip) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusTooManyRequests)
-				json.NewEncoder(w).Encode(errorResponse{Error: "rate limit exceeded"})
+				json.NewEncoder(w).Encode(map[string]string{"error": "rate limit exceeded"})
 				return
 			}
 			next.ServeHTTP(w, r)
@@ -67,7 +64,6 @@ func rateLimitMiddleware(rl *rateLimiter) func(http.Handler) http.Handler {
 	}
 }
 
-// clientIP extracts the client IP from RemoteAddr, stripping the port.
 func clientIP(r *http.Request) string {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {

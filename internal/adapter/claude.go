@@ -1,4 +1,4 @@
-package main
+package adapter
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 
 const claudeDefaultBaseURL = "https://api.anthropic.com"
 
-// ClaudeAdapter implements LLMAdapter for the Anthropic Messages API.
+// ClaudeAdapter connects to the Anthropic Messages API.
 type ClaudeAdapter struct {
 	BaseURL string
 	APIKey  string
@@ -102,7 +102,6 @@ func (c *ClaudeAdapter) Polish(ctx context.Context, text, systemPrompt string) (
 		return "", fmt.Errorf("claude: empty response content")
 	}
 
-	// Concatenate all text blocks
 	var result strings.Builder
 	for _, block := range msgResp.Content {
 		if block.Type == "text" {

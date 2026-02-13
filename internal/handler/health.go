@@ -1,8 +1,10 @@
-package main
+package handler
 
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/mlorentedev/pollex/internal/adapter"
 )
 
 type adapterStatus struct {
@@ -15,7 +17,7 @@ type healthResponse struct {
 	Adapters map[string]adapterStatus `json:"adapters"`
 }
 
-func handleHealth(adapters map[string]LLMAdapter) http.HandlerFunc {
+func Health(adapters map[string]adapter.LLMAdapter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		statuses := make(map[string]adapterStatus, len(adapters))
 		for id, a := range adapters {
@@ -34,13 +36,14 @@ func handleHealth(adapters map[string]LLMAdapter) http.HandlerFunc {
 	}
 }
 
-// unavailableReason returns a human-readable reason why an adapter is unavailable.
-func unavailableReason(a LLMAdapter) string {
+func unavailableReason(a adapter.LLMAdapter) string {
 	switch a.(type) {
-	case *ClaudeAdapter:
+	case *adapter.ClaudeAdapter:
 		return "no API key"
-	case *OllamaAdapter:
+	case *adapter.OllamaAdapter:
 		return "ollama unreachable"
+	case *adapter.LlamaCppAdapter:
+		return "llama-server unreachable"
 	default:
 		return "unavailable"
 	}

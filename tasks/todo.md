@@ -68,29 +68,48 @@ Ollama uses 100% CPU on Jetson (41s/request) because it dropped CUDA 10.2 suppor
 Switch to llama-server (llama.cpp compiled with CUDA 10.2) for ~300-500% speedup (→ ~8-15s).
 
 ### 9.1 — LlamaCppAdapter
-- [ ] `backend/adapter_llamacpp.go` — OpenAI-compatible API (`/v1/chat/completions`, `/health`)
-- [ ] `backend/adapter_llamacpp_test.go` — ~6 table-driven tests (Polish, Available, Name)
+- [x] `backend/adapter_llamacpp.go` — OpenAI-compatible API (`/v1/chat/completions`, `/health`)
+- [x] `backend/adapter_llamacpp_test.go` — 7 tests (Polish, ServerError, EmptyChoices, ContextCancel, Available, NotAvailable, Name)
 
 ### 9.2 — Config + Registration
-- [ ] `backend/config.go` — add `LlamaCppURL`, `LlamaCppModel` fields + env vars
-- [ ] `backend/main.go` — register in `buildAdapters()` when URL configured (120s timeout)
-- [ ] `backend/handler_health.go` — add type switch case for `*LlamaCppAdapter`
-- [ ] `backend/handler_test.go` — health test with LlamaCpp adapter unavailable
+- [x] `backend/config.go` — add `LlamaCppURL`, `LlamaCppModel` fields + env vars (`POLLEX_LLAMACPP_*`)
+- [x] `backend/main.go` — register in `buildAdapters()` when URL configured (120s timeout)
+- [x] `backend/handler_health.go` — add type switch case for `*LlamaCppAdapter`
+- [x] Config tests updated: YAML load + env override for new fields
 
 ### 9.3 — Deploy: Compile llama.cpp on Jetson
-- [ ] `deploy/build-llamacpp.sh` — idempotent CUDA build script (pinned commit `23106f9`, patches for CUDA 10.2)
-- [ ] `deploy/llama-server.service` — systemd unit (`-ngl 999 -c 2048 -t 4`)
-- [ ] `deploy/config.yaml` — add `llamacpp_url`, `llamacpp_model`
-- [ ] `Makefile` — `deploy-llamacpp` target
+- [x] `deploy/build-llamacpp.sh` — idempotent CUDA build script (pinned commit `23106f9`, 6 patches for CUDA 10.2)
+- [x] `deploy/llama-server.service` — systemd unit (`-ngl 999 -c 2048 -t 4`, hardened)
+- [x] `deploy/config.yaml` — add `llamacpp_url`, `llamacpp_model`
+- [x] `Makefile` — `deploy-llamacpp` target
 
 ### 9.4 — Documentation
-- [ ] Vault: `runbooks/build-llamacpp-jetson.md` — full build runbook
-- [ ] Vault: update `runbooks/deploy-jetson.md` — add llama-server section
-- [ ] Vault: update `_index.md` — GPU acceleration status
+- [x] Vault: ADR-004 llama.cpp GPU Acceleration (decision rationale, alternatives, patches, rollback)
+- [x] Vault: `runbooks/build-llamacpp-jetson.md` — full build runbook with troubleshooting
+- [x] Vault: update `runbooks/deploy-jetson.md` — llama-server section + rollback
+- [x] Vault: update `_index.md` — GPU acceleration status, updated stack table
+- [x] Vault: update `troubleshooting/jetson-memory.md` — memory budget for llama-server
 
 ### Verification
-- [ ] `make test` — all existing + new tests pass (~65+ top-level)
+- [x] `make test` — 62 top-level tests (97 with subtests), -race clean, go vet clean
+- [x] Local smoke test: Docker `llama-server` (CPU) + pollex API → polish end-to-end OK (2.1s)
 - [ ] `make deploy-llamacpp` — builds llama-server on Jetson (~85 min)
 - [ ] `ssh nvidia 'systemctl is-active llama-server'` — service running
 - [ ] `make deploy` — deploy new binary with LlamaCpp adapter
 - [ ] Compare: Ollama/CPU vs llama-server/GPU tokens/s
+
+## Phase 10 — Remote Access & Chrome Web Store
+
+Expose Pollex API remotely and publish extension for easy install on any PC.
+
+### 10.1 — Remote Tunnel (Jetson → Internet)
+- [ ] Set up Cloudflare Tunnel or WireGuard (Jetson → VPS relay) — no router access needed
+- [ ] HTTPS termination + auth (API key or basic auth to prevent open access)
+- [ ] Test latency from outside LAN
+
+### 10.2 — Chrome Web Store Publishing
+- [ ] Chrome Developer account ($5 one-time)
+- [ ] Default API URL: empty (force user to configure in settings)
+- [ ] Privacy policy (required by CWS)
+- [ ] Screenshots + description for store listing
+- [ ] Submit for review + publish

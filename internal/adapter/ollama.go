@@ -1,4 +1,4 @@
-package main
+package adapter
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// OllamaAdapter implements LLMAdapter for the Ollama chat API.
+// OllamaAdapter connects to a local Ollama instance via /api/chat.
 type OllamaAdapter struct {
 	BaseURL string
 	Model   string

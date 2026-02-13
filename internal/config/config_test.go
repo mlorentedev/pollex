@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"os"
@@ -6,10 +6,10 @@ import (
 	"testing"
 )
 
-func TestLoadConfigDefaults(t *testing.T) {
-	cfg, err := LoadConfig("")
+func TestLoadDefaults(t *testing.T) {
+	cfg, err := Load("")
 	if err != nil {
-		t.Fatalf("LoadConfig with no file: %v", err)
+		t.Fatalf("Load with no file: %v", err)
 	}
 
 	if cfg.Port != 8090 {
@@ -18,8 +18,8 @@ func TestLoadConfigDefaults(t *testing.T) {
 	if cfg.OllamaURL != "http://localhost:11434" {
 		t.Errorf("default ollama_url: got %q, want %q", cfg.OllamaURL, "http://localhost:11434")
 	}
-	if cfg.PromptPath != "../prompts/polish.txt" {
-		t.Errorf("default prompt_path: got %q, want %q", cfg.PromptPath, "../prompts/polish.txt")
+	if cfg.PromptPath != "prompts/polish.txt" {
+		t.Errorf("default prompt_path: got %q, want %q", cfg.PromptPath, "prompts/polish.txt")
 	}
 	if cfg.ClaudeAPIKey != "" {
 		t.Errorf("default claude_api_key: got %q, want empty", cfg.ClaudeAPIKey)
@@ -27,24 +27,32 @@ func TestLoadConfigDefaults(t *testing.T) {
 	if cfg.ClaudeModel != "claude-sonnet-4-5-20250929" {
 		t.Errorf("default claude_model: got %q, want %q", cfg.ClaudeModel, "claude-sonnet-4-5-20250929")
 	}
+	if cfg.LlamaCppURL != "" {
+		t.Errorf("default llamacpp_url: got %q, want empty", cfg.LlamaCppURL)
+	}
+	if cfg.LlamaCppModel != "" {
+		t.Errorf("default llamacpp_model: got %q, want empty", cfg.LlamaCppModel)
+	}
 }
 
-func TestLoadConfigFromYAML(t *testing.T) {
+func TestLoadFromYAML(t *testing.T) {
 	dir := t.TempDir()
 	yamlPath := filepath.Join(dir, "config.yaml")
 	content := `port: 9999
 ollama_url: "http://jetson.local:11434"
 claude_api_key: "sk-test-key"
 claude_model: "claude-opus-4-6"
+llamacpp_url: "http://localhost:8080"
+llamacpp_model: "qwen2.5-1.5b"
 prompt_path: "/etc/pollex/polish.txt"
 `
 	if err := os.WriteFile(yamlPath, []byte(content), 0644); err != nil {
 		t.Fatalf("write yaml: %v", err)
 	}
 
-	cfg, err := LoadConfig(yamlPath)
+	cfg, err := Load(yamlPath)
 	if err != nil {
-		t.Fatalf("LoadConfig: %v", err)
+		t.Fatalf("Load: %v", err)
 	}
 
 	tests := []struct {
@@ -57,6 +65,8 @@ prompt_path: "/etc/pollex/polish.txt"
 		{"claude_api_key", cfg.ClaudeAPIKey, "sk-test-key"},
 		{"claude_model", cfg.ClaudeModel, "claude-opus-4-6"},
 		{"prompt_path", cfg.PromptPath, "/etc/pollex/polish.txt"},
+		{"llamacpp_url", cfg.LlamaCppURL, "http://localhost:8080"},
+		{"llamacpp_model", cfg.LlamaCppModel, "qwen2.5-1.5b"},
 	}
 
 	for _, tt := range tests {
@@ -68,7 +78,7 @@ prompt_path: "/etc/pollex/polish.txt"
 	}
 }
 
-func TestLoadConfigEnvOverrides(t *testing.T) {
+func TestLoadEnvOverrides(t *testing.T) {
 	dir := t.TempDir()
 	yamlPath := filepath.Join(dir, "config.yaml")
 	content := `port: 9999
@@ -81,10 +91,12 @@ ollama_url: "http://from-yaml:11434"
 	t.Setenv("POLLEX_PORT", "7777")
 	t.Setenv("POLLEX_OLLAMA_URL", "http://from-env:11434")
 	t.Setenv("POLLEX_CLAUDE_API_KEY", "sk-env-key")
+	t.Setenv("POLLEX_LLAMACPP_URL", "http://from-env:8080")
+	t.Setenv("POLLEX_LLAMACPP_MODEL", "custom-model")
 
-	cfg, err := LoadConfig(yamlPath)
+	cfg, err := Load(yamlPath)
 	if err != nil {
-		t.Fatalf("LoadConfig: %v", err)
+		t.Fatalf("Load: %v", err)
 	}
 
 	tests := []struct {
@@ -95,6 +107,8 @@ ollama_url: "http://from-yaml:11434"
 		{"port from env", cfg.Port, 7777},
 		{"ollama_url from env", cfg.OllamaURL, "http://from-env:11434"},
 		{"claude_api_key from env", cfg.ClaudeAPIKey, "sk-env-key"},
+		{"llamacpp_url from env", cfg.LlamaCppURL, "http://from-env:8080"},
+		{"llamacpp_model from env", cfg.LlamaCppModel, "custom-model"},
 	}
 
 	for _, tt := range tests {
@@ -106,21 +120,21 @@ ollama_url: "http://from-yaml:11434"
 	}
 }
 
-func TestLoadConfigInvalidYAML(t *testing.T) {
+func TestLoadInvalidYAML(t *testing.T) {
 	dir := t.TempDir()
 	yamlPath := filepath.Join(dir, "bad.yaml")
 	if err := os.WriteFile(yamlPath, []byte("{{invalid"), 0644); err != nil {
 		t.Fatalf("write yaml: %v", err)
 	}
 
-	_, err := LoadConfig(yamlPath)
+	_, err := Load(yamlPath)
 	if err == nil {
 		t.Error("expected error for invalid YAML, got nil")
 	}
 }
 
-func TestLoadConfigMissingFile(t *testing.T) {
-	_, err := LoadConfig("/nonexistent/config.yaml")
+func TestLoadMissingFile(t *testing.T) {
+	_, err := Load("/nonexistent/config.yaml")
 	if err == nil {
 		t.Error("expected error for missing file, got nil")
 	}

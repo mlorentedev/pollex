@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"fmt"
@@ -8,28 +8,28 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Config holds all application configuration.
 type Config struct {
-	Port         int    `yaml:"port"`
-	OllamaURL    string `yaml:"ollama_url"`
-	ClaudeAPIKey string `yaml:"claude_api_key"`
-	ClaudeModel  string `yaml:"claude_model"`
-	PromptPath   string `yaml:"prompt_path"`
+	Port          int    `yaml:"port"`
+	OllamaURL     string `yaml:"ollama_url"`
+	ClaudeAPIKey  string `yaml:"claude_api_key"`
+	ClaudeModel   string `yaml:"claude_model"`
+	LlamaCppURL   string `yaml:"llamacpp_url"`
+	LlamaCppModel string `yaml:"llamacpp_model"`
+	PromptPath    string `yaml:"prompt_path"`
 }
 
-func configDefaults() Config {
+func defaults() Config {
 	return Config{
 		Port:        8090,
 		OllamaURL:   "http://localhost:11434",
 		ClaudeModel: "claude-sonnet-4-5-20250929",
-		PromptPath:  "../prompts/polish.txt",
+		PromptPath:  "prompts/polish.txt",
 	}
 }
 
-// LoadConfig loads configuration from a YAML file (if path is non-empty),
-// then applies environment variable overrides. An empty path returns defaults + env overrides.
-func LoadConfig(path string) (Config, error) {
-	cfg := configDefaults()
+// Load reads optional YAML then applies POLLEX_* env var overrides.
+func Load(path string) (Config, error) {
+	cfg := defaults()
 
 	if path != "" {
 		data, err := os.ReadFile(path)
@@ -41,7 +41,6 @@ func LoadConfig(path string) (Config, error) {
 		}
 	}
 
-	// Environment variable overrides
 	if v := os.Getenv("POLLEX_PORT"); v != "" {
 		p, err := strconv.Atoi(v)
 		if err != nil {
@@ -57,6 +56,12 @@ func LoadConfig(path string) (Config, error) {
 	}
 	if v := os.Getenv("POLLEX_CLAUDE_MODEL"); v != "" {
 		cfg.ClaudeModel = v
+	}
+	if v := os.Getenv("POLLEX_LLAMACPP_URL"); v != "" {
+		cfg.LlamaCppURL = v
+	}
+	if v := os.Getenv("POLLEX_LLAMACPP_MODEL"); v != "" {
+		cfg.LlamaCppModel = v
 	}
 	if v := os.Getenv("POLLEX_PROMPT_PATH"); v != "" {
 		cfg.PromptPath = v

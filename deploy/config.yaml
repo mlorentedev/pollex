@@ -1,3 +1,5 @@
 port: 8090
 ollama_url: "http://localhost:11434"
+llamacpp_url: "http://localhost:8080"
+llamacpp_model: "qwen2.5-1.5b-gpu"
 prompt_path: "/etc/pollex/polish.txt"

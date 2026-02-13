@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"encoding/json"
@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/mlorentedev/pollex/internal/adapter"
 )
 
 const maxTextLength = 10000
@@ -21,11 +23,7 @@ type polishResponse struct {
 	ElapsedMs int64  `json:"elapsed_ms"`
 }
 
-type errorResponse struct {
-	Error string `json:"error"`
-}
-
-func handlePolish(adapters map[string]LLMAdapter, systemPrompt string) http.HandlerFunc {
+func Polish(adapters map[string]adapter.LLMAdapter, systemPrompt string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -56,14 +54,14 @@ func handlePolish(adapters map[string]LLMAdapter, systemPrompt string) http.Hand
 			return
 		}
 
-		adapter, ok := adapters[req.ModelID]
+		a, ok := adapters[req.ModelID]
 		if !ok {
 			writeError(w, http.StatusBadRequest, fmt.Sprintf("unknown model: %s", req.ModelID))
 			return
 		}
 
 		start := time.Now()
-		polished, err := adapter.Polish(r.Context(), req.Text, systemPrompt)
+		polished, err := a.Polish(r.Context(), req.Text, systemPrompt)
 		elapsed := time.Since(start)
 
 		if err != nil {
@@ -78,10 +76,4 @@ func handlePolish(adapters map[string]LLMAdapter, systemPrompt string) http.Hand
 			ElapsedMs: elapsed.Milliseconds(),
 		})
 	}
-}
-
-func writeError(w http.ResponseWriter, code int, msg string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(errorResponse{Error: msg})
 }

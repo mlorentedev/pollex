@@ -1,4 +1,4 @@
-module pollex/backend
+module github.com/mlorentedev/pollex
 
 go 1.26
 
