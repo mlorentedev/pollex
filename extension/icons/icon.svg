@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Rounded indigo background -->
+  <rect x="8" y="8" width="112" height="112" rx="24" fill="#6366f1"/>
+  <!-- Three text lines -->
+  <rect x="30" y="40" width="52" height="6" rx="3" fill="#fff" opacity="0.95"/>
+  <rect x="30" y="56" width="42" height="6" rx="3" fill="#fff" opacity="0.75"/>
+  <rect x="30" y="72" width="48" height="6" rx="3" fill="#fff" opacity="0.55"/>
+  <!-- Sparkle star (top-right) -->
+  <path d="M90 28 L92 34 L98 36 L92 38 L90 44 L88 38 L82 36 L88 34Z" fill="#fff" opacity="0.9"/>
+  <path d="M100 20 L101 23 L104 24 L101 25 L100 28 L99 25 L96 24 L99 23Z" fill="#fff" opacity="0.6"/>
+</svg>

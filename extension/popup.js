@@ -1,37 +1,61 @@
 // Pollex popup — wires UI to api.js
 
+const MAX_CHARS = 10000;
+const WARN_THRESHOLD = 0.9;
+
+// --- DOM refs ---
+
 const input = document.getElementById("input");
+const charCount = document.getElementById("char-count");
 const modelSelect = document.getElementById("model-select");
 const btnPolish = document.getElementById("btn-polish");
+const btnCancel = document.getElementById("btn-cancel");
 const btnCopy = document.getElementById("btn-copy");
+const iconCopy = document.getElementById("icon-copy");
+const iconCheck = document.getElementById("icon-check");
+const copyLabel = document.getElementById("copy-label");
 const btnSettings = document.getElementById("btn-settings");
-const status = document.getElementById("status");
+const statusEl = document.getElementById("status");
 const resultSection = document.getElementById("result-section");
 const resultBox = document.getElementById("result");
-const elapsed = document.getElementById("elapsed");
+const elapsedEl = document.getElementById("elapsed");
+
+// Settings panel
+const btnBack = document.getElementById("btn-back");
+const apiUrlInput = document.getElementById("api-url");
+const btnTest = document.getElementById("btn-test");
+const btnSave = document.getElementById("btn-save");
+const settingsStatus = document.getElementById("settings-status");
 
 let abortController = null;
 let timerInterval = null;
+let modelsLoaded = false;
 
 // --- Init ---
 
 document.addEventListener("DOMContentLoaded", async () => {
   await loadModels();
+  await loadSettingsUrl();
+  updateCharCount();
   input.focus();
 });
+
+// --- Provider labels ---
 
 const providerLabels = {
   ollama: "Local",
   mock: "Local",
   claude: "Cloud",
+  "llama.cpp": "Local (GPU)",
 };
+
+// --- Models ---
 
 async function loadModels() {
   try {
     const models = await fetchModels();
     modelSelect.innerHTML = "";
 
-    // Group by provider category
     const groups = {};
     for (const m of models) {
       const label = providerLabels[m.provider] || m.provider;
@@ -41,7 +65,6 @@ async function loadModels() {
 
     const groupNames = Object.keys(groups);
     if (groupNames.length === 1) {
-      // Single group — no optgroup needed
       for (const m of groups[groupNames[0]]) {
         modelSelect.appendChild(makeOption(m));
       }
@@ -57,9 +80,12 @@ async function loadModels() {
     }
 
     btnPolish.disabled = false;
-  } catch (err) {
+    modelsLoaded = true;
+  } catch {
     modelSelect.innerHTML = '<option value="">Cannot connect</option>';
-    showStatus("Cannot reach API. Check settings.", "error");
+    btnPolish.disabled = true;
+    modelsLoaded = false;
+    showStatus("Cannot reach API — check Settings.", "error");
   }
 }
 
@@ -68,6 +94,32 @@ function makeOption(model) {
   opt.value = model.id;
   opt.textContent = model.name;
   return opt;
+}
+
+// --- Character count ---
+
+input.addEventListener("input", () => {
+  updateCharCount();
+  clearTransientStatus();
+});
+
+function updateCharCount() {
+  const len = input.value.length;
+  charCount.textContent = `${len.toLocaleString()} / ${MAX_CHARS.toLocaleString()}`;
+
+  charCount.classList.remove("warning", "error");
+  if (len > MAX_CHARS) {
+    charCount.classList.add("error");
+  } else if (len > MAX_CHARS * WARN_THRESHOLD) {
+    charCount.classList.add("warning");
+  }
+}
+
+function clearTransientStatus() {
+  // Dismiss error/cancelled messages when user starts editing
+  if (statusEl.classList.contains("error") || statusEl.classList.contains("cancelled")) {
+    hideStatus();
+  }
 }
 
 // --- Polish ---
@@ -91,31 +143,23 @@ async function doPolish() {
   // Reset UI
   resultSection.classList.add("hidden");
   btnPolish.disabled = true;
-  btnPolish.textContent = "Cancel";
-  btnPolish.disabled = false;
+  btnCancel.classList.remove("hidden");
 
   // Start timer
   let seconds = 0;
-  showStatus(`Polishing... 0s`, "polishing");
+  showStatus("Polishing... 0s", "polishing");
   timerInterval = setInterval(() => {
     seconds++;
     showStatus(`Polishing... ${seconds}s`, "polishing");
   }, 1000);
 
-  // Switch button to cancel mode
   abortController = new AbortController();
-  const cancelHandler = () => {
-    abortController.abort();
-  };
-  btnPolish.removeEventListener("click", doPolish);
-  btnPolish.addEventListener("click", cancelHandler);
 
   try {
     const result = await fetchPolish(text, modelId, abortController.signal);
 
-    // Show result
     resultBox.textContent = result.polished;
-    elapsed.textContent = `${(result.elapsed_ms / 1000).toFixed(1)}s`;
+    elapsedEl.textContent = `${(result.elapsed_ms / 1000).toFixed(1)}s`;
     resultSection.classList.remove("hidden");
     hideStatus();
   } catch (err) {
@@ -127,40 +171,120 @@ async function doPolish() {
   } finally {
     clearInterval(timerInterval);
     abortController = null;
-
-    // Restore polish button
-    btnPolish.removeEventListener("click", cancelHandler);
-    btnPolish.addEventListener("click", doPolish);
-    btnPolish.textContent = "Polish";
+    btnCancel.classList.add("hidden");
     btnPolish.disabled = false;
   }
 }
+
+// --- Cancel ---
+
+btnCancel.addEventListener("click", () => {
+  if (abortController) abortController.abort();
+});
 
 // --- Copy ---
 
 btnCopy.addEventListener("click", async () => {
   const text = resultBox.textContent;
   if (!text) return;
+
   await navigator.clipboard.writeText(text);
-  btnCopy.textContent = "Copied!";
+
+  // Swap to check icon
+  iconCopy.classList.add("hidden");
+  iconCheck.classList.remove("hidden");
+  copyLabel.textContent = "Copied";
+
   setTimeout(() => {
-    btnCopy.textContent = "Copy";
+    iconCheck.classList.add("hidden");
+    iconCopy.classList.remove("hidden");
+    copyLabel.textContent = "Copy";
   }, 1500);
 });
 
-// --- Settings ---
+// --- Settings panel ---
 
 btnSettings.addEventListener("click", () => {
-  chrome.runtime.openOptionsPage();
+  document.body.classList.add("settings-open");
+});
+
+btnBack.addEventListener("click", () => {
+  document.body.classList.remove("settings-open");
+  settingsStatus.textContent = "";
+  settingsStatus.className = "settings-status";
+});
+
+async function loadSettingsUrl() {
+  const result = await chrome.storage.local.get("apiUrl");
+  apiUrlInput.value = result.apiUrl || "http://localhost:8090";
+}
+
+btnTest.addEventListener("click", async () => {
+  settingsStatus.textContent = "Testing...";
+  settingsStatus.className = "settings-status";
+  btnTest.disabled = true;
+
+  try {
+    const url = apiUrlInput.value.trim().replace(/\/+$/, "");
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    try {
+      const resp = await fetch(`${url}/api/health`, { signal: controller.signal });
+      clearTimeout(timeout);
+      if (!resp.ok) throw new Error(`Status ${resp.status}`);
+      const data = await resp.json();
+      if (data.status === "ok") {
+        settingsStatus.textContent = "Connected.";
+        settingsStatus.className = "settings-status ok";
+      } else {
+        throw new Error("Unexpected response");
+      }
+    } catch (err) {
+      clearTimeout(timeout);
+      if (err.name === "AbortError") {
+        settingsStatus.textContent = "Timed out after 5s.";
+      } else {
+        settingsStatus.textContent = `Failed: ${err.message}`;
+      }
+      settingsStatus.className = "settings-status err";
+    }
+  } finally {
+    btnTest.disabled = false;
+  }
+});
+
+btnSave.addEventListener("click", async () => {
+  const url = apiUrlInput.value.trim().replace(/\/+$/, "");
+  await chrome.storage.local.set({ apiUrl: url });
+
+  settingsStatus.textContent = "Saved. Reloading models...";
+  settingsStatus.className = "settings-status ok";
+
+  // Reload models with new URL
+  await loadModels();
+
+  if (modelsLoaded) {
+    settingsStatus.textContent = "Saved.";
+    settingsStatus.className = "settings-status ok";
+  } else {
+    settingsStatus.textContent = "Saved, but cannot reach API.";
+    settingsStatus.className = "settings-status err";
+  }
+
+  setTimeout(() => {
+    settingsStatus.textContent = "";
+    settingsStatus.className = "settings-status";
+  }, 3000);
 });
 
 // --- Helpers ---
 
 function showStatus(msg, type) {
-  status.textContent = msg;
-  status.className = `status ${type}`;
+  statusEl.textContent = msg;
+  statusEl.className = `status ${type}`;
 }
 
 function hideStatus() {
-  status.className = "status hidden";
+  statusEl.className = "status hidden";
 }

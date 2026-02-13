@@ -104,34 +104,30 @@ STUBEOF
 #endif // CUDA_BF16_HPP
 HPPEOF
 
-  # 4f. Add ARM NEON intrinsic stubs for gcc-8.4
-  # gcc-8.4 on Ubuntu 18.04 is missing vld1q_*_x2/x4 intrinsics
-  # that were added in gcc-8.5. The macros ggml_vld1q_* are defined
-  # in ggml-cpu-impl.h, so stubs must go there (not quants.c).
+  # 4f. Fix ARM NEON intrinsic conflicts for gcc-8 on aarch64
+  # gcc-8 on aarch64 already provides vld1q_*_x2 in arm_neon.h, but
+  # llama.cpp defines its own polyfills that clash (different inline attrs).
+  # Comment out the upstream _x2 polyfills, and add _x4 stubs only (gcc-8
+  # does NOT provide _x4 variants).
   IMPL_FILE="ggml/src/ggml-cpu/ggml-cpu-impl.h"
   if [ -f "$IMPL_FILE" ]; then
-    echo "Patching ARM NEON intrinsics in ggml-cpu-impl.h for gcc-8.4..."
-    NEON_STUBS='
-/* --- gcc-8.4 ARM NEON stubs (missing until gcc-8.5) --- */
-#if defined(__ARM_NEON) && defined(__GNUC__) && __GNUC__ == 8 && __GNUC_MINOR__ < 5
-static inline int8x16x2_t vld1q_s8_x2(const int8_t *ptr) {
-    int8x16x2_t res;
-    res.val[0] = vld1q_s8(ptr);
-    res.val[1] = vld1q_s8(ptr + 16);
-    return res;
-}
+    echo "Patching ARM NEON intrinsics in ggml-cpu-impl.h for gcc-8..."
+
+    # Comment out upstream vld1q_*_x2 polyfills (already in gcc-8 arm_neon.h)
+    sed -i '/^static inline int8x16x2_t vld1q_s8_x2/,/^}/s/^/\/\//' "$IMPL_FILE"
+    sed -i '/^static inline uint8x16x2_t vld1q_u8_x2/,/^}/s/^/\/\//' "$IMPL_FILE"
+    sed -i '/^static inline int16x8x2_t vld1q_s16_x2/,/^}/s/^/\/\//' "$IMPL_FILE"
+
+    # Add _x4 stubs only (not provided by gcc-8 arm_neon.h)
+    NEON_X4_STUBS='
+/* --- gcc-8 ARM NEON _x4 stubs (not in arm_neon.h until gcc-10+) --- */
+#if defined(__ARM_NEON) && defined(__GNUC__) && __GNUC__ < 10
 static inline int8x16x4_t vld1q_s8_x4(const int8_t *ptr) {
     int8x16x4_t res;
     res.val[0] = vld1q_s8(ptr);
     res.val[1] = vld1q_s8(ptr + 16);
     res.val[2] = vld1q_s8(ptr + 32);
     res.val[3] = vld1q_s8(ptr + 48);
-    return res;
-}
-static inline uint8x16x2_t vld1q_u8_x2(const uint8_t *ptr) {
-    uint8x16x2_t res;
-    res.val[0] = vld1q_u8(ptr);
-    res.val[1] = vld1q_u8(ptr + 16);
     return res;
 }
 static inline uint8x16x4_t vld1q_u8_x4(const uint8_t *ptr) {
@@ -142,18 +138,12 @@ static inline uint8x16x4_t vld1q_u8_x4(const uint8_t *ptr) {
     res.val[3] = vld1q_u8(ptr + 48);
     return res;
 }
-static inline int16x8x2_t vld1q_s16_x2(const int16_t *ptr) {
-    int16x8x2_t res;
-    res.val[0] = vld1q_s16(ptr);
-    res.val[1] = vld1q_s16(ptr + 8);
-    return res;
-}
 #endif
-/* --- end gcc-8.4 stubs --- */
+/* --- end gcc-8 _x4 stubs --- */
 '
-    # Insert stubs after the first #include <arm_neon.h> in the file
+    # Insert _x4 stubs after the first #include <arm_neon.h> in the file
     TMPFILE=$(mktemp)
-    awk -v stubs="$NEON_STUBS" '
+    awk -v stubs="$NEON_X4_STUBS" '
       /#include <arm_neon.h>/ && !done { print; print stubs; done=1; next }
       { print }
     ' "$IMPL_FILE" > "$TMPFILE"
@@ -226,14 +216,20 @@ inline from_chars_result from_chars(const char* first, const char* last, float& 
 CHARCONVEOF
 
   # 4h. Disable WMMA flash attention (requires Volta+ compute 7.0, Maxwell is 5.3)
+  # Must provide a no-op function body (not empty file) because the symbol
+  # is declared in a header and called from the flash-attention dispatcher.
   WMMA_FILE="ggml/src/ggml-cuda/fattn-wmma-f16.cu"
   if [ -f "$WMMA_FILE" ]; then
     echo "Stubbing out fattn-wmma-f16.cu (WMMA not supported on Maxwell)..."
     cat > "$WMMA_FILE" << 'WMMAEOF'
-// Stubbed out: WMMA (Warp Matrix Multiply Accumulate) requires
-// Volta+ (compute capability 7.0). Jetson Nano Maxwell GPU is 5.3.
-// This file is intentionally empty for CUDA 10.2 compatibility.
+// Stubbed: WMMA requires Volta+ (compute 7.0). Jetson Nano Maxwell is 5.3.
 #include "common.cuh"
+#include "fattn-wmma-f16.cuh"
+
+void ggml_cuda_flash_attn_ext_wmma_f16(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
+    (void)ctx; (void)dst;
+    GGML_ABORT("WMMA flash attention not supported on compute capability < 7.0");
+}
 WMMAEOF
   fi
 

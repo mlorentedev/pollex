@@ -9,9 +9,10 @@ async function getApiUrl() {
   return result.apiUrl || DEFAULT_API_URL;
 }
 
-async function fetchHealth() {
+async function fetchHealth(signal) {
   const base = await getApiUrl();
-  const resp = await fetch(`${base}/api/health`);
+  const opts = signal ? { signal } : {};
+  const resp = await fetch(`${base}/api/health`, opts);
   if (!resp.ok) throw new Error(`Health check failed: ${resp.status}`);
   return resp.json();
 }

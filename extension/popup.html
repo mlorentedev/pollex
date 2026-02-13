@@ -5,31 +5,100 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Pollex</h1>
-      <button id="btn-settings" class="icon-btn" title="Settings">&#9881;</button>
-    </header>
+  <div class="viewport">
 
-    <textarea id="input" placeholder="Paste your English text here..." rows="6"></textarea>
+    <!-- Main Panel -->
+    <div class="panel panel-main">
+      <header class="header">
+        <div class="brand">
+          <svg class="brand-icon" viewBox="0 0 128 128" aria-hidden="true">
+            <rect x="8" y="8" width="112" height="112" rx="24" fill="#6366f1"/>
+            <rect x="30" y="40" width="52" height="6" rx="3" fill="#fff" opacity="0.95"/>
+            <rect x="30" y="56" width="42" height="6" rx="3" fill="#fff" opacity="0.75"/>
+            <rect x="30" y="72" width="48" height="6" rx="3" fill="#fff" opacity="0.55"/>
+            <path d="M90 28 L92 34 L98 36 L92 38 L90 44 L88 38 L82 36 L88 34Z" fill="#fff" opacity="0.9"/>
+            <path d="M100 20 L101 23 L104 24 L101 25 L100 28 L99 25 L96 24 L99 23Z" fill="#fff" opacity="0.6"/>
+          </svg>
+          <span class="brand-name">Pollex</span>
+        </div>
+        <button id="btn-settings" class="icon-btn" aria-label="Settings" title="Settings">
+          <!-- Lucide: settings (gear) -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+      </header>
 
-    <div class="controls">
-      <select id="model-select">
-        <option value="">Loading models...</option>
-      </select>
-      <button id="btn-polish" disabled>Polish</button>
-    </div>
+      <div class="input-group">
+        <textarea id="input" placeholder="Paste your English text here..." rows="5"></textarea>
+        <div class="input-meta">
+          <span id="char-count" class="char-count">0 / 10,000</span>
+          <span class="hint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></span>
+        </div>
+      </div>
 
-    <div id="status" class="status hidden"></div>
+      <div class="controls">
+        <div class="select-wrap">
+          <select id="model-select">
+            <option value="">Loading models...</option>
+          </select>
+        </div>
+        <button id="btn-cancel" class="btn btn-cancel hidden">Cancel</button>
+        <button id="btn-polish" class="btn btn-primary" disabled>Polish</button>
+      </div>
 
-    <div id="result-section" class="hidden">
-      <label>Result</label>
-      <div id="result" class="result-box"></div>
-      <div class="result-footer">
-        <span id="elapsed"></span>
-        <button id="btn-copy">Copy</button>
+      <div id="status" class="status hidden" role="status" aria-live="polite"></div>
+
+      <div id="result-section" class="result-section hidden">
+        <div class="result-header">
+          <span class="result-label">Result</span>
+          <span id="elapsed" class="result-elapsed"></span>
+        </div>
+        <div id="result" class="result-box"></div>
+        <div class="result-footer">
+          <button id="btn-copy" class="btn btn-ghost btn-copy" aria-label="Copy result">
+            <!-- Lucide: copy -->
+            <svg id="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            <!-- Lucide: check (shown after copy) -->
+            <svg id="icon-check" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span id="copy-label">Copy</span>
+          </button>
+        </div>
       </div>
     </div>
+
+    <!-- Settings Panel -->
+    <div class="panel panel-settings">
+      <div class="settings-header">
+        <button id="btn-back" class="icon-btn" aria-label="Back">
+          <!-- Lucide: arrow-left -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"/>
+            <polyline points="12 19 5 12 12 5"/>
+          </svg>
+        </button>
+        <span class="settings-title">Settings</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="api-url">API URL</label>
+        <input id="api-url" class="form-input" type="url" placeholder="http://localhost:8090">
+      </div>
+
+      <div class="settings-actions">
+        <button id="btn-test" class="btn btn-ghost">Test Connection</button>
+        <button id="btn-save" class="btn btn-primary">Save</button>
+      </div>
+
+      <div id="settings-status" class="settings-status" role="status" aria-live="polite"></div>
+    </div>
+
   </div>
 
   <script src="api.js"></script>
