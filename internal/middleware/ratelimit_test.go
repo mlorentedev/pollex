@@ -1,9 +1,53 @@
 package middleware
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 )
+
+func TestClientIPFromCfHeader(t *testing.T) {
+	inner := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	rl := NewRateLimiter(1, time.Minute)
+	handler := RateLimit(rl)(inner)
+
+	t.Run("uses Cf-Connecting-Ip when present", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set("Cf-Connecting-Ip", "1.2.3.4")
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("status: got %d, want %d", w.Code, http.StatusOK)
+		}
+	})
+
+	t.Run("different Cf IPs get separate buckets", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set("Cf-Connecting-Ip", "5.6.7.8")
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("status: got %d, want %d", w.Code, http.StatusOK)
+		}
+	})
+
+	t.Run("same Cf IP hits rate limit", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set("Cf-Connecting-Ip", "1.2.3.4")
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusTooManyRequests {
+			t.Errorf("status: got %d, want %d", w.Code, http.StatusTooManyRequests)
+		}
+	})
+}
 
 func TestRateLimiterAllow(t *testing.T) {
 	rl := NewRateLimiter(3, time.Minute)

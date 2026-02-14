@@ -26,6 +26,9 @@ func TestCORSMiddleware(t *testing.T) {
 		if got := w.Header().Get("Access-Control-Allow-Methods"); got != "GET, POST, OPTIONS" {
 			t.Errorf("Allow-Methods: got %q, want %q", got, "GET, POST, OPTIONS")
 		}
+		if got := w.Header().Get("Access-Control-Allow-Headers"); got != "Content-Type, X-API-Key" {
+			t.Errorf("Allow-Headers: got %q, want %q", got, "Content-Type, X-API-Key")
+		}
 		if w.Code != http.StatusOK {
 			t.Errorf("status: got %d, want %d", w.Code, http.StatusOK)
 		}

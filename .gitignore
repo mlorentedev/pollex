@@ -12,9 +12,10 @@ vendor/
 # Node
 node_modules/
 
-# Environment
+# Environment / Secrets
 .env
 .env.*
+secrets.env
 
 # Extension packaging
 *.zip
@@ -30,5 +31,8 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# AI
 .claude/
 CLAUDE.md
+GEMINI.md

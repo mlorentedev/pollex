@@ -15,8 +15,8 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.Port != 8090 {
 		t.Errorf("default port: got %d, want 8090", cfg.Port)
 	}
-	if cfg.OllamaURL != "http://localhost:11434" {
-		t.Errorf("default ollama_url: got %q, want %q", cfg.OllamaURL, "http://localhost:11434")
+	if cfg.OllamaURL != "" {
+		t.Errorf("default ollama_url: got %q, want empty", cfg.OllamaURL)
 	}
 	if cfg.PromptPath != "prompts/polish.txt" {
 		t.Errorf("default prompt_path: got %q, want %q", cfg.PromptPath, "prompts/polish.txt")
@@ -33,6 +33,9 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.LlamaCppModel != "" {
 		t.Errorf("default llamacpp_model: got %q, want empty", cfg.LlamaCppModel)
 	}
+	if cfg.APIKey != "" {
+		t.Errorf("default api_key: got %q, want empty", cfg.APIKey)
+	}
 }
 
 func TestLoadFromYAML(t *testing.T) {
@@ -45,6 +48,7 @@ claude_model: "claude-opus-4-6"
 llamacpp_url: "http://localhost:8080"
 llamacpp_model: "qwen2.5-1.5b"
 prompt_path: "/etc/pollex/polish.txt"
+api_key: "my-secret-key"
 `
 	if err := os.WriteFile(yamlPath, []byte(content), 0644); err != nil {
 		t.Fatalf("write yaml: %v", err)
@@ -67,6 +71,7 @@ prompt_path: "/etc/pollex/polish.txt"
 		{"prompt_path", cfg.PromptPath, "/etc/pollex/polish.txt"},
 		{"llamacpp_url", cfg.LlamaCppURL, "http://localhost:8080"},
 		{"llamacpp_model", cfg.LlamaCppModel, "qwen2.5-1.5b"},
+		{"api_key", cfg.APIKey, "my-secret-key"},
 	}
 
 	for _, tt := range tests {
@@ -93,6 +98,7 @@ ollama_url: "http://from-yaml:11434"
 	t.Setenv("POLLEX_CLAUDE_API_KEY", "sk-env-key")
 	t.Setenv("POLLEX_LLAMACPP_URL", "http://from-env:8080")
 	t.Setenv("POLLEX_LLAMACPP_MODEL", "custom-model")
+	t.Setenv("POLLEX_API_KEY", "env-api-key")
 
 	cfg, err := Load(yamlPath)
 	if err != nil {
@@ -109,6 +115,7 @@ ollama_url: "http://from-yaml:11434"
 		{"claude_api_key from env", cfg.ClaudeAPIKey, "sk-env-key"},
 		{"llamacpp_url from env", cfg.LlamaCppURL, "http://from-env:8080"},
 		{"llamacpp_model from env", cfg.LlamaCppModel, "custom-model"},
+		{"api_key from env", cfg.APIKey, "env-api-key"},
 	}
 
 	for _, tt := range tests {

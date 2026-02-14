@@ -23,8 +23,10 @@ type llamaCppMessage struct {
 }
 
 type llamaCppChatRequest struct {
-	Model    string            `json:"model"`
-	Messages []llamaCppMessage `json:"messages"`
+	Model       string            `json:"model"`
+	Messages    []llamaCppMessage `json:"messages"`
+	Temperature float32           `json:"temperature"`
+	MaxTokens   int               `json:"max_tokens,omitempty"`
 }
 
 type llamaCppChoice struct {
@@ -46,6 +48,7 @@ func (l *LlamaCppAdapter) Polish(ctx context.Context, text, systemPrompt string)
 			{Role: "system", Content: systemPrompt},
 			{Role: "user", Content: text},
 		},
+		Temperature: 0,
 	}
 
 	body, err := json.Marshal(reqBody)

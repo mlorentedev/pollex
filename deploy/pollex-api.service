@@ -1,7 +1,7 @@
 [Unit]
 Description=Pollex API — text polishing service
-After=network.target ollama.service
-Wants=ollama.service
+After=network.target llama-server.service
+Wants=llama-server.service
 
 [Service]
 Type=simple
@@ -10,6 +10,7 @@ ExecStart=/usr/local/bin/pollex --config /etc/pollex/config.yaml
 Restart=on-failure
 RestartSec=5
 Environment=POLLEX_PROMPT_PATH=/etc/pollex/polish.txt
+EnvironmentFile=-/etc/pollex/secrets.env
 
 # Hardening
 NoNewPrivileges=true

@@ -468,6 +468,11 @@ textarea::placeholder {
   box-shadow: 0 0 0 3px var(--accent-ring);
 }
 
+.form-hint {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
 .settings-actions {
   display: flex;
   gap: var(--sp-2);

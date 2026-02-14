@@ -1,0 +1,21 @@
+[Unit]
+Description=Cloudflare Tunnel for Pollex API
+After=network-online.target pollex-api.service
+Wants=network-online.target pollex-api.service
+
+[Service]
+Type=simple
+User=manu
+ExecStart=/usr/local/bin/cloudflared tunnel run pollex
+Restart=on-failure
+RestartSec=10
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/manu/.cloudflared
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

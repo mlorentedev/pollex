@@ -23,6 +23,7 @@ const elapsedEl = document.getElementById("elapsed");
 // Settings panel
 const btnBack = document.getElementById("btn-back");
 const apiUrlInput = document.getElementById("api-url");
+const apiKeyInput = document.getElementById("api-key");
 const btnTest = document.getElementById("btn-test");
 const btnSave = document.getElementById("btn-save");
 const settingsStatus = document.getElementById("settings-status");
@@ -35,7 +36,7 @@ let modelsLoaded = false;
 
 document.addEventListener("DOMContentLoaded", async () => {
   await loadModels();
-  await loadSettingsUrl();
+  await loadSettings();
   updateCharCount();
   input.focus();
 });
@@ -214,9 +215,10 @@ btnBack.addEventListener("click", () => {
   settingsStatus.className = "settings-status";
 });
 
-async function loadSettingsUrl() {
-  const result = await chrome.storage.local.get("apiUrl");
+async function loadSettings() {
+  const result = await chrome.storage.local.get(["apiUrl", "apiKey"]);
   apiUrlInput.value = result.apiUrl || "http://localhost:8090";
+  apiKeyInput.value = result.apiKey || "";
 }
 
 btnTest.addEventListener("click", async () => {
@@ -256,7 +258,8 @@ btnTest.addEventListener("click", async () => {
 
 btnSave.addEventListener("click", async () => {
   const url = apiUrlInput.value.trim().replace(/\/+$/, "");
-  await chrome.storage.local.set({ apiUrl: url });
+  const key = apiKeyInput.value.trim();
+  await chrome.storage.local.set({ apiUrl: url, apiKey: key });
 
   settingsStatus.textContent = "Saved. Reloading models...";
   settingsStatus.className = "settings-status ok";

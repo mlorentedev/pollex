@@ -37,7 +37,13 @@ func main() {
 	systemPrompt := string(promptData)
 
 	adapters, models := buildAdapters(cfg, *useMock)
-	handler := server.SetupMux(adapters, models, systemPrompt)
+	handler := server.SetupMux(adapters, models, systemPrompt, cfg.APIKey)
+
+	if cfg.APIKey != "" {
+		log.Println("auth: API key required (X-API-Key header)")
+	} else {
+		log.Println("auth: disabled (no api_key configured)")
+	}
 
 	addr := fmt.Sprintf(":%d", cfg.Port)
 	srv := &http.Server{
@@ -75,21 +81,14 @@ func buildAdapters(cfg config.Config, useMock bool) (map[string]adapter.LLMAdapt
 		adapters["mock"] = &adapter.MockAdapter{Delay: 500 * time.Millisecond}
 		models = append(models, adapter.ModelInfo{ID: "mock", Name: "Mock (dev)", Provider: "mock"})
 		log.Println("mode: mock adapter enabled")
-	} else {
-		ollama := &adapter.OllamaAdapter{
-			BaseURL: cfg.OllamaURL,
-			Model:   "qwen2.5:1.5b",
-			Client:  &http.Client{Timeout: 60 * time.Second},
-		}
-		adapters["qwen2.5:1.5b"] = ollama
-		models = append(models, adapter.ModelInfo{ID: "qwen2.5:1.5b", Name: "Qwen 2.5 1.5B", Provider: "ollama"})
-		log.Printf("mode: ollama at %s", cfg.OllamaURL)
+		return adapters, models
 	}
 
+	// 1. llama.cpp (Highest priority for local GPU)
 	if cfg.LlamaCppURL != "" {
 		model := cfg.LlamaCppModel
 		if model == "" {
-			model = "qwen2.5-1.5b"
+			model = "qwen2.5-1.5b-gpu"
 		}
 		llama := &adapter.LlamaCppAdapter{
 			BaseURL: cfg.LlamaCppURL,
@@ -101,6 +100,7 @@ func buildAdapters(cfg config.Config, useMock bool) (map[string]adapter.LLMAdapt
 		log.Printf("mode: llama.cpp at %s (model: %s)", cfg.LlamaCppURL, model)
 	}
 
+	// 2. Claude (Optional cloud fallback)
 	if cfg.ClaudeAPIKey != "" {
 		claude := &adapter.ClaudeAdapter{
 			APIKey: cfg.ClaudeAPIKey,
@@ -110,6 +110,19 @@ func buildAdapters(cfg config.Config, useMock bool) (map[string]adapter.LLMAdapt
 		adapters[cfg.ClaudeModel] = claude
 		models = append(models, adapter.ModelInfo{ID: cfg.ClaudeModel, Name: "Claude (" + cfg.ClaudeModel + ")", Provider: "claude"})
 		log.Printf("mode: claude enabled (model: %s)", cfg.ClaudeModel)
+	}
+
+	// 3. Ollama (Optional or legacy fallback)
+	if cfg.OllamaURL != "" {
+		model := "qwen2.5:1.5b"
+		ollama := &adapter.OllamaAdapter{
+			BaseURL: cfg.OllamaURL,
+			Model:   model,
+			Client:  &http.Client{Timeout: 60 * time.Second},
+		}
+		adapters[model] = ollama
+		models = append(models, adapter.ModelInfo{ID: model, Name: "Qwen 2.5 1.5B", Provider: "ollama"})
+		log.Printf("mode: ollama at %s", cfg.OllamaURL)
 	}
 
 	return adapters, models

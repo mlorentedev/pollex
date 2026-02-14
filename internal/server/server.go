@@ -10,12 +10,12 @@ import (
 )
 
 // SetupMux wires handlers with the full middleware chain.
-func SetupMux(adapters map[string]adapter.LLMAdapter, models []adapter.ModelInfo, systemPrompt string) http.Handler {
+func SetupMux(adapters map[string]adapter.LLMAdapter, models []adapter.ModelInfo, systemPrompt, apiKey string) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/health", handler.Health(adapters))
 	mux.HandleFunc("/api/models", handler.Models(models))
 	mux.HandleFunc("/api/polish", handler.Polish(adapters, systemPrompt))
 
 	rl := middleware.NewRateLimiter(10, time.Minute)
-	return middleware.Chain(mux, rl)
+	return middleware.Chain(mux, rl, apiKey)
 }

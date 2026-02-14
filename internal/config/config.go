@@ -16,12 +16,12 @@ type Config struct {
 	LlamaCppURL   string `yaml:"llamacpp_url"`
 	LlamaCppModel string `yaml:"llamacpp_model"`
 	PromptPath    string `yaml:"prompt_path"`
+	APIKey        string `yaml:"api_key"`
 }
 
 func defaults() Config {
 	return Config{
 		Port:        8090,
-		OllamaURL:   "http://localhost:11434",
 		ClaudeModel: "claude-sonnet-4-5-20250929",
 		PromptPath:  "prompts/polish.txt",
 	}
@@ -65,6 +65,9 @@ func Load(path string) (Config, error) {
 	}
 	if v := os.Getenv("POLLEX_PROMPT_PATH"); v != "" {
 		cfg.PromptPath = v
+	}
+	if v := os.Getenv("POLLEX_API_KEY"); v != "" {
+		cfg.APIKey = v
 	}
 
 	return cfg, nil

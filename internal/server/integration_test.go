@@ -45,7 +45,13 @@ type errorResponse struct {
 
 func newTestServer(t *testing.T, adapters map[string]adapter.LLMAdapter, models []adapter.ModelInfo) *httptest.Server {
 	t.Helper()
-	h := SetupMux(adapters, models, "test system prompt")
+	h := SetupMux(adapters, models, "test system prompt", "")
+	return httptest.NewServer(h)
+}
+
+func newTestServerWithAPIKey(t *testing.T, adapters map[string]adapter.LLMAdapter, models []adapter.ModelInfo, apiKey string) *httptest.Server {
+	t.Helper()
+	h := SetupMux(adapters, models, "test system prompt", apiKey)
 	return httptest.NewServer(h)
 }
 
@@ -158,6 +164,9 @@ func TestIntegration_OptionsPreflightCORS(t *testing.T) {
 	}
 	if got := resp.Header.Get("Access-Control-Allow-Methods"); got != "GET, POST, OPTIONS" {
 		t.Errorf("Allow-Methods: got %q, want %q", got, "GET, POST, OPTIONS")
+	}
+	if got := resp.Header.Get("Access-Control-Allow-Headers"); !strings.Contains(got, "X-API-Key") {
+		t.Errorf("Allow-Headers: got %q, want to contain X-API-Key", got)
 	}
 }
 
@@ -327,4 +336,80 @@ func TestIntegration_TextTooLong(t *testing.T) {
 	if !strings.Contains(er.Error, "too long") {
 		t.Errorf("error: got %q, want to contain 'too long'", er.Error)
 	}
+}
+
+func TestIntegration_APIKeyRequired(t *testing.T) {
+	adapters := map[string]adapter.LLMAdapter{"mock": &adapter.MockAdapter{}}
+	models := []adapter.ModelInfo{{ID: "mock", Name: "Mock (dev)", Provider: "mock"}}
+	ts := newTestServerWithAPIKey(t, adapters, models, "test-key-123")
+	defer ts.Close()
+
+	t.Run("polish without key returns 401", func(t *testing.T) {
+		body, _ := json.Marshal(polishRequest{Text: "hello", ModelID: "mock"})
+		resp, err := http.Post(ts.URL+"/api/polish", "application/json", bytes.NewReader(body))
+		if err != nil {
+			t.Fatalf("request: %v", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusUnauthorized {
+			t.Errorf("status: got %d, want %d", resp.StatusCode, http.StatusUnauthorized)
+		}
+	})
+
+	t.Run("polish with valid key returns 200", func(t *testing.T) {
+		body, _ := json.Marshal(polishRequest{Text: "hello", ModelID: "mock"})
+		req, _ := http.NewRequest(http.MethodPost, ts.URL+"/api/polish", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("X-API-Key", "test-key-123")
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatalf("request: %v", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("status: got %d, want %d", resp.StatusCode, http.StatusOK)
+		}
+	})
+
+	t.Run("health exempt from auth", func(t *testing.T) {
+		resp, err := http.Get(ts.URL + "/api/health")
+		if err != nil {
+			t.Fatalf("request: %v", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("status: got %d, want %d", resp.StatusCode, http.StatusOK)
+		}
+	})
+
+	t.Run("models without key returns 401", func(t *testing.T) {
+		resp, err := http.Get(ts.URL + "/api/models")
+		if err != nil {
+			t.Fatalf("request: %v", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusUnauthorized {
+			t.Errorf("status: got %d, want %d", resp.StatusCode, http.StatusUnauthorized)
+		}
+	})
+
+	t.Run("wrong key returns 401", func(t *testing.T) {
+		body, _ := json.Marshal(polishRequest{Text: "hello", ModelID: "mock"})
+		req, _ := http.NewRequest(http.MethodPost, ts.URL+"/api/polish", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("X-API-Key", "wrong-key")
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatalf("request: %v", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusUnauthorized {
+			t.Errorf("status: got %d, want %d", resp.StatusCode, http.StatusUnauthorized)
+		}
+	})
 }

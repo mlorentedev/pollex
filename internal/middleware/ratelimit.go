@@ -64,7 +64,12 @@ func RateLimit(rl *RateLimiter) func(http.Handler) http.Handler {
 	}
 }
 
+// clientIP extracts the real client IP, preferring Cf-Connecting-Ip
+// (set by Cloudflare Tunnel) over the direct remote address.
 func clientIP(r *http.Request) string {
+	if ip := r.Header.Get("Cf-Connecting-Ip"); ip != "" {
+		return ip
+	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return r.RemoteAddr

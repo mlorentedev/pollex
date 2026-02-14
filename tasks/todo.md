@@ -93,23 +93,91 @@ Switch to llama-server (llama.cpp compiled with CUDA 10.2) for ~300-500% speedup
 ### Verification
 - [x] `make test` — 62 top-level tests (97 with subtests), -race clean, go vet clean
 - [x] Local smoke test: Docker `llama-server` (CPU) + pollex API → polish end-to-end OK (2.1s)
-- [ ] `make deploy-llamacpp` — builds llama-server on Jetson (~85 min)
-- [ ] `ssh nvidia 'systemctl is-active llama-server'` — service running
-- [ ] `make deploy` — deploy new binary with LlamaCpp adapter
-- [ ] Compare: Ollama/CPU vs llama-server/GPU tokens/s
+- [x] `make deploy-llamacpp` — llama-server compiled and running on Jetson
+- [x] `ssh nvidia 'systemctl is-active llama-server'` — service active
+- [x] `make deploy` — new binary with LlamaCpp adapter deployed
+- [x] Benchmark: llama-server/GPU ~7.9s (short) vs Ollama/CPU ~41s = **~5x speedup**
 
-## Phase 10 — Remote Access & Chrome Web Store
+## Phase 10 — Remote Access via Cloudflare Tunnel + API Key Auth
 
-Expose Pollex API remotely and publish extension for easy install on any PC.
+Jetson behind double NAT (no router access). Cloudflare Tunnel for zero-config ingress + API key middleware in Go.
 
-### 10.1 — Remote Tunnel (Jetson → Internet)
-- [ ] Set up Cloudflare Tunnel or WireGuard (Jetson → VPS relay) — no router access needed
-- [ ] HTTPS termination + auth (API key or basic auth to prevent open access)
-- [ ] Test latency from outside LAN
+### 10.1 — API Key Auth (Backend)
+- [x] `internal/config/config.go` — add `APIKey` field + `POLLEX_API_KEY` env override
+- [x] `internal/middleware/apikey.go` — `X-API-Key` header, `crypto/subtle.ConstantTimeCompare`, health exempt
+- [x] `internal/middleware/apikey_test.go` — 6 subtests (disabled, valid, missing, wrong, health exempt, models requires auth)
+- [x] `internal/middleware/chain.go` — APIKey after RateLimit, before MaxBytes
+- [x] `internal/middleware/cors.go` — `Access-Control-Allow-Headers: "Content-Type, X-API-Key"`
+- [x] `internal/server/server.go` — `SetupMux` accepts `apiKey` parameter
+- [x] `cmd/pollex/main.go` — pass `cfg.APIKey`, log auth mode
 
-### 10.2 — Chrome Web Store Publishing
+### 10.2 — Integration Tests
+- [x] `internal/server/integration_test.go` — `TestIntegration_APIKeyRequired` with 5 subtests
+- [x] Updated `SetupMux` calls + CORS header assertions
+
+### 10.3 — Extension API Key Support
+- [x] `extension/api.js` — `getApiKey()`, `buildHeaders()`, inject `X-API-Key` in fetchModels + fetchPolish
+- [x] `extension/popup.html` — API Key password input in Settings
+- [x] `extension/popup.js` — load/save `apiKey` in `chrome.storage.local`
+- [x] `extension/popup.css` — `.form-hint` style
+
+### 10.4 — Deploy Artifacts
+- [x] `deploy/config.yaml` — comment for api_key via env
+- [x] `deploy/pollex-api.service` — `EnvironmentFile=-/etc/pollex/secrets.env`, After=llama-server
+- [x] `deploy/cloudflared.service` — systemd unit for Cloudflare Tunnel
+- [x] `deploy/setup-cloudflared.sh` — idempotent setup script (install, auth, create tunnel, config, DNS hint)
+- [x] `Makefile` — `deploy-cloudflared` target
+- [x] `.gitignore` — `secrets.env`
+
+### 10.5 — Documentation
+- [x] Vault: ADR-005 Cloudflare Tunnel for Public Access
+- [x] Vault: `runbooks/setup-cloudflare-tunnel.md`
+- [x] Vault: update `_index.md` — Phase 10 status, package layout, ADR-005 link
+- [x] Vault: update `runbooks/deploy-jetson.md` — cloudflared section + API key rotation
+
+### 10.6 — Deploy & Verification
+- [x] `make test` — all tests pass + 11 new subtests (6 unit + 5 integration)
+- [x] `make dev` (no api_key) — backward compatible, auth disabled
+- [x] `POLLEX_API_KEY=test make dev` — auth enforcement (401 without, 200 with key)
+- [x] Extension: API key input in Settings, polish works with key
+- [x] `make deploy` + `make deploy-secrets` — binary, service, and secrets on Jetson
+- [x] `make deploy-cloudflared` — tunnel created, DNS CNAME configured
+- [x] `curl https://pollex.mlorente.dev/api/health` — 200 from internet
+- [x] `curl -H "X-API-Key: ..." https://pollex.mlorente.dev/api/polish` — 200, ~3s GPU inference
+- [x] Extension with remote URL + API key — end-to-end OK
+- [x] `extension/manifest.json` — added `host_permissions: ["<all_urls>"]` for remote access
+- [x] `Makefile` — `deploy-secrets`, `tunnel-start`, `tunnel-status`, `tunnel-logs` targets
+- [x] `Makefile` — `deploy` now includes service file + daemon-reload
+- [x] Vault + CLAUDE.md — secrets flow documented (dotfiles → age → deploy-secrets → Jetson)
+
+### Known Limitations (resolved)
+- [x] Rate limiter: reads `Cf-Connecting-Ip` header for real client IP behind Cloudflare Tunnel
+
+### 10.7 — Chrome Web Store Publishing (future)
 - [ ] Chrome Developer account ($5 one-time)
 - [ ] Default API URL: empty (force user to configure in settings)
 - [ ] Privacy policy (required by CWS)
 - [ ] Screenshots + description for store listing
 - [ ] Submit for review + publish
+
+## Phase 11 — Performance Optimization & Streaming
+
+Improve perceived and actual performance for long texts on resource-constrained hardware.
+
+### 11.1 — Streaming Implementation (SSE)
+- [ ] Backend: Add `/api/polish/stream` endpoint with Server-Sent Events (SSE)
+- [ ] Adapters: Implement `PolishStream` in `LlamaCppAdapter` and `OllamaAdapter`
+- [ ] Extension: Update `api.js` to handle stream reading (Fetch API + ReadableStream)
+- [ ] Extension UI: Implement "typewriter" effect in the result area
+
+### 11.2 — Benchmarking & Model Evaluation
+- [ ] Performance: Benchmark `Qwen2.5-0.5B-Instruct` vs `1.5B` on Jetson Nano GPU
+- [ ] Quality: Evaluate 0.5B model for grammar correction quality with long texts
+- [ ] Latency: Measure tokens/s for short vs. long paragraphs (verify linear delay)
+- [ ] Strategy: Decide on default model or "High-speed vs High-quality" toggle
+
+### 11.3 — Advanced Decoding & Memory Optimization
+- [ ] Speculative Decoding: Research and implement `llama.cpp` speculative decoding using Qwen-0.5B as draft model for 1.5B
+- [ ] KV Cache Optimization: Tune context size and caching strategy to handle longer texts without memory thrashing
+- [ ] Persistence: Implement a local result cache (e.g., SQLite) to provide 0ms responses for repeated text segments
+- [ ] Text Partitioning: Implement logic to split large documents into smaller chunks for more efficient processing and faster first-chunk delivery
