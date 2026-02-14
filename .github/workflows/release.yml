@@ -25,8 +25,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Sync extension version from tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          jq --arg v "$VERSION" '.version = $v' extension/manifest.json > tmp.json && mv tmp.json extension/manifest.json
+
       - name: Package extension
-        run: cd extension && zip -r ../pollex-extension.zip . -x '*.gitkeep'
+        run: cd extension && zip -r ../pollex-extension.zip . -x '*.gitkeep' -x '*.svg'
 
       - name: Upload extension zip
         uses: softprops/action-gh-release@v2

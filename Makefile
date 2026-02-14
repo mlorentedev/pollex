@@ -29,7 +29,7 @@ ext-zip: ## Package extension into dist/pollex-ext.zip
 	cd extension && zip -r ../dist/pollex-ext.zip . -x '*.gitkeep'
 
 # ─── Benchmark ──────────────────────────────────────────────
-.PHONY: bench bench-jetson bench-mock
+.PHONY: bench bench-jetson
 
 bench: ## Run performance benchmark against local API
 	go run ./cmd/benchmark --url http://localhost:$(API_PORT)
@@ -37,15 +37,13 @@ bench: ## Run performance benchmark against local API
 bench-jetson: ## Run benchmark against Jetson (via Cloudflare Tunnel)
 	go run ./cmd/benchmark --url https://pollex.mlorente.dev --api-key $$POLLEX_API_KEY
 
-bench-mock: ## Run benchmark against mock adapter (measures overhead)
-	go run ./cmd/benchmark --url http://localhost:$(API_PORT)
-
 # ─── Deploy (Jetson) ────────────────────────────────────────
 .PHONY: deploy deploy-init deploy-secrets deploy-llamacpp deploy-tunnel
 
 deploy-init: ## First-time Jetson setup (packages, CUDA, dirs, systemd)
 	scp deploy/systemd/pollex-api.service $(JETSON_USER)@$(JETSON_HOST):/tmp/pollex-api.service
 	scp deploy/systemd/llama-server.service $(JETSON_USER)@$(JETSON_HOST):/tmp/llama-server.service
+	scp deploy/systemd/jetson-clocks.service $(JETSON_USER)@$(JETSON_HOST):/tmp/jetson-clocks.service
 	ssh $(JETSON_USER)@$(JETSON_HOST) 'bash -s' < deploy/scripts/init.sh
 
 deploy: build-arm64 ## Build + deploy binary, config, prompt, and service to Jetson

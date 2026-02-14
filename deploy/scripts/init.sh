@@ -24,9 +24,11 @@ sudo chown "$(whoami):$(whoami)" /etc/pollex
 echo "Installing systemd services..."
 sudo cp /tmp/pollex-api.service /etc/systemd/system/pollex-api.service
 sudo cp /tmp/llama-server.service /etc/systemd/system/llama-server.service
+sudo cp /tmp/jetson-clocks.service /etc/systemd/system/jetson-clocks.service
 sudo systemctl daemon-reload
 sudo systemctl enable pollex-api
 sudo systemctl enable llama-server
+sudo systemctl enable --now jetson-clocks
 
 echo ""
 echo "=== Setup complete ==="

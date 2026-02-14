@@ -210,6 +210,11 @@ textarea::placeholder {
   color: var(--warning);
 }
 
+.slow-hint {
+  font-size: 11px;
+  color: var(--warning);
+}
+
 .char-count.error {
   color: var(--error);
   font-weight: 500;

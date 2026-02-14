@@ -11,11 +11,10 @@ import (
 	"time"
 )
 
-type modelsResponse struct {
-	Models []struct {
-		ID       string `json:"id"`
-		Provider string `json:"provider"`
-	} `json:"models"`
+type modelInfo struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Provider string `json:"provider"`
 }
 
 type polishRequest struct {
@@ -37,6 +36,7 @@ type result struct {
 	ElapsedMs int64
 	WallMs    int64
 	OutChars  int
+	Error     string
 }
 
 func main() {
@@ -58,12 +58,18 @@ func main() {
 
 	// Run benchmarks
 	var results []result
+	var failures int
 	for _, sample := range Samples {
 		for run := 1; run <= *runs; run++ {
 			fmt.Printf("  Running %s (run %d/%d)...", sample.Name, run, *runs)
 			r := benchmark(client, baseURL, *apiKey, modelID, sample, run)
 			results = append(results, r)
-			fmt.Printf(" %dms\n", r.ElapsedMs)
+			if r.Error != "" {
+				fmt.Printf(" FAILED (%s)\n", r.Error)
+				failures++
+			} else {
+				fmt.Printf(" %dms\n", r.ElapsedMs)
+			}
 		}
 	}
 
@@ -71,6 +77,10 @@ func main() {
 	fmt.Println()
 	printTable(results)
 	printSummary(results)
+
+	if failures > 0 {
+		os.Exit(1)
+	}
 }
 
 func discoverModel(client *http.Client, baseURL, apiKey string) string {
@@ -96,21 +106,25 @@ func discoverModel(client *http.Client, baseURL, apiKey string) string {
 		os.Exit(1)
 	}
 
-	var models modelsResponse
+	var models []modelInfo
 	if err := json.NewDecoder(resp.Body).Decode(&models); err != nil {
 		fmt.Fprintf(os.Stderr, "Error decoding models: %v\n", err)
 		os.Exit(1)
 	}
 
-	if len(models.Models) == 0 {
+	if len(models) == 0 {
 		fmt.Fprintln(os.Stderr, "No models available")
 		os.Exit(1)
 	}
 
-	return models.Models[0].ID
+	return models[0].ID
 }
 
 func benchmark(client *http.Client, baseURL, apiKey, modelID string, sample Sample, run int) result {
+	fail := func(err string) result {
+		return result{Sample: sample.Name, Chars: len(sample.Text), Run: run, Error: err}
+	}
+
 	payload, _ := json.Marshal(polishRequest{
 		Text:    sample.Text,
 		ModelID: modelID,
@@ -118,8 +132,7 @@ func benchmark(client *http.Client, baseURL, apiKey, modelID string, sample Samp
 
 	req, err := http.NewRequest("POST", baseURL+"/api/polish", strings.NewReader(string(payload)))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "\nError creating request: %v\n", err)
-		os.Exit(1)
+		return fail(err.Error())
 	}
 	req.Header.Set("Content-Type", "application/json")
 	if apiKey != "" {
@@ -131,21 +144,18 @@ func benchmark(client *http.Client, baseURL, apiKey, modelID string, sample Samp
 	wallMs := time.Since(start).Milliseconds()
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "\nError sending request: %v\n", err)
-		os.Exit(1)
+		return fail(err.Error())
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		fmt.Fprintf(os.Stderr, "\nPolish returned %d: %s\n", resp.StatusCode, body)
-		os.Exit(1)
+		return fail(fmt.Sprintf("HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body))))
 	}
 
 	var pr polishResponse
 	if err := json.NewDecoder(resp.Body).Decode(&pr); err != nil {
-		fmt.Fprintf(os.Stderr, "\nError decoding response: %v\n", err)
-		os.Exit(1)
+		return fail(err.Error())
 	}
 
 	return result{
@@ -163,6 +173,11 @@ func printTable(results []result) {
 	fmt.Println("| Sample | Chars | Model | Run | Elapsed (ms) | Wall (ms) | Out Chars | Ratio |")
 	fmt.Println("|--------|-------|-------|-----|--------------|-----------|-----------|-------|")
 	for _, r := range results {
+		if r.Error != "" {
+			fmt.Printf("| %-6s | %5d | %-20s | %d | %12s | %9s | %9s | %5s |\n",
+				r.Sample, r.Chars, "-", r.Run, "FAIL", "-", "-", "-")
+			continue
+		}
 		ratio := float64(r.OutChars) / float64(r.Chars)
 		fmt.Printf("| %-6s | %5d | %-20s | %d | %12d | %9d | %9d | %5.2f |\n",
 			r.Sample, r.Chars, r.Model, r.Run, r.ElapsedMs, r.WallMs, r.OutChars, ratio)
@@ -170,18 +185,28 @@ func printTable(results []result) {
 }
 
 func printSummary(results []result) {
-	if len(results) == 0 {
+	var ok []result
+	for _, r := range results {
+		if r.Error == "" {
+			ok = append(ok, r)
+		}
+	}
+
+	failed := len(results) - len(ok)
+
+	if len(ok) == 0 {
+		fmt.Printf("\nSummary: all %d runs failed\n", len(results))
 		return
 	}
 
 	var totalElapsed int64
 	var totalChars int
-	minElapsed := results[0].ElapsedMs
-	maxElapsed := results[0].ElapsedMs
-	minSample := results[0].Sample
-	maxSample := results[0].Sample
+	minElapsed := ok[0].ElapsedMs
+	maxElapsed := ok[0].ElapsedMs
+	minSample := ok[0].Sample
+	maxSample := ok[0].Sample
 
-	for _, r := range results {
+	for _, r := range ok {
 		totalElapsed += r.ElapsedMs
 		totalChars += r.Chars
 		if r.ElapsedMs < minElapsed {
@@ -200,5 +225,5 @@ func printSummary(results []result) {
 	fmt.Printf("- Avg ms/char: %.2f\n", avgMsPerChar)
 	fmt.Printf("- Min elapsed: %dms (%s)\n", minElapsed, minSample)
 	fmt.Printf("- Max elapsed: %dms (%s)\n", maxElapsed, maxSample)
-	fmt.Printf("- Total runs: %d\n", len(results))
+	fmt.Printf("- Total runs: %d (%d ok, %d failed)\n", len(results), len(ok), failed)
 }

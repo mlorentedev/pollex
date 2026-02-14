@@ -2,6 +2,8 @@
 
 const MAX_CHARS = 10000;
 const WARN_THRESHOLD = 0.9;
+const MS_PER_CHAR = 68;
+const SLOW_SECONDS = 45;
 
 // --- DOM refs ---
 
@@ -16,6 +18,7 @@ const iconCopy = document.getElementById("icon-copy");
 const iconCheck = document.getElementById("icon-check");
 const copyLabel = document.getElementById("copy-label");
 const btnSettings = document.getElementById("btn-settings");
+const slowHint = document.getElementById("slow-hint");
 const statusEl = document.getElementById("status");
 const resultSection = document.getElementById("result-section");
 const resultBox = document.getElementById("result");
@@ -131,6 +134,17 @@ function updateCharCount() {
     charCount.classList.add("error");
   } else if (len > MAX_CHARS * WARN_THRESHOLD) {
     charCount.classList.add("warning");
+  }
+
+  const estimatedSec = Math.round((len * MS_PER_CHAR) / 1000);
+  if (estimatedSec > SLOW_SECONDS) {
+    const min = Math.floor(estimatedSec / 60);
+    const sec = estimatedSec % 60;
+    const timeStr = min > 0 ? `~${min}m ${sec}s` : `~${estimatedSec}s`;
+    slowHint.textContent = `Estimated processing time: ${timeStr}`;
+    slowHint.classList.remove("hidden");
+  } else {
+    slowHint.classList.add("hidden");
   }
 }
 

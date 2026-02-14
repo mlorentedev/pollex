@@ -1,0 +1,11 @@
+[Unit]
+Description=Maximize Jetson GPU/CPU/EMC clocks
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/jetson_clocks
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

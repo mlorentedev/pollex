@@ -1,7 +1,7 @@
 // Pollex API client — shared HTTP layer for the extension.
 
 const DEFAULT_API_URL = "http://localhost:8090";
-const POLISH_TIMEOUT_MS = 70000;
+const POLISH_TIMEOUT_MS = 125000;
 
 async function getApiUrl() {
   const result = await chrome.storage.local.get("apiUrl");

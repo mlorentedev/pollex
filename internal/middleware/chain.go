@@ -9,7 +9,7 @@ import (
 // Order: CORS → RequestID → Logging → RateLimit → APIKey → MaxBytes → Timeout → mux
 func Chain(handler http.Handler, rl *RateLimiter, apiKey string) http.Handler {
 	h := handler
-	h = http.TimeoutHandler(h, 65*time.Second, `{"error":"request timeout"}`)
+	h = http.TimeoutHandler(h, 120*time.Second, `{"error":"request timeout"}`)
 	h = MaxBytes(64 * 1024)(h)
 	h = APIKey(apiKey)(h)
 	h = RateLimit(rl)(h)
