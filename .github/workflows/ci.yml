@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+      - run: go vet ./...
+      - run: test -z "$(gofmt -l ./...)"
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+      - run: go test -v -race ./...
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+      - run: go build -o dist/pollex ./cmd/pollex
+      - run: GOOS=linux GOARCH=arm64 go build -o dist/pollex-arm64 ./cmd/pollex

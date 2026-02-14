@@ -8,6 +8,7 @@ const WARN_THRESHOLD = 0.9;
 const input = document.getElementById("input");
 const charCount = document.getElementById("char-count");
 const modelSelect = document.getElementById("model-select");
+const modelLabel = document.getElementById("model-label");
 const btnPolish = document.getElementById("btn-polish");
 const btnCancel = document.getElementById("btn-cancel");
 const btnCopy = document.getElementById("btn-copy");
@@ -31,6 +32,7 @@ const settingsStatus = document.getElementById("settings-status");
 let abortController = null;
 let timerInterval = null;
 let modelsLoaded = false;
+let singleModelId = null;
 
 // --- Init ---
 
@@ -55,34 +57,50 @@ const providerLabels = {
 async function loadModels() {
   try {
     const models = await fetchModels();
-    modelSelect.innerHTML = "";
 
-    const groups = {};
-    for (const m of models) {
-      const label = providerLabels[m.provider] || m.provider;
-      if (!groups[label]) groups[label] = [];
-      groups[label].push(m);
-    }
-
-    const groupNames = Object.keys(groups);
-    if (groupNames.length === 1) {
-      for (const m of groups[groupNames[0]]) {
-        modelSelect.appendChild(makeOption(m));
-      }
+    // Single model: show static label instead of dropdown
+    if (models.length === 1) {
+      singleModelId = models[0].id;
+      const provider = providerLabels[models[0].provider] || models[0].provider;
+      modelLabel.textContent = `${models[0].name} · ${provider}`;
+      modelLabel.classList.remove("hidden");
+      modelSelect.classList.add("hidden");
     } else {
-      for (const label of groupNames) {
-        const optgroup = document.createElement("optgroup");
-        optgroup.label = label;
-        for (const m of groups[label]) {
-          optgroup.appendChild(makeOption(m));
+      singleModelId = null;
+      modelLabel.classList.add("hidden");
+      modelSelect.classList.remove("hidden");
+      modelSelect.innerHTML = "";
+
+      const groups = {};
+      for (const m of models) {
+        const label = providerLabels[m.provider] || m.provider;
+        if (!groups[label]) groups[label] = [];
+        groups[label].push(m);
+      }
+
+      const groupNames = Object.keys(groups);
+      if (groupNames.length === 1) {
+        for (const m of groups[groupNames[0]]) {
+          modelSelect.appendChild(makeOption(m));
         }
-        modelSelect.appendChild(optgroup);
+      } else {
+        for (const label of groupNames) {
+          const optgroup = document.createElement("optgroup");
+          optgroup.label = label;
+          for (const m of groups[label]) {
+            optgroup.appendChild(makeOption(m));
+          }
+          modelSelect.appendChild(optgroup);
+        }
       }
     }
 
     btnPolish.disabled = false;
     modelsLoaded = true;
   } catch {
+    singleModelId = null;
+    modelLabel.classList.add("hidden");
+    modelSelect.classList.remove("hidden");
     modelSelect.innerHTML = '<option value="">Cannot connect</option>';
     btnPolish.disabled = true;
     modelsLoaded = false;
@@ -138,7 +156,7 @@ async function doPolish() {
   const text = input.value.trim();
   if (!text) return;
 
-  const modelId = modelSelect.value;
+  const modelId = singleModelId || modelSelect.value;
   if (!modelId) return;
 
   // Reset UI

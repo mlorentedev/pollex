@@ -1,6 +1,8 @@
 # Pollex
 
-**Polish your English text** — fixes grammar, syntax, and coherence. The output sounds like a fluent non-native speaker: professional and clear, not AI-generated.
+**Polish your English text** — fixes grammar, improves coherence, and tightens wording. The output sounds like a fluent non-native speaker: professional and clear, not AI-generated.
+
+Self-hosted, private, and fast. Runs entirely on a Jetson Nano 4GB with GPU inference via llama.cpp.
 
 ## Architecture
 
@@ -10,9 +12,13 @@ graph LR
         EXT["Browser Extension<br/>(Manifest V3)"]
     end
 
+    subgraph Internet
+        CF["Cloudflare Tunnel<br/>(pollex.mlorente.dev)"]
+    end
+
     subgraph Jetson Nano 4GB
         API["Pollex API<br/>(Go · :8090)"]
-        OLL["Ollama<br/>(:11434)"]
+        LLAMA["llama-server<br/>(CUDA 10.2 · GPU)"]
         MODEL["Qwen 2.5 1.5B<br/>(Q4 · ~1GB VRAM)"]
     end
 
@@ -20,25 +26,26 @@ graph LR
         CLAUDE["Claude API<br/>(optional)"]
     end
 
-    EXT -- "HTTP JSON<br/>LAN" --> API
-    API -- "/api/chat" --> OLL
-    OLL --> MODEL
-    API -. "Messages API<br/>(comparison)" .-> CLAUDE
+    EXT -- "HTTPS + API Key" --> CF
+    CF -- "localhost:8090" --> API
+    API -- "/v1/chat/completions" --> LLAMA
+    LLAMA --> MODEL
+    API -. "Messages API" .-> CLAUDE
 
     style EXT fill:#4a90d9,stroke:#3a7bc8,color:#fff
+    style CF fill:#f48120,stroke:#d35400,color:#fff
     style API fill:#2ecc71,stroke:#27ae60,color:#fff
-    style OLL fill:#e67e22,stroke:#d35400,color:#fff
+    style LLAMA fill:#e67e22,stroke:#d35400,color:#fff
     style MODEL fill:#f39c12,stroke:#e67e22,color:#fff
     style CLAUDE fill:#9b59b6,stroke:#8e44ad,color:#fff
 ```
 
-**Three layers, zero complexity:**
-
 | Layer | Tech | Role |
 |-------|------|------|
-| Extension | Manifest V3 | Pure UI — no API keys, no logic |
+| Extension | Chrome Manifest V3 | UI — paste text, select model, copy result |
+| Tunnel | Cloudflare Tunnel | Zero-config ingress (Jetson behind double NAT) |
 | API | Go 1.26, stdlib `net/http` | Routes text to LLM backends, returns polished result |
-| LLM | Ollama + Qwen 2.5 1.5B | Local inference on Jetson Nano (Claude API optional) |
+| LLM | llama.cpp + Qwen 2.5 1.5B | Local GPU inference on Jetson Nano (~3s short, ~8s long) |
 
 ## How It Works
 
@@ -46,130 +53,179 @@ graph LR
 sequenceDiagram
     participant U as User
     participant E as Extension
+    participant T as Cloudflare Tunnel
     participant A as Pollex API
-    participant O as Ollama
-    participant M as Qwen 2.5
+    participant L as llama-server
 
     U->>E: Paste text + click Polish
     E->>E: Show spinner (0s...)
-    E->>A: POST /api/polish
-    A->>O: POST /api/chat
-    O->>M: Inference (~10-30s)
-    M-->>O: Polished text
-    O-->>A: Response
-    A-->>E: {"polished":"...", "elapsed_ms":...}
+    E->>T: POST /api/polish (X-API-Key)
+    T->>A: Forward to localhost:8090
+    A->>L: POST /v1/chat/completions
+    L->>L: GPU inference (~3-8s)
+    L-->>A: Polished text
+    A-->>T: {"polished":"...", "elapsed_ms":...}
+    T-->>E: Response
     E->>E: Hide spinner, show result
     U->>E: Click Copy
-    E->>E: Copy to clipboard
 ```
 
 ## Quick Start
 
-### Development (Docker)
+### Development (no GPU needed)
 
 ```sh
-make ollama-up      # Start Ollama in Docker + pull model (~1GB)
-make dev-ollama     # Start API connected to Ollama on :8090
+make dev    # Start API with mock adapter on :8090
+make test   # Run all tests (75+ with subtests, race detector)
 ```
 
-Then load the extension in Chrome: `chrome://extensions` → Developer mode → Load unpacked → select `extension/`.
+Load the extension: `chrome://extensions` → Developer mode → Load unpacked → select `extension/`.
 
-### Development (Mock)
-
-```sh
-make dev            # Start API with mock adapter (no LLM needed)
-```
-
-### Run Tests
+### Benchmark
 
 ```sh
-make test           # 63 tests with race detector
-make lint           # go vet + gofmt
+make bench       # Against local API (mock)
+make bench-jetson  # Against Jetson via Cloudflare Tunnel
 ```
 
 ## API
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/polish` | Polish text via selected model |
-| `GET` | `/api/models` | List available models |
-| `GET` | `/api/health` | Health check |
-
-**Example:**
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `POST` | `/api/polish` | `X-API-Key` | Polish text via selected model |
+| `GET` | `/api/models` | `X-API-Key` | List available models |
+| `GET` | `/api/health` | None | Health check (per-adapter status) |
 
 ```sh
-curl -X POST http://localhost:8090/api/polish \
+curl -X POST https://pollex.mlorente.dev/api/polish \
   -H 'Content-Type: application/json' \
-  -d '{"text":"i goes to store yesterday","model_id":"qwen2.5:1.5b"}'
+  -H 'X-API-Key: YOUR_KEY' \
+  -d '{"text":"i goes to store yesterday","model_id":"qwen2.5-1.5b-gpu"}'
 
-# {"polished":"I went to the store yesterday.","model":"qwen2.5:1.5b","elapsed_ms":4830}
+# {"polished":"I went to the store yesterday.","model":"qwen2.5-1.5b-gpu","elapsed_ms":3200}
 ```
 
 ## Project Structure
 
 ```
 pollex/
-├── cmd/pollex/           # Entry point (composition root)
-│   └── main.go           # Flags, config, wiring, graceful shutdown
+├── cmd/
+│   ├── pollex/              # Entry point (flags, config, wiring, shutdown)
+│   └── benchmark/           # Benchmark CLI tool
 ├── internal/
-│   ├── adapter/          # LLMAdapter interface + implementations
-│   │   ├── adapter.go    # Interface + ModelInfo
-│   │   ├── mock.go       # Mock adapter (dev/testing)
-│   │   ├── ollama.go     # Ollama (local LLM)
-│   │   ├── claude.go     # Claude API (optional)
-│   │   └── llamacpp.go   # llama.cpp (GPU acceleration)
-│   ├── config/           # YAML config + env overrides (POLLEX_*)
-│   ├── handler/          # HTTP handlers (health, models, polish)
-│   ├── middleware/        # CORS, RequestID, Logging, RateLimit, MaxBytes
-│   └── server/           # SetupMux + integration tests
-├── extension/            # Browser extension (Manifest V3)
-│   ├── popup.*           # Main UI
-│   ├── settings.*        # API URL configuration
-│   └── api.js            # HTTP client
-├── prompts/
-│   └── polish.txt        # System prompt (9 rules)
-├── deploy/               # systemd, install scripts, config example
-└── Makefile              # All targets
+│   ├── adapter/             # LLMAdapter interface + implementations
+│   │   ├── adapter.go       #   Interface: Name(), Polish(), Available()
+│   │   ├── mock.go          #   Mock (dev/testing)
+│   │   ├── ollama.go        #   Ollama (legacy, optional)
+│   │   ├── claude.go        #   Claude API (optional)
+│   │   └── llamacpp.go      #   llama.cpp (primary, GPU)
+│   ├── config/              # YAML + env overrides (POLLEX_*)
+│   ├── handler/             # HTTP handlers + response helpers
+│   ├── middleware/           # CORS, RequestID, Logging, RateLimit, APIKey, MaxBytes
+│   └── server/              # SetupMux + integration tests
+├── extension/               # Chrome extension (Manifest V3)
+├── prompts/polish.txt       # System prompt
+├── deploy/                  # Systemd services, build scripts, config
+├── .github/workflows/       # CI (lint+test+build) + Release (goreleaser)
+└── Makefile
 ```
 
-## Hardware Target
+## Contributing
+
+### Prerequisites
+
+- Go 1.26+
+- Chrome (for extension testing)
+
+### Development Workflow
+
+1. **Run tests first** to ensure a clean baseline:
+   ```sh
+   make test
+   make lint
+   ```
+
+2. **Start the dev server** with the mock adapter (no LLM needed):
+   ```sh
+   make dev
+   ```
+
+3. **Load the extension** in Chrome (`chrome://extensions` → Load unpacked → `extension/`).
+
+4. **Make changes** — the adapter pattern makes it easy to add new LLM backends:
+   - Implement the `LLMAdapter` interface in `internal/adapter/`
+   - Register it in `cmd/pollex/main.go:buildAdapters()`
+   - The rest (routing, health checks, model listing) is automatic
+
+5. **Run tests** before pushing:
+   ```sh
+   make test   # All tests with race detector
+   make lint   # go vet + gofmt
+   ```
+
+### Middleware Chain
+
+Request processing order (defined in `internal/middleware/chain.go`):
+
+```
+CORS → RequestID → Logging → RateLimit → APIKey → MaxBytes(64KB) → Timeout(65s) → Router
+```
+
+### Hardening
+
+| Protection | Limit | Response |
+|------------|-------|----------|
+| API key | `X-API-Key` header, constant-time compare | 401 |
+| Request body | 64KB max | 413 |
+| Text length | 10,000 chars | 400 |
+| Rate limit | 10 req/min/IP (sliding window) | 429 |
+| Request timeout | 65s | 504 |
+
+### CI/CD
+
+- **Push to `master`** or **PR** → lint + test + build (amd64 + arm64)
+- **Tag `v*`** → goreleaser creates GitHub release with binaries + extension zip
+
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/).
+
+## Deploy to Jetson
+
+### First-time setup
+
+```sh
+make deploy-init      # Packages, CUDA PATH, /etc/pollex, systemd services
+make deploy-llamacpp  # Build llama.cpp with CUDA on Jetson (~85 min)
+make deploy           # Binary + config + prompt
+make deploy-secrets   # API key
+make deploy-tunnel    # Cloudflare Tunnel
+```
+
+### Subsequent deploys
+
+```sh
+make deploy           # Build ARM64 + SCP + restart service
+```
+
+### Remote operations
+
+```sh
+make jetson-status          # Health check via SSH
+make jetson-test            # End-to-end polish test
+make jetson-logs            # Tail API logs
+make jetson-tunnel-status   # Tunnel health
+```
+
+## Hardware
 
 **Jetson Nano 4GB** — ARM64, CUDA 10.2, 128 Maxwell cores.
 
 | Component | RAM |
 |-----------|-----|
 | JetPack OS (headless) | ~500MB |
-| Ollama runtime | ~200MB |
+| llama-server (GPU) | ~200MB |
 | Qwen 2.5 1.5B (Q4) | ~1.0GB |
 | Pollex API | ~15MB |
 | **Free** | **~2.3GB** |
-
-## Deploy to Jetson
-
-```sh
-make deploy-setup   # First time: install Ollama + systemd service
-make deploy         # Build ARM64 binary + SCP + restart service
-make jetson-status  # Remote health check
-```
-
-## Makefile Targets
-
-```sh
-make help
-```
-
-| Target | Description |
-|--------|-------------|
-| `dev` | Start API with mock adapter |
-| `dev-ollama` | Start API with local Ollama |
-| `test` | Run all tests with race detector |
-| `lint` | go vet + gofmt |
-| `ollama-up` | Start Ollama in Docker |
-| `ollama-down` | Stop Ollama container |
-| `build` | Build for current platform |
-| `build-arm64` | Cross-compile for Jetson |
-| `deploy` | Deploy to Jetson |
-| `deploy-setup` | First-time Jetson setup |
 
 ## License
 

@@ -160,24 +160,36 @@ Jetson behind double NAT (no router access). Cloudflare Tunnel for zero-config i
 - [ ] Screenshots + description for store listing
 - [ ] Submit for review + publish
 
-## Phase 11 — Performance Optimization & Streaming
+## Phase 11 — Performance Benchmarking + System Prompt + CI/CD
 
-Improve perceived and actual performance for long texts on resource-constrained hardware.
+### 11.1 — System Prompt Improvement
+- [x] `prompts/polish.txt` — expanded to three dimensions: grammar, coherence, conciseness
+- [x] Added constraints: no AI-isms, preserve formatting/intent, output only polished text
 
-### 11.1 — Streaming Implementation (SSE)
-- [ ] Backend: Add `/api/polish/stream` endpoint with Server-Sent Events (SSE)
-- [ ] Adapters: Implement `PolishStream` in `LlamaCppAdapter` and `OllamaAdapter`
-- [ ] Extension: Update `api.js` to handle stream reading (Fetch API + ReadableStream)
-- [ ] Extension UI: Implement "typewriter" effect in the result area
+### 11.2 — Benchmark CLI Tool
+- [x] `cmd/benchmark/samples.go` — 5 realistic email samples (tiny/short/medium/long/max)
+- [x] `cmd/benchmark/main.go` — standalone CLI: auto-discover models, N runs, markdown table output
+- [x] Makefile: `bench`, `bench-jetson`, `bench-mock` targets
 
-### 11.2 — Benchmarking & Model Evaluation
-- [ ] Performance: Benchmark `Qwen2.5-0.5B-Instruct` vs `1.5B` on Jetson Nano GPU
-- [ ] Quality: Evaluate 0.5B model for grammar correction quality with long texts
-- [ ] Latency: Measure tokens/s for short vs. long paragraphs (verify linear delay)
-- [ ] Strategy: Decide on default model or "High-speed vs High-quality" toggle
+### 11.3 — CI/CD (GitHub Actions)
+- [x] `.github/workflows/ci.yml` — lint + test + build (push to master, PRs)
+- [x] `.github/workflows/release.yml` — goreleaser + extension zip on `v*` tags
+- [x] `.goreleaser.yml` — linux/amd64 + linux/arm64 binaries, changelog from commits
+- [x] Extension version synced from git tag in release workflow
 
-### 11.3 — Advanced Decoding & Memory Optimization
-- [ ] Speculative Decoding: Research and implement `llama.cpp` speculative decoding using Qwen-0.5B as draft model for 1.5B
-- [ ] KV Cache Optimization: Tune context size and caching strategy to handle longer texts without memory thrashing
-- [ ] Persistence: Implement a local result cache (e.g., SQLite) to provide 0ms responses for repeated text segments
-- [ ] Text Partitioning: Implement logic to split large documents into smaller chunks for more efficient processing and faster first-chunk delivery
+### 11.4 — Extension Improvements
+- [x] `extension/manifest.json` — professional fields (name, short_name, description, homepage_url, minimum_chrome_version)
+- [x] `extension/popup.js` + `popup.html` + `popup.css` — single-model mode: static label instead of dropdown when only one model available
+
+### 11.5 — Makefile Refactoring
+- [x] Removed 6 obsolete Ollama targets (deploy-setup, deploy-models, dev-ollama, ollama-up/down/pull)
+- [x] Removed obsolete scripts: `deploy/install.sh`, `deploy/ollama-models.sh`
+- [x] Renamed for coherence: `tunnel-*` → `jetson-tunnel-*`, `deploy-cloudflared` → `deploy-tunnel`, `ext-pack` → `ext-zip`
+- [x] Reorganized into 6 sections: Development, Build, Benchmark, Deploy, Jetson Remote, Utilities
+
+### Verification
+- [ ] `make test` — all existing tests pass
+- [ ] `make dev` + `make bench-mock` — benchmark runs against mock adapter
+- [ ] Push to GitHub → CI workflow runs (lint + test + build)
+- [ ] `make bench-jetson` — benchmark against Jetson with real inference
+- [ ] Tag `v0.3.0` → release workflow creates GitHub release with binaries + extension zip

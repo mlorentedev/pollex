@@ -1,0 +1,26 @@
+version: 2
+
+builds:
+  - main: ./cmd/pollex
+    binary: pollex
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+
+archives:
+  - formats: [tar.gz]
+    files:
+      - prompts/polish.txt
+      - deploy/config.yaml.example
+
+changelog:
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^chore:"
+      - "^ci:"

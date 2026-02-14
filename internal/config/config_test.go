@@ -7,6 +7,8 @@ import (
 )
 
 func TestLoadDefaults(t *testing.T) {
+	t.Setenv("POLLEX_API_KEY", "")
+
 	cfg, err := Load("")
 	if err != nil {
 		t.Fatalf("Load with no file: %v", err)
@@ -39,6 +41,8 @@ func TestLoadDefaults(t *testing.T) {
 }
 
 func TestLoadFromYAML(t *testing.T) {
+	t.Setenv("POLLEX_API_KEY", "")
+
 	dir := t.TempDir()
 	yamlPath := filepath.Join(dir, "config.yaml")
 	content := `port: 9999

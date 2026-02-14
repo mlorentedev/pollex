@@ -276,6 +276,21 @@ textarea::placeholder {
   pointer-events: none;
 }
 
+/* Hide chevron when single model (select is hidden) */
+.select-wrap:has(.model-label:not(.hidden))::after {
+  display: none;
+}
+
+.model-label {
+  display: block;
+  padding: 7px var(--sp-3);
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
 /* Buttons */
 .btn {
   padding: 7px var(--sp-4);
