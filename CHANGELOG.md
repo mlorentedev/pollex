@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/mlorentedev/pollex/compare/v1.0.0...v1.1.0) (2026-02-14)
+
+
+### Features
+
+* benchmark fixes, extension slow-text warning, timeout 120s, llama-server tuning ([d29495a](https://github.com/mlorentedev/pollex/commit/d29495ae215b0cd2e60e97975697b7be6c2145f7))
+
 ## 1.0.0 (2026-02-14)
 
 
