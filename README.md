@@ -125,7 +125,11 @@ pollex/
 │   └── server/              # SetupMux + integration tests
 ├── extension/               # Chrome extension (Manifest V3)
 ├── prompts/polish.txt       # System prompt
-├── deploy/                  # Systemd services, build scripts, config
+├── deploy/
+│   ├── systemd/             # pollex-api, llama-server, cloudflared services
+│   ├── scripts/             # init, build-llamacpp, setup-cloudflared
+│   ├── config.yaml          # Production config (deployed to Jetson)
+│   └── config.yaml.example  # Template for new setups
 ├── .github/workflows/       # CI (lint+test+build) + Release (goreleaser)
 └── Makefile
 ```

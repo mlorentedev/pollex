@@ -44,15 +44,15 @@ bench-mock: ## Run benchmark against mock adapter (measures overhead)
 .PHONY: deploy deploy-init deploy-secrets deploy-llamacpp deploy-tunnel
 
 deploy-init: ## First-time Jetson setup (packages, CUDA, dirs, systemd)
-	scp deploy/pollex-api.service $(JETSON_USER)@$(JETSON_HOST):/tmp/pollex-api.service
-	scp deploy/llama-server.service $(JETSON_USER)@$(JETSON_HOST):/tmp/llama-server.service
-	ssh $(JETSON_USER)@$(JETSON_HOST) 'bash -s' < deploy/init.sh
+	scp deploy/systemd/pollex-api.service $(JETSON_USER)@$(JETSON_HOST):/tmp/pollex-api.service
+	scp deploy/systemd/llama-server.service $(JETSON_USER)@$(JETSON_HOST):/tmp/llama-server.service
+	ssh $(JETSON_USER)@$(JETSON_HOST) 'bash -s' < deploy/scripts/init.sh
 
 deploy: build-arm64 ## Build + deploy binary, config, prompt, and service to Jetson
 	scp dist/pollex-arm64 $(JETSON_USER)@$(JETSON_HOST):/tmp/pollex
 	scp deploy/config.yaml $(JETSON_USER)@$(JETSON_HOST):/tmp/pollex-config.yaml
 	scp prompts/polish.txt $(JETSON_USER)@$(JETSON_HOST):/tmp/pollex-polish.txt
-	scp deploy/pollex-api.service $(JETSON_USER)@$(JETSON_HOST):/tmp/pollex-api.service
+	scp deploy/systemd/pollex-api.service $(JETSON_USER)@$(JETSON_HOST):/tmp/pollex-api.service
 	ssh $(JETSON_USER)@$(JETSON_HOST) 'sudo mv /tmp/pollex /usr/local/bin/pollex && sudo chmod +x /usr/local/bin/pollex && sudo mv /tmp/pollex-config.yaml /etc/pollex/config.yaml && sudo mv /tmp/pollex-polish.txt /etc/pollex/polish.txt && sudo cp /tmp/pollex-api.service /etc/systemd/system/pollex-api.service && sudo systemctl daemon-reload && sudo systemctl restart pollex-api'
 
 deploy-secrets: ## Deploy API key from dotfiles to Jetson
@@ -64,13 +64,13 @@ deploy-secrets: ## Deploy API key from dotfiles to Jetson
 	@echo "Done."
 
 deploy-llamacpp: ## Build llama.cpp with CUDA on Jetson (~85 min)
-	scp deploy/build-llamacpp.sh $(JETSON_USER)@$(JETSON_HOST):/tmp/build-llamacpp.sh
-	scp deploy/llama-server.service $(JETSON_USER)@$(JETSON_HOST):/tmp/llama-server.service
+	scp deploy/scripts/build-llamacpp.sh $(JETSON_USER)@$(JETSON_HOST):/tmp/build-llamacpp.sh
+	scp deploy/systemd/llama-server.service $(JETSON_USER)@$(JETSON_HOST):/tmp/llama-server.service
 	ssh $(JETSON_USER)@$(JETSON_HOST) 'bash /tmp/build-llamacpp.sh'
 
 deploy-tunnel: ## Setup Cloudflare Tunnel on Jetson (interactive)
-	scp deploy/setup-cloudflared.sh $(JETSON_USER)@$(JETSON_HOST):/tmp/setup-cloudflared.sh
-	scp deploy/cloudflared.service $(JETSON_USER)@$(JETSON_HOST):/tmp/cloudflared.service
+	scp deploy/scripts/setup-cloudflared.sh $(JETSON_USER)@$(JETSON_HOST):/tmp/setup-cloudflared.sh
+	scp deploy/systemd/cloudflared.service $(JETSON_USER)@$(JETSON_HOST):/tmp/cloudflared.service
 	ssh -t $(JETSON_USER)@$(JETSON_HOST) 'bash /tmp/setup-cloudflared.sh'
 
 # ─── Jetson Remote ──────────────────────────────────────────
