@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -17,6 +17,8 @@ import (
 )
 
 func main() {
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+
 	configPath := flag.String("config", "", "path to config.yaml")
 	useMock := flag.Bool("mock", false, "use mock adapter instead of real LLM backends")
 	port := flag.Int("port", 0, "override listen port")
@@ -24,7 +26,8 @@ func main() {
 
 	cfg, err := config.Load(*configPath)
 	if err != nil {
-		log.Fatalf("config: %v", err)
+		slog.Error("config load failed", "error", err)
+		os.Exit(1)
 	}
 	if *port > 0 {
 		cfg.Port = *port
@@ -32,7 +35,8 @@ func main() {
 
 	promptData, err := os.ReadFile(cfg.PromptPath)
 	if err != nil {
-		log.Fatalf("prompt: read %s: %v", cfg.PromptPath, err)
+		slog.Error("prompt read failed", "path", cfg.PromptPath, "error", err)
+		os.Exit(1)
 	}
 	systemPrompt := string(promptData)
 
@@ -40,9 +44,9 @@ func main() {
 	handler := server.SetupMux(adapters, models, systemPrompt, cfg.APIKey)
 
 	if cfg.APIKey != "" {
-		log.Println("auth: API key required (X-API-Key header)")
+		slog.Info("auth enabled", "mode", "X-API-Key header")
 	} else {
-		log.Println("auth: disabled (no api_key configured)")
+		slog.Info("auth disabled", "reason", "no api_key configured")
 	}
 
 	addr := fmt.Sprintf(":%d", cfg.Port)
@@ -55,22 +59,24 @@ func main() {
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		log.Printf("pollex api listening on %s", addr)
+		slog.Info("server starting", "addr", addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("server: %v", err)
+			slog.Error("server failed", "error", err)
+			os.Exit(1)
 		}
 	}()
 
 	<-done
-	log.Println("shutting down...")
+	slog.Info("shutting down")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("shutdown: %v", err)
+		slog.Error("shutdown failed", "error", err)
+		os.Exit(1)
 	}
-	log.Println("server stopped")
+	slog.Info("server stopped")
 }
 
 func buildAdapters(cfg config.Config, useMock bool) (map[string]adapter.LLMAdapter, []adapter.ModelInfo) {
@@ -80,7 +86,7 @@ func buildAdapters(cfg config.Config, useMock bool) (map[string]adapter.LLMAdapt
 	if useMock {
 		adapters["mock"] = &adapter.MockAdapter{Delay: 500 * time.Millisecond}
 		models = append(models, adapter.ModelInfo{ID: "mock", Name: "Mock (dev)", Provider: "mock"})
-		log.Println("mode: mock adapter enabled")
+		slog.Info("adapter registered", "adapter", "mock")
 		return adapters, models
 	}
 
@@ -97,7 +103,7 @@ func buildAdapters(cfg config.Config, useMock bool) (map[string]adapter.LLMAdapt
 		}
 		adapters[model] = llama
 		models = append(models, adapter.ModelInfo{ID: model, Name: "llama.cpp (" + model + ")", Provider: "llamacpp"})
-		log.Printf("mode: llama.cpp at %s (model: %s)", cfg.LlamaCppURL, model)
+		slog.Info("adapter registered", "adapter", "llamacpp", "url", cfg.LlamaCppURL, "model", model)
 	}
 
 	// 2. Claude (Optional cloud fallback)
@@ -109,7 +115,7 @@ func buildAdapters(cfg config.Config, useMock bool) (map[string]adapter.LLMAdapt
 		}
 		adapters[cfg.ClaudeModel] = claude
 		models = append(models, adapter.ModelInfo{ID: cfg.ClaudeModel, Name: "Claude (" + cfg.ClaudeModel + ")", Provider: "claude"})
-		log.Printf("mode: claude enabled (model: %s)", cfg.ClaudeModel)
+		slog.Info("adapter registered", "adapter", "claude", "model", cfg.ClaudeModel)
 	}
 
 	// 3. Ollama (Optional or legacy fallback)
@@ -122,7 +128,7 @@ func buildAdapters(cfg config.Config, useMock bool) (map[string]adapter.LLMAdapt
 		}
 		adapters[model] = ollama
 		models = append(models, adapter.ModelInfo{ID: model, Name: "Qwen 2.5 1.5B", Provider: "ollama"})
-		log.Printf("mode: ollama at %s", cfg.OllamaURL)
+		slog.Info("adapter registered", "adapter", "ollama", "url", cfg.OllamaURL)
 	}
 
 	return adapters, models

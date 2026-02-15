@@ -174,31 +174,32 @@ Jetson behind double NAT (no router access). Cloudflare Tunnel for zero-config i
 - [x] A/B test `-t 2` vs `-t 4`: no difference with full GPU offload, keeping `-t 4`
 - [ ] Zram tuning: deferred — only 29MB/2GB used, negligible overhead
 
-### 12.3 — Model Upgrade (after tuning baseline)
-- [ ] Download `qwen2.5-3b-instruct-q4_k_m.gguf` (~2.2GB, fits in 4GB)
-- [ ] Benchmark 3B vs 1.5B: latency vs quality tradeoff
-- [ ] Update service, config, deploy scripts if 3B chosen
+### 12.3 — Model Upgrade (deferred)
+- [x] **Skipped:** 3B model descartado — latencia ~2x haría textos >750 chars inutilizables (timeout 120s). 1.5B Q4_0 ya pasa los 5 quality samples. Reconsiderar solo si la calidad resulta insuficiente en uso real.
 
 ### 12.4 — Benchmark Improvements
-- [ ] Rate limiter: exempt authenticated requests or add `--no-rate-limit` flag for benchmarking
-- [ ] Output results to JSON file for historical comparison
-- [ ] Add warmup run (discard first result per sample)
+- [x] Rate limiter: authenticated requests (X-API-Key) bypass rate limiting; APIKey moved before RateLimit in chain
+- [x] Output results to JSON file (`--json results.json`)
+- [x] Add warmup run (`--warmup`, discards first result per sample)
 
 ## Phase 13 — Observability & SRE Foundations
 
 ### 13.1 — Prometheus Metrics
-- [ ] Add `prometheus/client_golang` dependency
-- [ ] `GET /metrics` endpoint (exempt from API key auth, like health)
-- [ ] Metrics: `pollex_polish_duration_seconds` histogram (by model)
-- [ ] Metrics: `pollex_requests_total` counter (by endpoint, status code)
-- [ ] Metrics: `pollex_adapter_available` gauge (per adapter)
-- [ ] Metrics: `pollex_input_chars` histogram (text size distribution)
-- [ ] Integration test for `/metrics` endpoint
+- [x] Add `prometheus/client_golang` dependency
+- [x] `GET /metrics` endpoint (exempt from API key auth + rate limit)
+- [x] Metrics: `pollex_polish_duration_seconds` histogram (by model)
+- [x] Metrics: `pollex_requests_total` counter (by method, path, status)
+- [x] Metrics: `pollex_adapter_available` gauge (per adapter)
+- [x] Metrics: `pollex_input_chars` histogram (text size distribution)
+- [x] Metrics middleware in chain: CORS → RequestID → Logging → **Metrics** → APIKey → RateLimit → MaxBytes → Timeout
+- [x] Integration tests: MetricsEndpoint, MetricsExemptFromAuth, MetricsAfterPolish
+- [x] Unit tests: metrics middleware counter, apikey /metrics exempt
 
 ### 13.2 — Structured Logging
-- [ ] JSON log format (timestamp, level, request_id, method, path, status, duration_ms)
-- [ ] Replace `log.Printf` with structured logger (stdlib `slog` — Go 1.21+, zero deps)
-- [ ] Log adapter name + model in polish requests
+- [x] JSON log format via `slog.NewJSONHandler` (timestamp, level, msg, request_id, method, path, status, duration_ms)
+- [x] Replace `log.Printf` with `log/slog` in middleware/logging.go
+- [x] Replace `log.Printf/Fatalf/Println` with `slog.Info/Error` in cmd/pollex/main.go
+- [x] Log adapter name + model in buildAdapters registration
 
 ### 13.3 — SLOs & SLIs
 - [ ] Define SLIs: availability (health check), latency (p50/p95/p99 polish), error rate

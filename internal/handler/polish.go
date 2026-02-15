@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/mlorentedev/pollex/internal/adapter"
+	"github.com/mlorentedev/pollex/internal/metrics"
 )
 
 const maxTextLength = 10000
@@ -54,6 +55,8 @@ func Polish(adapters map[string]adapter.LLMAdapter, systemPrompt string) http.Ha
 			return
 		}
 
+		metrics.InputChars.Observe(float64(len(req.Text)))
+
 		a, ok := adapters[req.ModelID]
 		if !ok {
 			writeError(w, http.StatusBadRequest, fmt.Sprintf("unknown model: %s", req.ModelID))
@@ -68,6 +71,8 @@ func Polish(adapters map[string]adapter.LLMAdapter, systemPrompt string) http.Ha
 			writeError(w, http.StatusBadGateway, fmt.Sprintf("polish failed: %v", err))
 			return
 		}
+
+		metrics.PolishDuration.WithLabelValues(req.ModelID).Observe(elapsed.Seconds())
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(polishResponse{

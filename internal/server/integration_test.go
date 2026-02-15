@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -412,4 +413,83 @@ func TestIntegration_APIKeyRequired(t *testing.T) {
 			t.Errorf("status: got %d, want %d", resp.StatusCode, http.StatusUnauthorized)
 		}
 	})
+}
+
+func TestIntegration_MetricsEndpoint(t *testing.T) {
+	ts := defaultTestServer(t)
+	defer ts.Close()
+
+	resp, err := http.Get(ts.URL + "/metrics")
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status: got %d, want %d", resp.StatusCode, http.StatusOK)
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	text := string(body)
+
+	if !strings.Contains(text, "pollex_requests_total") {
+		t.Error("metrics body missing pollex_requests_total")
+	}
+	if !strings.Contains(text, "go_goroutines") {
+		t.Error("metrics body missing go_goroutines")
+	}
+}
+
+func TestIntegration_MetricsExemptFromAuth(t *testing.T) {
+	adapters := map[string]adapter.LLMAdapter{"mock": &adapter.MockAdapter{}}
+	models := []adapter.ModelInfo{{ID: "mock", Name: "Mock (dev)", Provider: "mock"}}
+	ts := newTestServerWithAPIKey(t, adapters, models, "secret-key")
+	defer ts.Close()
+
+	resp, err := http.Get(ts.URL + "/metrics")
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("status: got %d, want %d", resp.StatusCode, http.StatusOK)
+	}
+}
+
+func TestIntegration_MetricsAfterPolish(t *testing.T) {
+	ts := defaultTestServer(t)
+	defer ts.Close()
+
+	// POST a polish request
+	body, _ := json.Marshal(polishRequest{Text: "test input", ModelID: "mock"})
+	resp, err := http.Post(ts.URL+"/api/polish", "application/json", bytes.NewReader(body))
+	if err != nil {
+		t.Fatalf("polish request: %v", err)
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("polish status: got %d, want %d", resp.StatusCode, http.StatusOK)
+	}
+
+	// GET /metrics and check pollex_* metrics are present
+	resp, err = http.Get(ts.URL + "/metrics")
+	if err != nil {
+		t.Fatalf("metrics request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	metricsBody, _ := io.ReadAll(resp.Body)
+	text := string(metricsBody)
+
+	if !strings.Contains(text, `pollex_requests_total`) {
+		t.Error("missing pollex_requests_total")
+	}
+	if !strings.Contains(text, "pollex_polish_duration_seconds") {
+		t.Error("missing pollex_polish_duration_seconds")
+	}
+	if !strings.Contains(text, "pollex_input_chars") {
+		t.Error("missing pollex_input_chars")
+	}
 }

@@ -45,6 +45,8 @@ func main() {
 	runs := flag.Int("runs", 3, "Number of runs per sample")
 	model := flag.String("model", "", "Model ID to use (default: first available)")
 	quality := flag.Bool("quality", false, "Quality mode: show input/output for each sample (1 run, no timing table)")
+	jsonOut := flag.String("json", "", "Write results to JSON file (e.g. results.json)")
+	warmup := flag.Bool("warmup", false, "Run one warmup request per sample before measuring")
 	flag.Parse()
 
 	baseURL := strings.TrimRight(*url, "/")
@@ -61,12 +63,25 @@ func main() {
 		return
 	}
 
-	fmt.Printf("Benchmarking against %s using model: %s (%d runs per sample)\n\n", baseURL, modelID, *runs)
+	fmt.Printf("Benchmarking against %s using model: %s (%d runs per sample", baseURL, modelID, *runs)
+	if *warmup {
+		fmt.Print(", warmup enabled")
+	}
+	fmt.Println(")")
 
 	// Run benchmarks
 	var results []result
 	var failures int
 	for _, sample := range Samples {
+		if *warmup {
+			fmt.Printf("  Warming up %s...", sample.Name)
+			w := benchmark(client, baseURL, *apiKey, modelID, sample, 0)
+			if w.Error != "" {
+				fmt.Printf(" FAILED (%s)\n", w.Error)
+			} else {
+				fmt.Printf(" %dms (discarded)\n", w.ElapsedMs)
+			}
+		}
 		for run := 1; run <= *runs; run++ {
 			fmt.Printf("  Running %s (run %d/%d)...", sample.Name, run, *runs)
 			r := benchmark(client, baseURL, *apiKey, modelID, sample, run)
@@ -84,6 +99,15 @@ func main() {
 	fmt.Println()
 	printTable(results)
 	printSummary(results)
+
+	// Write JSON output
+	if *jsonOut != "" {
+		if err := writeJSON(*jsonOut, results, baseURL, modelID); err != nil {
+			fmt.Fprintf(os.Stderr, "Error writing JSON: %v\n", err)
+		} else {
+			fmt.Printf("\nResults written to %s\n", *jsonOut)
+		}
+	}
 
 	if failures > 0 {
 		os.Exit(1)
@@ -289,4 +313,25 @@ func printSummary(results []result) {
 	fmt.Printf("- Min elapsed: %dms (%s)\n", minElapsed, minSample)
 	fmt.Printf("- Max elapsed: %dms (%s)\n", maxElapsed, maxSample)
 	fmt.Printf("- Total runs: %d (%d ok, %d failed)\n", len(results), len(ok), failed)
+}
+
+type jsonReport struct {
+	Timestamp string   `json:"timestamp"`
+	URL       string   `json:"url"`
+	Model     string   `json:"model"`
+	Results   []result `json:"results"`
+}
+
+func writeJSON(path string, results []result, baseURL, modelID string) error {
+	report := jsonReport{
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		URL:       baseURL,
+		Model:     modelID,
+		Results:   results,
+	}
+	data, err := json.MarshalIndent(report, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, data, 0644)
 }

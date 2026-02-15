@@ -49,9 +49,19 @@ func (rl *RateLimiter) Allow(key string) bool {
 }
 
 // RateLimit rejects requests exceeding the per-IP limit with 429.
+// Authenticated requests (with X-API-Key header) bypass rate limiting —
+// by the time a request reaches this middleware, APIKey has already validated it.
 func RateLimit(rl *RateLimiter) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/metrics" {
+				next.ServeHTTP(w, r)
+				return
+			}
+			if r.Header.Get("X-API-Key") != "" {
+				next.ServeHTTP(w, r)
+				return
+			}
 			ip := clientIP(r)
 			if !rl.Allow(ip) {
 				w.Header().Set("Content-Type", "application/json")

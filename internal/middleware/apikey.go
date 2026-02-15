@@ -17,7 +17,7 @@ func APIKey(expectedKey string) func(http.Handler) http.Handler {
 				return
 			}
 
-			if r.URL.Path == "/api/health" {
+			if r.URL.Path == "/api/health" || r.URL.Path == "/metrics" {
 				next.ServeHTTP(w, r)
 				return
 			}

@@ -49,6 +49,40 @@ func TestClientIPFromCfHeader(t *testing.T) {
 	})
 }
 
+func TestRateLimitBypassWithAPIKey(t *testing.T) {
+	inner := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	rl := NewRateLimiter(1, time.Minute)
+	handler := RateLimit(rl)(inner)
+
+	// First request without key — uses rate limit budget
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("first request: got %d, want %d", w.Code, http.StatusOK)
+	}
+
+	// Second request without key — should be rate limited
+	req = httptest.NewRequest(http.MethodGet, "/", nil)
+	w = httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+	if w.Code != http.StatusTooManyRequests {
+		t.Fatalf("second request without key: got %d, want %d", w.Code, http.StatusTooManyRequests)
+	}
+
+	// Third request with API key — should bypass rate limit
+	req = httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("X-API-Key", "any-valid-key")
+	w = httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("request with API key: got %d, want %d", w.Code, http.StatusOK)
+	}
+}
+
 func TestRateLimiterAllow(t *testing.T) {
 	rl := NewRateLimiter(3, time.Minute)
 

@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -16,7 +16,13 @@ func Logging(next http.Handler) http.Handler {
 		if id == "" {
 			id = "-"
 		}
-		log.Printf("[%s] %s %s %d %s", id, r.Method, r.URL.Path, sw.status, time.Since(start).Round(time.Millisecond))
+		slog.Info("request",
+			"request_id", id,
+			"method", r.Method,
+			"path", r.URL.Path,
+			"status", sw.status,
+			"duration_ms", time.Since(start).Milliseconds(),
+		)
 	})
 }
 

@@ -81,6 +81,17 @@ func TestAPIKeyMiddleware(t *testing.T) {
 		}
 	})
 
+	t.Run("metrics endpoint exempt", func(t *testing.T) {
+		handler := APIKey("secret-123")(inner)
+		req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("status: got %d, want %d", w.Code, http.StatusOK)
+		}
+	})
+
 	t.Run("models endpoint requires auth", func(t *testing.T) {
 		handler := APIKey("secret-123")(inner)
 		req := httptest.NewRequest(http.MethodGet, "/api/models", nil)
