@@ -8,6 +8,7 @@ type Sample struct {
 
 // Samples contains realistic work email texts at varying lengths,
 // intentionally written with non-native English mistakes.
+// Used by default benchmark mode (--quality=false) for performance measurement.
 var Samples = []Sample{
 	{
 		Name: "tiny",
@@ -67,6 +68,7 @@ Manuel`,
 	},
 	{
 		Name: "max",
+		// Quality note: exceeds 1500 char extension limit, for stress testing only.
 		Text: `Subject: Post-Incident Report - Production Outage on January 15th
 
 Dear team and stakeholders,
@@ -136,5 +138,36 @@ Thank you for your patience and understanding during this incident.
 Best regards,
 Manuel
 Senior Site Reliability Engineer`,
+	},
+}
+
+// QualitySamples are designed to test specific error types and correction quality.
+// Each sample targets a different class of writing issue.
+// Used by --quality mode to compare model output quality.
+var QualitySamples = []Sample{
+	{
+		Name: "subtle",
+		// Tests: then/than, should of/have, commiting/committing
+		Text: "The data suggests that our approach is less effective then we initially thought. We should of considered alternative methods before commiting to this strategy.",
+	},
+	{
+		Name: "technical",
+		// Tests: effecting/affecting, wich/which, technical jargon preservation
+		Text: "After investigating the incident, we determined that the root cause was a race condition in the authentication middleware which was effecting all requests that relied on the session cache. The fix involves implementing a mutex lock around the shared state, wich prevents concurrent writes from corrupting the token store.",
+	},
+	{
+		Name: "informal",
+		// Tests: run-on sentence, tone elevation, dont/don't, alot/a lot
+		Text: "So basically what happened is that the client called us yesterday and they were pretty upset about the delay and they said that if we dont deliver by end of month they will cancel the contract which would be really bad for us because this is one of our biggest accounts and we already spent alot of resources on this project so I think we need to have an emergency meeting to figure out how to speed things up.",
+	},
+	{
+		Name: "academic",
+		// Tests: wrong prepositions (in/on, for/to), consistant, reccomend, representitive, comprised mostly by
+		Text: "The research team has been working in this problem for several months and have produced some preliminary results that are consistant with our hypothesis. However, the sample size is too small to draw definitive conclusions from. We reccomend expanding the study to include participants from different demographics, as the current sample is comprised mostly by college students who may not be representitive of the general population. Additionally, the methodology needs to be revised for addressing the concerns raised by the peer reviewers.",
+	},
+	{
+		Name: "complex",
+		// Tests: verbose phrasing, amongst/among, unprecedentedly, innefficiencies, less then, multi-sentence coherence
+		Text: "I would like to take this opportunity to bring to your attention the fact that our department has been experiencing a number of significant challenges over the course of the past several months that have had a negative impact on our ability to deliver projects on time and within budget. Firstly, the turnover rate amongst our senior engineers has been unprecedentedly high, which has resulted in a significant loss of institutional knowledge. Secondly, the tools and infrastructure that we are currently utilizing are outdated and no longer fit for purpose, leading to innefficiencies that could easily be avoided with proper investment. Lastly, the communication between our team and the product management department has been less then ideal, with requirements frequently changing midway through development cycles without adequate notice or justification being provided to the engineering team.",
 	},
 }

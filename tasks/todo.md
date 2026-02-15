@@ -160,6 +160,83 @@ Jetson behind double NAT (no router access). Cloudflare Tunnel for zero-config i
 - [ ] Screenshots + description for store listing
 - [ ] Submit for review + publish
 
+## Phase 12 — Performance Optimization + Extension UX
+
+### 12.1 — Extension UX
+- [x] Persist textarea draft in `chrome.storage.local` (restore on popup reopen — popup closes on focus loss)
+- [x] Hard character limit: reduce MAX_CHARS from 10000 to 1500 (120s timeout ÷ 68ms/char ≈ 1764 max)
+- [x] Adjust estimated time warning threshold accordingly
+
+### 12.2 — Jetson Inference Tuning
+- [x] Q4_0 quantization: `qwen2.5-1.5b-instruct-q4_0.gguf` — 23% faster (3.0s vs 3.9s short text)
+- [x] `--mlock` + `LimitMEMLOCK=infinity`: model locked in RAM, no paging
+- [x] Headless mode: `systemctl set-default multi-user.target` (frees ~400MB RAM, effective after reboot)
+- [x] A/B test `-t 2` vs `-t 4`: no difference with full GPU offload, keeping `-t 4`
+- [ ] Zram tuning: deferred — only 29MB/2GB used, negligible overhead
+
+### 12.3 — Model Upgrade (after tuning baseline)
+- [ ] Download `qwen2.5-3b-instruct-q4_k_m.gguf` (~2.2GB, fits in 4GB)
+- [ ] Benchmark 3B vs 1.5B: latency vs quality tradeoff
+- [ ] Update service, config, deploy scripts if 3B chosen
+
+### 12.4 — Benchmark Improvements
+- [ ] Rate limiter: exempt authenticated requests or add `--no-rate-limit` flag for benchmarking
+- [ ] Output results to JSON file for historical comparison
+- [ ] Add warmup run (discard first result per sample)
+
+## Phase 13 — Observability & SRE Foundations
+
+### 13.1 — Prometheus Metrics
+- [ ] Add `prometheus/client_golang` dependency
+- [ ] `GET /metrics` endpoint (exempt from API key auth, like health)
+- [ ] Metrics: `pollex_polish_duration_seconds` histogram (by model)
+- [ ] Metrics: `pollex_requests_total` counter (by endpoint, status code)
+- [ ] Metrics: `pollex_adapter_available` gauge (per adapter)
+- [ ] Metrics: `pollex_input_chars` histogram (text size distribution)
+- [ ] Integration test for `/metrics` endpoint
+
+### 13.2 — Structured Logging
+- [ ] JSON log format (timestamp, level, request_id, method, path, status, duration_ms)
+- [ ] Replace `log.Printf` with structured logger (stdlib `slog` — Go 1.21+, zero deps)
+- [ ] Log adapter name + model in polish requests
+
+### 13.3 — SLOs & SLIs
+- [ ] Define SLIs: availability (health check), latency (p50/p95/p99 polish), error rate
+- [ ] Define SLOs: 99.5% availability, p95 < 30s (short text), error rate < 1%
+- [ ] Document in vault as ADR-007
+
+### 13.4 — Alerting & Dashboard
+- [ ] Prometheus alerting rules file (`deploy/prometheus/alerts.yml`)
+- [ ] Grafana dashboard JSON (`deploy/grafana/pollex-dashboard.json`)
+- [ ] Configure scrape target in cubelab for `pollex.mlorente.dev/metrics`
+
+## Phase 14 — Containerization
+
+### 14.1 — Dockerfile
+- [ ] Multi-stage build (Go builder → scratch/distroless runtime)
+- [ ] Non-root user, read-only filesystem
+- [ ] Health check instruction (`HEALTHCHECK`)
+- [ ] `.dockerignore` (extension/, deploy/, tasks/, .github/)
+
+### 14.2 — Docker Compose (local dev)
+- [ ] `docker-compose.yml`: pollex-api (mock mode) + llama-server (CPU, optional)
+- [ ] `make docker-dev` target
+- [ ] Document in README or vault
+
+## Phase 15 — IaC & Load Testing
+
+### 15.1 — Ansible Playbook (Jetson Provisioning)
+- [ ] `deploy/ansible/playbook.yml` — replaces shell scripts (`init.sh`, manual scp)
+- [ ] Roles: base (packages, users), llama-server (binary, model, service), pollex (binary, config, secrets), cloudflared (tunnel)
+- [ ] Idempotent: safe to re-run, convergent state
+- [ ] `make deploy-ansible` target
+
+### 15.2 — Load Testing
+- [ ] k6 or vegeta script for sustained load (req/s ramp, latency percentiles)
+- [ ] Test scenarios: normal load (1 req/5s), burst (5 concurrent), soak (30 min steady)
+- [ ] `make loadtest` and `make loadtest-jetson` targets
+- [ ] Results documented in vault benchmarks
+
 ## Phase 11 — Performance Benchmarking + System Prompt + CI/CD
 
 ### 11.1 — System Prompt Improvement
@@ -169,7 +246,7 @@ Jetson behind double NAT (no router access). Cloudflare Tunnel for zero-config i
 ### 11.2 — Benchmark CLI Tool
 - [x] `cmd/benchmark/samples.go` — 5 realistic email samples (tiny/short/medium/long/max)
 - [x] `cmd/benchmark/main.go` — standalone CLI: auto-discover models, N runs, markdown table output
-- [x] Makefile: `bench`, `bench-jetson`, `bench-mock` targets
+- [x] Makefile: `bench`, `bench-jetson` targets
 
 ### 11.3 — CI/CD (GitHub Actions)
 - [x] `.github/workflows/ci.yml` — lint + test + build (push to master, PRs)
@@ -188,8 +265,7 @@ Jetson behind double NAT (no router access). Cloudflare Tunnel for zero-config i
 - [x] Reorganized into 6 sections: Development, Build, Benchmark, Deploy, Jetson Remote, Utilities
 
 ### Verification
-- [ ] `make test` — all existing tests pass
-- [ ] `make dev` + `make bench-mock` — benchmark runs against mock adapter
-- [ ] Push to GitHub → CI workflow runs (lint + test + build)
-- [ ] `make bench-jetson` — benchmark against Jetson with real inference
-- [ ] Tag `v0.3.0` → release workflow creates GitHub release with binaries + extension zip
+- [x] `make test` — 75+ tests pass, -race clean, go vet clean
+- [x] Push to GitHub → CI workflow runs (lint + test + build)
+- [x] `make bench-jetson` — baseline: ~4 tok/s on Qwen 2.5 1.5B Q4_K_M
+- [x] release-please + goreleaser + extension zip automation verified

@@ -29,13 +29,19 @@ ext-zip: ## Package extension into dist/pollex-ext.zip
 	cd extension && zip -r ../dist/pollex-ext.zip . -x '*.gitkeep'
 
 # ─── Benchmark ──────────────────────────────────────────────
-.PHONY: bench bench-jetson
+.PHONY: bench bench-jetson quality quality-jetson
 
 bench: ## Run performance benchmark against local API
 	go run ./cmd/benchmark --url http://localhost:$(API_PORT)
 
 bench-jetson: ## Run benchmark against Jetson (via Cloudflare Tunnel)
 	go run ./cmd/benchmark --url https://pollex.mlorente.dev --api-key $$POLLEX_API_KEY
+
+quality: ## Run quality test against local API (shows input/output)
+	go run ./cmd/benchmark --quality --url http://localhost:$(API_PORT)
+
+quality-jetson: ## Run quality test against Jetson (via Cloudflare Tunnel)
+	go run ./cmd/benchmark --quality --url https://pollex.mlorente.dev --api-key $$POLLEX_API_KEY
 
 # ─── Deploy (Jetson) ────────────────────────────────────────
 .PHONY: deploy deploy-init deploy-secrets deploy-llamacpp deploy-tunnel

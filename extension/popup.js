@@ -1,9 +1,10 @@
 // Pollex popup — wires UI to api.js
 
-const MAX_CHARS = 10000;
+const MAX_CHARS = 1500;
 const WARN_THRESHOLD = 0.9;
-const MS_PER_CHAR = 68;
+const MS_PER_CHAR = 36;
 const SLOW_SECONDS = 45;
+const DRAFT_DEBOUNCE_MS = 500;
 
 // --- DOM refs ---
 
@@ -36,10 +37,12 @@ let abortController = null;
 let timerInterval = null;
 let modelsLoaded = false;
 let singleModelId = null;
+let draftTimer = null;
 
 // --- Init ---
 
 document.addEventListener("DOMContentLoaded", async () => {
+  await restoreDraft();
   await loadModels();
   await loadSettings();
   updateCharCount();
@@ -118,11 +121,31 @@ function makeOption(model) {
   return opt;
 }
 
+// --- Draft persistence ---
+
+async function restoreDraft() {
+  const result = await chrome.storage.local.get("draftText");
+  if (result.draftText) input.value = result.draftText;
+}
+
+function saveDraft() {
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(() => {
+    chrome.storage.local.set({ draftText: input.value });
+  }, DRAFT_DEBOUNCE_MS);
+}
+
+function clearDraft() {
+  clearTimeout(draftTimer);
+  chrome.storage.local.remove("draftText");
+}
+
 // --- Character count ---
 
 input.addEventListener("input", () => {
   updateCharCount();
   clearTransientStatus();
+  saveDraft();
 });
 
 function updateCharCount() {
@@ -195,6 +218,7 @@ async function doPolish() {
     elapsedEl.textContent = `${(result.elapsed_ms / 1000).toFixed(1)}s`;
     resultSection.classList.remove("hidden");
     hideStatus();
+    clearDraft();
   } catch (err) {
     if (err.name === "AbortError") {
       showStatus("Cancelled.", "cancelled");

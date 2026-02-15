@@ -1,5 +1,6 @@
 # Binaries
 dist/
+benchmark
 *.exe
 *.exe~
 *.dll

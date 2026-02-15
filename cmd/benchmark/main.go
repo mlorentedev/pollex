@@ -44,16 +44,23 @@ func main() {
 	apiKey := flag.String("api-key", "", "API key (optional)")
 	runs := flag.Int("runs", 3, "Number of runs per sample")
 	model := flag.String("model", "", "Model ID to use (default: first available)")
+	quality := flag.Bool("quality", false, "Quality mode: show input/output for each sample (1 run, no timing table)")
 	flag.Parse()
 
 	baseURL := strings.TrimRight(*url, "/")
-	client := &http.Client{Timeout: 120 * time.Second}
+	client := &http.Client{Timeout: 180 * time.Second}
 
 	// Discover models
 	modelID := *model
 	if modelID == "" {
 		modelID = discoverModel(client, baseURL, *apiKey)
 	}
+
+	if *quality {
+		runQualityMode(client, baseURL, *apiKey, modelID)
+		return
+	}
+
 	fmt.Printf("Benchmarking against %s using model: %s (%d runs per sample)\n\n", baseURL, modelID, *runs)
 
 	// Run benchmarks
@@ -181,6 +188,62 @@ func printTable(results []result) {
 		ratio := float64(r.OutChars) / float64(r.Chars)
 		fmt.Printf("| %-6s | %5d | %-20s | %d | %12d | %9d | %9d | %5.2f |\n",
 			r.Sample, r.Chars, r.Model, r.Run, r.ElapsedMs, r.WallMs, r.OutChars, ratio)
+	}
+}
+
+func runQualityMode(client *http.Client, baseURL, apiKey, modelID string) {
+	fmt.Printf("Quality test against %s using model: %s\n", baseURL, modelID)
+	fmt.Println(strings.Repeat("=", 72))
+
+	var failures int
+	for i, sample := range QualitySamples {
+		fmt.Printf("\n--- %d/%d: %s (%d chars) ---\n", i+1, len(QualitySamples), sample.Name, len(sample.Text))
+		fmt.Printf("IN:  %s\n", sample.Text)
+
+		payload, _ := json.Marshal(polishRequest{Text: sample.Text, ModelID: modelID})
+		req, err := http.NewRequest("POST", baseURL+"/api/polish", strings.NewReader(string(payload)))
+		if err != nil {
+			fmt.Printf("ERR: %s\n", err)
+			failures++
+			continue
+		}
+		req.Header.Set("Content-Type", "application/json")
+		if apiKey != "" {
+			req.Header.Set("X-API-Key", apiKey)
+		}
+
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Printf("ERR: %s\n", err)
+			failures++
+			continue
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			body, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			fmt.Printf("ERR: HTTP %d: %s\n", resp.StatusCode, strings.TrimSpace(string(body)))
+			failures++
+			continue
+		}
+
+		var pr polishResponse
+		if err := json.NewDecoder(resp.Body).Decode(&pr); err != nil {
+			resp.Body.Close()
+			fmt.Printf("ERR: %s\n", err)
+			failures++
+			continue
+		}
+		resp.Body.Close()
+
+		fmt.Printf("OUT: %s\n", pr.Polished)
+		fmt.Printf("     [%dms, %d->%d chars]\n", pr.ElapsedMs, len(sample.Text), len(pr.Polished))
+	}
+
+	fmt.Printf("\n%s\n", strings.Repeat("=", 72))
+	fmt.Printf("Done: %d/%d passed\n", len(QualitySamples)-failures, len(QualitySamples))
+	if failures > 0 {
+		os.Exit(1)
 	}
 }
 
