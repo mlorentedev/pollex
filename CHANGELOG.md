@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.0](https://github.com/mlorentedev/pollex/compare/v1.1.0...v1.2.0) (2026-02-15)
+
+
+### Features
+
+* Prometheus metrics endpoint + structured JSON logging (slog) ([f9f44cf](https://github.com/mlorentedev/pollex/commit/f9f44cfb58b1ab0cf920631040180028b2316a63))
+* Q4_0 quantization + mlock (22% faster), extension draft persistence, quality benchmark mode ([48badf7](https://github.com/mlorentedev/pollex/commit/48badf71fc3459077656637cf17e15ce0f64fcc2))
+
 ## [1.1.0](https://github.com/mlorentedev/pollex/compare/v1.0.0...v1.1.0) (2026-02-14)
 
 
