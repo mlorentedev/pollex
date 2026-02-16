@@ -19,7 +19,7 @@ func TestHandleHealth(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
 	w := httptest.NewRecorder()
 
-	Health(adapters).ServeHTTP(w, req)
+	Health(adapters, "test").ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("status: got %d, want %d", w.Code, http.StatusOK)
@@ -53,7 +53,7 @@ func TestHandleHealthUnavailableClaude(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
 	w := httptest.NewRecorder()
 
-	Health(adapters).ServeHTTP(w, req)
+	Health(adapters, "test").ServeHTTP(w, req)
 
 	var resp healthResponse
 	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
@@ -78,7 +78,7 @@ func TestHandleHealthMixedAdapters(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
 	w := httptest.NewRecorder()
 
-	Health(adapters).ServeHTTP(w, req)
+	Health(adapters, "test").ServeHTTP(w, req)
 
 	var resp healthResponse
 	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {

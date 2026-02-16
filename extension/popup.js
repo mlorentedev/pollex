@@ -37,6 +37,7 @@ const apiKeyInput = document.getElementById("api-key");
 const btnTest = document.getElementById("btn-test");
 const btnSave = document.getElementById("btn-save");
 const settingsStatus = document.getElementById("settings-status");
+const serverVersion = document.getElementById("server-version");
 
 // History
 const historySection = document.getElementById("history-section");
@@ -124,6 +125,9 @@ async function loadModels() {
 
     btnPolish.disabled = false;
     modelsLoaded = true;
+    fetchHealth().then(data => {
+      if (data && data.version) serverVersion.textContent = `API ${data.version}`;
+    }).catch(() => {});
   } catch {
     singleModelId = null;
     modelLabel.classList.add("hidden");
@@ -215,7 +219,12 @@ input.addEventListener("keydown", (e) => {
 
 async function doPolish() {
   const text = input.value.trim();
-  if (!text) return;
+  if (!text) {
+    input.focus();
+    input.classList.add("shake");
+    input.addEventListener("animationend", () => input.classList.remove("shake"), { once: true });
+    return;
+  }
 
   const modelId = singleModelId || modelSelect.value;
   if (!modelId) return;

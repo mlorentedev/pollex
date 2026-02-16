@@ -17,6 +17,8 @@ import (
 	"github.com/mlorentedev/pollex/internal/server"
 )
 
+var version = "dev"
+
 func main() {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
 
@@ -42,7 +44,7 @@ func main() {
 	systemPrompt := string(promptData)
 
 	adapters, models := buildAdapters(cfg, *useMock)
-	handler := server.SetupMux(adapters, models, systemPrompt, cfg.APIKey)
+	handler := server.SetupMux(adapters, models, systemPrompt, cfg.APIKey, version)
 
 	startAdapterProbe(adapters, 30*time.Second)
 

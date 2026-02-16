@@ -511,6 +511,14 @@ textarea::placeholder {
   color: var(--error);
 }
 
+/* === Server Version === */
+.server-version {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-align: center;
+  margin-top: var(--sp-2);
+}
+
 /* === Progress Bar === */
 .progress-section {
   animation: fadeIn 200ms var(--ease);
@@ -645,6 +653,17 @@ textarea::placeholder {
 }
 
 /* === Animations === */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+textarea.shake {
+  animation: shake 300ms var(--ease);
+  border-color: var(--error);
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

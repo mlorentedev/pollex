@@ -46,13 +46,13 @@ type errorResponse struct {
 
 func newTestServer(t *testing.T, adapters map[string]adapter.LLMAdapter, models []adapter.ModelInfo) *httptest.Server {
 	t.Helper()
-	h := SetupMux(adapters, models, "test system prompt", "")
+	h := SetupMux(adapters, models, "test system prompt", "", "test")
 	return httptest.NewServer(h)
 }
 
 func newTestServerWithAPIKey(t *testing.T, adapters map[string]adapter.LLMAdapter, models []adapter.ModelInfo, apiKey string) *httptest.Server {
 	t.Helper()
-	h := SetupMux(adapters, models, "test system prompt", apiKey)
+	h := SetupMux(adapters, models, "test system prompt", apiKey, "test")
 	return httptest.NewServer(h)
 }
 

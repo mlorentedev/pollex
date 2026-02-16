@@ -15,10 +15,11 @@ type adapterStatus struct {
 
 type healthResponse struct {
 	Status   string                   `json:"status"`
+	Version  string                   `json:"version"`
 	Adapters map[string]adapterStatus `json:"adapters"`
 }
 
-func Health(adapters map[string]adapter.LLMAdapter) http.HandlerFunc {
+func Health(adapters map[string]adapter.LLMAdapter, version string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		statuses := make(map[string]adapterStatus, len(adapters))
 		for id, a := range adapters {
@@ -35,6 +36,7 @@ func Health(adapters map[string]adapter.LLMAdapter) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(healthResponse{
 			Status:   "ok",
+			Version:  version,
 			Adapters: statuses,
 		})
 	}

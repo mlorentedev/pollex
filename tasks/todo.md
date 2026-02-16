@@ -292,8 +292,17 @@ CWS publishing adds cost ($5), maintenance burden (privacy policy, review proces
 - [x] ETA padded +15% for conservative estimate, capped at 99%
 - [x] Copy button in history detail view
 - [x] Clean interface on popup reopen (no stale results shown, history below for recovery)
+- [x] Empty input shake animation on Polish click (no text status noise)
 
 ### 16.5 — Hardening
 - [x] Input validation in background.js (type check, empty, max length 1500)
 - [x] Error message truncation (200 chars max in storage)
 - [x] Prompt injection defense in `prompts/polish.txt`
+
+### 16.6 — Backend Version in Extension
+- [x] `cmd/pollex/main.go` — `var version = "dev"`, injected via `-ldflags -X main.version`
+- [x] `internal/handler/health.go` — `version` field in health response JSON
+- [x] `internal/server/server.go` — pass version through SetupMux
+- [x] `Makefile` — VERSION from `git describe --tags`, LDFLAGS for build/build-arm64
+- [x] `.goreleaser.yml` — `-X main.version={{.Version}}` in ldflags
+- [x] Extension Settings — shows `API vX.Y.Z` fetched from `/api/health`

@@ -17,13 +17,16 @@ lint: ## Run go vet + check formatting
 	go vet ./... && gofmt -l internal/ cmd/
 
 # ─── Build ──────────────────────────────────────────────────
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+LDFLAGS  = -ldflags "-X main.version=$(VERSION)"
+
 .PHONY: build build-arm64 ext-zip
 
 build: ## Build binary for current platform
-	go build -o dist/pollex ./cmd/pollex
+	go build $(LDFLAGS) -o dist/pollex ./cmd/pollex
 
 build-arm64: ## Cross-compile for ARM64 (Jetson Nano)
-	GOOS=linux GOARCH=arm64 go build -o dist/pollex-arm64 ./cmd/pollex
+	GOOS=linux GOARCH=arm64 go build $(LDFLAGS) -o dist/pollex-arm64 ./cmd/pollex
 
 ext-zip: ## Package extension into dist/pollex-ext.zip
 	cd extension && zip -r ../dist/pollex-ext.zip . -x '*.gitkeep'
