@@ -153,12 +153,8 @@ Jetson behind double NAT (no router access). Cloudflare Tunnel for zero-config i
 ### Known Limitations (resolved)
 - [x] Rate limiter: reads `Cf-Connecting-Ip` header for real client IP behind Cloudflare Tunnel
 
-### 10.7 — Chrome Web Store Publishing (future)
-- [ ] Chrome Developer account ($5 one-time)
-- [ ] Default API URL: empty (force user to configure in settings)
-- [ ] Privacy policy (required by CWS)
-- [ ] Screenshots + description for store listing
-- [ ] Submit for review + publish
+### 10.7 — Chrome Web Store Publishing — WON'T DO
+CWS publishing adds cost ($5), maintenance burden (privacy policy, review process, responding to reviews), and ongoing compliance for zero practical benefit. The target audience capable of deploying a Jetson Nano with llama.cpp + Cloudflare Tunnel can load an unpacked extension. Chrome blocks .crx installs outside CWS since Chrome 75, so the only alternative is load unpacked (current approach), which works fine for a self-hosted tool.
 
 ## Phase 12 — Performance Optimization + Extension UX
 
@@ -172,7 +168,7 @@ Jetson behind double NAT (no router access). Cloudflare Tunnel for zero-config i
 - [x] `--mlock` + `LimitMEMLOCK=infinity`: model locked in RAM, no paging
 - [x] Headless mode: `systemctl set-default multi-user.target` (frees ~400MB RAM, effective after reboot)
 - [x] A/B test `-t 2` vs `-t 4`: no difference with full GPU offload, keeping `-t 4`
-- [ ] Zram tuning: deferred — only 29MB/2GB used, negligible overhead
+- [~] Zram tuning: WON'T DO — only 29MB/2GB used, negligible overhead, not worth the complexity
 
 ### 12.3 — Model Upgrade (deferred)
 - [x] **Skipped:** 3B model descartado — latencia ~2x haría textos >750 chars inutilizables (timeout 120s). 1.5B Q4_0 ya pasa los 5 quality samples. Reconsiderar solo si la calidad resulta insuficiente en uso real.
