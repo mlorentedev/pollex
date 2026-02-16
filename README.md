@@ -4,6 +4,8 @@
 
 Self-hosted, private, and fast. Runs entirely on a Jetson Nano 4GB with GPU inference via llama.cpp.
 
+![Pollex demo](docs/assets/demo.gif)
+
 ## Architecture
 
 ```mermaid
