@@ -213,7 +213,7 @@ Jetson behind double NAT (no router access). Cloudflare Tunnel for zero-config i
 - [x] Prometheus scrape config (`deploy/prometheus/prometheus.yml`): pollex.mlorente.dev target, 30s interval
 - [x] Grafana dashboard (`deploy/grafana/pollex-dashboard.json`): SLO status row, traffic/errors, latency percentiles, adapter availability
 - [x] Background adapter probe goroutine (30s interval) in `cmd/pollex/main.go` — keeps `pollex_adapter_available` gauge fresh for Prometheus
-- [ ] Deploy: configure scrape target in Docker Prometheus on monitoring host
+- [x] Deploy: configure scrape target in Docker Prometheus on monitoring host
 
 ## Phase 14 — Containerization
 
