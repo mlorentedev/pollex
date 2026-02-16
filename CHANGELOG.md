@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0](https://github.com/mlorentedev/pollex/compare/v1.3.1...v1.4.0) (2026-02-16)
+
+
+### Features
+
+* add backend version to health endpoint and extension settings ([7ad8a94](https://github.com/mlorentedev/pollex/commit/7ad8a949e03d933b097206a00ee666b3d226950e))
+* add service worker, rolling history, progress bar, and prompt injection defense to extension ([014b4b2](https://github.com/mlorentedev/pollex/commit/014b4b2aa93d3c10d4dcf9cad71f36f4b7362a20))
+
 ## [1.3.1](https://github.com/mlorentedev/pollex/compare/v1.3.0...v1.3.1) (2026-02-16)
 
 
