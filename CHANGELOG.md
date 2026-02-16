@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.3.0](https://github.com/mlorentedev/pollex/compare/v1.2.0...v1.3.0) (2026-02-16)
+
+
+### Features
+
+* containerization (Dockerfile + compose) + observability alerting stack ([62d544a](https://github.com/mlorentedev/pollex/commit/62d544a0dd3bf26661e20e5480012cc33534ac39))
+* SLOs/SLIs definition (ADR-007) + Prometheus alerting + Grafana dashboard ([cbc7eba](https://github.com/mlorentedev/pollex/commit/cbc7eba7df344832fad7f51db24d71aade36f860))
+
+
+### Bug Fixes
+
+* k6 load test + remove Ansible + repo cleanup ([d88a365](https://github.com/mlorentedev/pollex/commit/d88a36507e2882ef4fac55aa457d4a5373d0289d))
+
 ## [1.2.0](https://github.com/mlorentedev/pollex/compare/v1.1.0...v1.2.0) (2026-02-15)
 
 
