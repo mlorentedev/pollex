@@ -19,25 +19,25 @@ graph LR
     subgraph Jetson Nano 4GB
         API["Pollex API<br/>(Go · :8090)"]
         LLAMA["llama-server<br/>(CUDA 10.2 · GPU)"]
-        MODEL["Qwen 2.5 1.5B<br/>(Q4 · ~1GB VRAM)"]
+        MODEL["Qwen 2.5 1.5B<br/>(Q4_0 · ~1GB)"]
     end
 
-    subgraph Cloud
-        CLAUDE["Claude API<br/>(optional)"]
+    subgraph Monitoring
+        PROM["Prometheus + Grafana"]
     end
 
     EXT -- "HTTPS + API Key" --> CF
     CF -- "localhost:8090" --> API
     API -- "/v1/chat/completions" --> LLAMA
     LLAMA --> MODEL
-    API -. "Messages API" .-> CLAUDE
+    PROM -. "/metrics" .-> CF
 
     style EXT fill:#4a90d9,stroke:#3a7bc8,color:#fff
     style CF fill:#f48120,stroke:#d35400,color:#fff
     style API fill:#2ecc71,stroke:#27ae60,color:#fff
     style LLAMA fill:#e67e22,stroke:#d35400,color:#fff
     style MODEL fill:#f39c12,stroke:#e67e22,color:#fff
-    style CLAUDE fill:#9b59b6,stroke:#8e44ad,color:#fff
+    style PROM fill:#9b59b6,stroke:#8e44ad,color:#fff
 ```
 
 | Layer | Tech | Role |
@@ -45,7 +45,8 @@ graph LR
 | Extension | Chrome Manifest V3 | UI — paste text, select model, copy result |
 | Tunnel | Cloudflare Tunnel | Zero-config ingress (Jetson behind double NAT) |
 | API | Go 1.26, stdlib `net/http` | Routes text to LLM backends, returns polished result |
-| LLM | llama.cpp + Qwen 2.5 1.5B | Local GPU inference on Jetson Nano (~3s short, ~8s long) |
+| LLM | llama.cpp + Qwen 2.5 1.5B Q4_0 | Local GPU inference on Jetson Nano (~3s short, ~16s medium) |
+| Monitoring | Prometheus + Alertmanager + Grafana | SLO tracking, alerting, dashboards |
 
 ## How It Works
 
@@ -76,7 +77,7 @@ sequenceDiagram
 
 ```sh
 make dev    # Start API with mock adapter on :8090
-make test   # Run all tests (75+ with subtests, race detector)
+make test   # Run all tests (80+ with subtests, race detector)
 ```
 
 Load the extension: `chrome://extensions` → Developer mode → Load unpacked → select `extension/`.
@@ -95,6 +96,7 @@ make bench-jetson  # Against Jetson via Cloudflare Tunnel
 | `POST` | `/api/polish` | `X-API-Key` | Polish text via selected model |
 | `GET` | `/api/models` | `X-API-Key` | List available models |
 | `GET` | `/api/health` | None | Health check (per-adapter status) |
+| `GET` | `/metrics` | None | Prometheus metrics |
 
 ```sh
 curl -X POST https://pollex.mlorente.dev/api/polish \
@@ -128,8 +130,12 @@ pollex/
 ├── deploy/
 │   ├── systemd/             # pollex-api, llama-server, cloudflared services
 │   ├── scripts/             # init, build-llamacpp, setup-cloudflared
-│   ├── config.yaml          # Production config (deployed to Jetson)
-│   └── config.yaml.example  # Template for new setups
+│   ├── prometheus/          # Alert rules, scrape config, alertmanager
+│   ├── grafana/             # Dashboard JSON + provisioning
+│   └── config.yaml          # Production config (deployed to Jetson)
+├── Dockerfile               # Multi-stage: Go builder → alpine (24.7MB)
+├── docker-compose.yml       # Local dev (mock mode)
+├── docker-compose.monitoring.yml  # Prometheus + Alertmanager + Grafana
 ├── .github/workflows/       # CI (lint+test+build) + Release (goreleaser)
 └── Makefile
 ```
@@ -172,7 +178,7 @@ pollex/
 Request processing order (defined in `internal/middleware/chain.go`):
 
 ```
-CORS → RequestID → Logging → RateLimit → APIKey → MaxBytes(64KB) → Timeout(65s) → Router
+CORS → RequestID → Logging → Metrics → APIKey → RateLimit → MaxBytes(64KB) → Timeout(120s) → Router
 ```
 
 ### Hardening
@@ -183,7 +189,7 @@ CORS → RequestID → Logging → RateLimit → APIKey → MaxBytes(64KB) → T
 | Request body | 64KB max | 413 |
 | Text length | 10,000 chars | 400 |
 | Rate limit | 10 req/min/IP (sliding window) | 429 |
-| Request timeout | 65s | 504 |
+| Request timeout | 120s | 504 |
 
 ### CI/CD
 
@@ -191,6 +197,30 @@ CORS → RequestID → Logging → RateLimit → APIKey → MaxBytes(64KB) → T
 - **Tag `v*`** → goreleaser creates GitHub release with binaries + extension zip
 
 Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/).
+
+## Docker
+
+```sh
+make docker-build   # Build image (alpine:3.21, ~25MB, non-root)
+make docker-dev     # Run pollex in Docker (mock mode, :8090)
+make docker-down    # Stop container
+```
+
+### Monitoring Stack
+
+```sh
+make dev              # Start pollex natively (mock mode)
+make monitoring-up    # Start Prometheus + Alertmanager + Grafana
+```
+
+- Prometheus: [localhost:9090](http://localhost:9090) — 6 alerting rules based on SLOs
+- Grafana: [localhost:3000](http://localhost:3000) — Pollex SRE Overview dashboard (auto-provisioned)
+- Alertmanager: [localhost:9093](http://localhost:9093) — Slack webhook routing
+
+```sh
+make monitoring-down      # Stop monitoring stack
+make monitoring-validate  # Validate Prometheus rules syntax
+```
 
 ## Deploy to Jetson
 
