@@ -128,6 +128,7 @@ pollex/
 ├── extension/               # Chrome extension (Manifest V3)
 ├── prompts/polish.txt       # System prompt
 ├── deploy/
+│   ├── loadtest/            # k6 load test scripts (normal, burst, jetson, soak)
 │   ├── systemd/             # pollex-api, llama-server, cloudflared services
 │   ├── scripts/             # init, build-llamacpp, setup-cloudflared
 │   ├── prometheus/          # Alert rules, scrape config, alertmanager

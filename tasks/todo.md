@@ -17,7 +17,7 @@
 - [x] `popup.js` (UI wiring, Ctrl+Enter, timer en vivo, cancel, copy)
 - [x] `settings.html` + `settings.js` (API URL + Test Connection)
 - [x] Icons (16/48/128px PNG)
-- [ ] Verificar: extensión carga en Chrome, flujo polish funciona end-to-end
+- [x] Verificar: extensión carga en Chrome, flujo polish funciona end-to-end
 
 ## Fase 3 — Claude Adapter
 - [x] `adapter_claude.go` + tests (7 tests, Messages API)
@@ -232,17 +232,15 @@ Jetson behind double NAT (no router access). Cloudflare Tunnel for zero-config i
 
 ## Phase 15 — IaC & Load Testing
 
-### 15.1 — Ansible Playbook (Jetson Provisioning)
-- [ ] `deploy/ansible/playbook.yml` — replaces shell scripts (`init.sh`, manual scp)
-- [ ] Roles: base (packages, users), llama-server (binary, model, service), pollex (binary, config, secrets), cloudflared (tunnel)
-- [ ] Idempotent: safe to re-run, convergent state
-- [ ] `make deploy-ansible` target
+### 15.1 — Ansible Playbook (Removed)
+- [x] ~~Ansible playbook~~ — removed. Jetson Nano runs Ubuntu 18.04 (Python 3.6), incompatible with ansible-core 2.20 (requires 3.9+). deadsnakes PPA only provides up to 3.8 for bionic arm64. Deploy via `make deploy-*` targets (SSH + SCP), which are simpler and proven for single-node.
 
 ### 15.2 — Load Testing
-- [ ] k6 or vegeta script for sustained load (req/s ramp, latency percentiles)
-- [ ] Test scenarios: normal load (1 req/5s), burst (5 concurrent), soak (30 min steady)
-- [ ] `make loadtest` and `make loadtest-jetson` targets
-- [ ] Results documented in vault benchmarks
+- [x] k6 script (`deploy/loadtest/pollex.js`) with custom metrics (polish_duration_ms, errors)
+- [x] Test scenarios: normal load (12 req/min, 2 min), burst (5 VUs, 25 iterations), soak (12 req/min, 30 min)
+- [x] Thresholds aligned to SLOs: p50 < 20s, p95 < 60s, error rate < 1%
+- [x] `make loadtest`, `make loadtest-jetson`, `make loadtest-soak` targets
+- [x] Run against Jetson and document results in vault benchmarks
 
 ## Phase 11 — Performance Benchmarking + System Prompt + CI/CD
 

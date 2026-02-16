@@ -129,6 +129,18 @@ monitoring-validate: ## Validate Prometheus rules and config syntax
 	docker run --rm --entrypoint promtool -v $(PWD)/deploy/prometheus:/p prom/prometheus check rules /p/alerts.yml
 	docker run --rm --entrypoint promtool -v $(PWD)/deploy/prometheus:/p prom/prometheus check config /p/prometheus-local.yml
 
+# ─── Load Testing ─────────────────────────────────────────
+.PHONY: loadtest loadtest-jetson loadtest-soak
+
+loadtest: ## Run k6 load test against local API (normal + burst)
+	k6 run -e API_KEY=$$POLLEX_API_KEY deploy/loadtest/pollex.js
+
+loadtest-jetson: ## Run k6 load test against Jetson (single-user, via Cloudflare Tunnel)
+	k6 run -e SCENARIO=jetson -e BASE_URL=https://pollex.mlorente.dev -e API_KEY=$$POLLEX_API_KEY deploy/loadtest/pollex.js
+
+loadtest-soak: ## Run 30-min soak test against Jetson
+	k6 run -e SCENARIO=soak -e BASE_URL=https://pollex.mlorente.dev -e API_KEY=$$POLLEX_API_KEY deploy/loadtest/pollex.js
+
 # ─── Utilities ──────────────────────────────────────────────
 .PHONY: clean help
 
