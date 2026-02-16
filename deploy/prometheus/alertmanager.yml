@@ -18,7 +18,7 @@ route:
 receivers:
   - name: slack
     slack_configs:
-      - api_url: "SLACK_WEBHOOK_URL"
+      - api_url: "https://hooks.slack.com/services/REPLACE_ME"
         channel: "#pollex-alerts"
         title: '{{ .Status | toUpper }}: {{ .GroupLabels.alertname }}'
         text: >-

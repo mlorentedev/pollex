@@ -106,7 +106,7 @@ Jetson behind double NAT (no router access). Cloudflare Tunnel for zero-config i
 - [x] `internal/config/config.go` — add `APIKey` field + `POLLEX_API_KEY` env override
 - [x] `internal/middleware/apikey.go` — `X-API-Key` header, `crypto/subtle.ConstantTimeCompare`, health exempt
 - [x] `internal/middleware/apikey_test.go` — 6 subtests (disabled, valid, missing, wrong, health exempt, models requires auth)
-- [x] `internal/middleware/chain.go` — APIKey after RateLimit, before MaxBytes
+- [x] `internal/middleware/chain.go` — APIKey before RateLimit (reordered in Phase 12.4)
 - [x] `internal/middleware/cors.go` — `Access-Control-Allow-Headers: "Content-Type, X-API-Key"`
 - [x] `internal/server/server.go` — `SetupMux` accepts `apiKey` parameter
 - [x] `cmd/pollex/main.go` — pass `cfg.APIKey`, log auth mode
@@ -218,15 +218,17 @@ Jetson behind double NAT (no router access). Cloudflare Tunnel for zero-config i
 ## Phase 14 — Containerization
 
 ### 14.1 — Dockerfile
-- [ ] Multi-stage build (Go builder → scratch/distroless runtime)
-- [ ] Non-root user, read-only filesystem
-- [ ] Health check instruction (`HEALTHCHECK`)
-- [ ] `.dockerignore` (extension/, deploy/, tasks/, .github/)
+- [x] Multi-stage build (Go 1.26 builder → `alpine:3.21` runtime, 24.7MB image)
+- [x] Non-root user (`pollex:pollex` UID/GID 1001)
+- [x] Health check via `curl` in compose (alpine has curl, no separate binary needed)
+- [x] Build args: `VERSION` (git describe), `VCS_REF` (commit SHA), OCI labels
+- [x] Build cache: `--mount=type=cache` for go mod + go build
+- [x] `.dockerignore` (extension/, deploy/, tasks/, .github/, .git/)
 
 ### 14.2 — Docker Compose (local dev)
-- [ ] `docker-compose.yml`: pollex-api (mock mode) + llama-server (CPU, optional)
-- [ ] `make docker-dev` target
-- [ ] Document in README or vault
+- [x] `docker-compose.yml`: pollex-api (mock mode, port 8090)
+- [x] `make docker-build`, `make docker-dev`, `make docker-down` targets
+- [x] Verified: health, polish, metrics endpoints + Docker HEALTHCHECK `healthy`
 
 ## Phase 15 — IaC & Load Testing
 

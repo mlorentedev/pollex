@@ -1,0 +1,8 @@
+.git/
+.github/
+dist/
+extension/
+tasks/
+deploy/
+*.md
+!prompts/

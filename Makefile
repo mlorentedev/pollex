@@ -101,6 +101,34 @@ jetson-tunnel-status: ## Check Cloudflare Tunnel status
 jetson-tunnel-logs: ## Tail Cloudflare Tunnel logs on Jetson
 	ssh $(JETSON_USER)@$(JETSON_HOST) 'sudo journalctl -u cloudflared -f'
 
+# ─── Docker ────────────────────────────────────────────────
+.PHONY: docker-build docker-dev docker-down
+
+docker-build: ## Build pollex Docker image
+	docker build \
+		--build-arg VERSION=$$(git describe --tags --always 2>/dev/null || echo dev) \
+		--build-arg VCS_REF=$$(git rev-parse --short HEAD) \
+		-t pollex:latest .
+
+docker-dev: ## Start pollex in Docker (mock mode) on :8090
+	docker compose up -d --build
+
+docker-down: ## Stop pollex Docker container
+	docker compose down
+
+# ─── Monitoring ────────────────────────────────────────────
+.PHONY: monitoring-up monitoring-down monitoring-validate
+
+monitoring-up: ## Start Prometheus + Alertmanager + Grafana (needs `make dev` running)
+	docker compose -f docker-compose.monitoring.yml up -d
+
+monitoring-down: ## Stop monitoring stack
+	docker compose -f docker-compose.monitoring.yml down
+
+monitoring-validate: ## Validate Prometheus rules and config syntax
+	docker run --rm --entrypoint promtool -v $(PWD)/deploy/prometheus:/p prom/prometheus check rules /p/alerts.yml
+	docker run --rm --entrypoint promtool -v $(PWD)/deploy/prometheus:/p prom/prometheus check config /p/prometheus-local.yml
+
 # ─── Utilities ──────────────────────────────────────────────
 .PHONY: clean help
 

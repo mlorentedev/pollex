@@ -1,0 +1,30 @@
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./deploy/prometheus/prometheus-local.yml:/etc/prometheus/prometheus.yml:ro
+      - ./deploy/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./deploy/prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+    volumes:
+      - ./deploy/grafana/provisioning-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - ./deploy/grafana/provisioning-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+      - ./deploy/grafana/pollex-dashboard.json:/var/lib/grafana/dashboards/pollex-dashboard.json:ro
