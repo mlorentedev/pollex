@@ -89,6 +89,27 @@ make bench       # Against local API (mock)
 make bench-jetson  # Against Jetson via Cloudflare Tunnel
 ```
 
+## Performance (Jetson Nano 4GB)
+
+Measured on Qwen 2.5 1.5B Q4_0, full GPU offload (`-ngl 999`), 128 Maxwell cores.
+
+| Text Length | Chars | Inference Time | Throughput |
+|-------------|-------|---------------|------------|
+| Short | ~50 | ~3s | ~4 tok/s |
+| Medium | ~500 | ~8s | ~4 tok/s |
+| Long | ~1000 | ~16s | ~4 tok/s |
+
+**SLO targets (7-day rolling window):**
+
+| SLI | Target |
+|-----|--------|
+| Availability (API + llama-server) | 99% (≤100.8 min downtime) |
+| Latency p50 | < 20s |
+| Latency p95 | < 60s |
+| Error rate (5xx on `/api/polish`) | < 1% |
+
+Load tested with k6 (burst: 5 VUs / 25 iterations, sustained: 12 req/min for 2 min). Alerting via Prometheus rules + Alertmanager.
+
 ## API
 
 | Method | Path | Auth | Description |
