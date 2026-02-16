@@ -43,7 +43,7 @@ graph LR
 ```
 
 | Layer | Tech | Role |
-|-------|------|------|
+| --- | --- | --- |
 | Extension | Chrome Manifest V3 | UI — paste text, select model, copy result |
 | Tunnel | Cloudflare Tunnel | Zero-config ingress (Jetson behind double NAT) |
 | API | Go 1.26, stdlib `net/http` | Routes text to LLM backends, returns polished result |
@@ -96,7 +96,7 @@ make bench-jetson  # Against Jetson via Cloudflare Tunnel
 Measured on Qwen 2.5 1.5B Q4_0, full GPU offload (`-ngl 999`), 128 Maxwell cores.
 
 | Text Length | Chars | Inference Time | Throughput |
-|-------------|-------|---------------|------------|
+| ----------- | ----- | -------------- | ---------- |
 | Short | ~50 | ~3s | ~4 tok/s |
 | Medium | ~500 | ~8s | ~4 tok/s |
 | Long | ~1000 | ~16s | ~4 tok/s |
@@ -104,7 +104,7 @@ Measured on Qwen 2.5 1.5B Q4_0, full GPU offload (`-ngl 999`), 128 Maxwell cores
 **SLO targets (7-day rolling window):**
 
 | SLI | Target |
-|-----|--------|
+| --- | --- |
 | Availability (API + llama-server) | 99% (≤100.8 min downtime) |
 | Latency p50 | < 20s |
 | Latency p95 | < 60s |
@@ -115,7 +115,7 @@ Load tested with k6 (burst: 5 VUs / 25 iterations, sustained: 12 req/min for 2 m
 ## API
 
 | Method | Path | Auth | Description |
-|--------|------|------|-------------|
+| --------- | ----------- | ----------- | ----------------------- |
 | `POST` | `/api/polish` | `X-API-Key` | Polish text via selected model |
 | `GET` | `/api/models` | `X-API-Key` | List available models |
 | `GET` | `/api/health` | None | Health check (per-adapter status) |
@@ -132,7 +132,7 @@ curl -X POST https://pollex.mlorente.dev/api/polish \
 
 ## Project Structure
 
-```
+```text
 pollex/
 ├── cmd/
 │   ├── pollex/              # Entry point (flags, config, wiring, shutdown)
@@ -174,12 +174,14 @@ pollex/
 ### Development Workflow
 
 1. **Run tests first** to ensure a clean baseline:
+
    ```sh
    make test
    make lint
    ```
 
 2. **Start the dev server** with the mock adapter (no LLM needed):
+
    ```sh
    make dev
    ```
@@ -192,6 +194,7 @@ pollex/
    - The rest (routing, health checks, model listing) is automatic
 
 5. **Run tests** before pushing:
+
    ```sh
    make test   # All tests with race detector
    make lint   # go vet + gofmt
@@ -201,14 +204,14 @@ pollex/
 
 Request processing order (defined in `internal/middleware/chain.go`):
 
-```
+```text
 CORS → RequestID → Logging → Metrics → APIKey → RateLimit → MaxBytes(64KB) → Timeout(120s) → Router
 ```
 
 ### Hardening
 
 | Protection | Limit | Response |
-|------------|-------|----------|
+| --- | --- | --- |
 | API key | `X-API-Key` header, constant-time compare | 401 |
 | Request body | 64KB max | 413 |
 | Text length | 10,000 chars | 400 |
@@ -278,7 +281,7 @@ make jetson-tunnel-status   # Tunnel health
 **Jetson Nano 4GB** — ARM64, CUDA 10.2, 128 Maxwell cores.
 
 | Component | RAM |
-|-----------|-----|
+| --- | --- |
 | JetPack OS (headless) | ~500MB |
 | llama-server (GPU) | ~200MB |
 | Qwen 2.5 1.5B (Q4) | ~1.0GB |
