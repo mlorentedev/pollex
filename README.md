@@ -84,12 +84,7 @@ make test   # Run all tests (80+ with subtests, race detector)
 
 Load the extension: `chrome://extensions` → Developer mode → Load unpacked → select `extension/`.
 
-### Benchmark
-
-```sh
-make bench       # Against local API (mock)
-make bench-jetson  # Against Jetson via Cloudflare Tunnel
-```
+Run `make help` for the full list of targets (35 total: dev, build, bench, docker, monitoring, deploy, loadtest, jetson remote ops).
 
 ## Performance (Jetson Nano 4GB)
 
@@ -121,6 +116,8 @@ Load tested with k6 (burst: 5 VUs / 25 iterations, sustained: 12 req/min for 2 m
 | `GET` | `/api/health` | None | Health check (per-adapter status) |
 | `GET` | `/metrics` | None | Prometheus metrics |
 
+### `POST /api/polish`
+
 ```sh
 curl -X POST https://pollex.mlorente.dev/api/polish \
   -H 'Content-Type: application/json' \
@@ -128,6 +125,28 @@ curl -X POST https://pollex.mlorente.dev/api/polish \
   -d '{"text":"i goes to store yesterday","model_id":"qwen2.5-1.5b-gpu"}'
 
 # {"polished":"I went to the store yesterday.","model":"qwen2.5-1.5b-gpu","elapsed_ms":3200}
+```
+
+### `GET /api/health`
+
+```json
+{
+  "status": "ok",
+  "version": "1.4.0",
+  "adapters": {
+    "qwen2.5-1.5b-gpu": {"available": true},
+    "claude-sonnet": {"available": false, "reason": "no API key"}
+  }
+}
+```
+
+### `GET /api/models`
+
+```json
+[
+  {"id": "qwen2.5-1.5b-gpu", "name": "Qwen 2.5 1.5B (GPU)", "provider": "llama.cpp"},
+  {"id": "mock", "name": "Mock", "provider": "mock"}
+]
 ```
 
 ## Project Structure
@@ -146,13 +165,14 @@ pollex/
 │   │   └── llamacpp.go      #   llama.cpp (primary, GPU)
 │   ├── config/              # YAML + env overrides (POLLEX_*)
 │   ├── handler/             # HTTP handlers + response helpers
-│   ├── middleware/           # CORS, RequestID, Logging, RateLimit, APIKey, MaxBytes
+│   ├── metrics/             # Prometheus metric declarations (promauto)
+│   ├── middleware/           # CORS, RequestID, Logging, Metrics, APIKey, RateLimit, MaxBytes
 │   └── server/              # SetupMux + integration tests
 ├── extension/               # Chrome extension (Manifest V3)
 ├── prompts/polish.txt       # System prompt
 ├── deploy/
 │   ├── loadtest/            # k6 load test scripts (normal, burst, jetson, soak)
-│   ├── systemd/             # pollex-api, llama-server, cloudflared services
+│   ├── systemd/             # pollex-api, llama-server, cloudflared, jetson-clocks services
 │   ├── scripts/             # init, build-llamacpp, setup-cloudflared
 │   ├── prometheus/          # Alert rules, scrape config, alertmanager
 │   ├── grafana/             # Dashboard JSON + provisioning
@@ -228,7 +248,7 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 ## Docker
 
 ```sh
-make docker-build   # Build image (alpine:3.21, ~25MB, non-root)
+make docker-build   # Build image (alpine:3.21, 24.7MB, non-root)
 make docker-dev     # Run pollex in Docker (mock mode, :8090)
 make docker-down    # Stop container
 ```
@@ -270,10 +290,13 @@ make deploy           # Build ARM64 + SCP + restart service
 ### Remote operations
 
 ```sh
+make jetson-ssh             # SSH into Jetson
 make jetson-status          # Health check via SSH
 make jetson-test            # End-to-end polish test
 make jetson-logs            # Tail API logs
+make jetson-tunnel-start    # Start Cloudflare Tunnel
 make jetson-tunnel-status   # Tunnel health
+make jetson-tunnel-logs     # Tail tunnel logs
 ```
 
 ## Hardware
