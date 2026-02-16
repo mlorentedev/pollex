@@ -2,10 +2,10 @@
 
 /* === Tokens === */
 :root {
-  /* Accent */
-  --accent: #6366f1;
-  --accent-hover: #5558e6;
-  --accent-ring: rgba(99, 102, 241, 0.25);
+  /* Accent (cyan-700 family) */
+  --accent: #0e7490;
+  --accent-hover: #0c6578;
+  --accent-ring: rgba(14, 116, 144, 0.25);
 
   /* Neutrals (warm gray) */
   --bg-primary: #fafaf9;
@@ -24,8 +24,8 @@
   --error-bg: #fef2f2;
   --error-border: #fecaca;
   --warning: #d97706;
-  --info: #6366f1;
-  --info-bg: #eef2ff;
+  --info: #0e7490;
+  --info-bg: #ecfeff;
 
   /* Spacing (4px base) */
   --sp-1: 4px;
@@ -422,7 +422,7 @@ textarea::placeholder {
   line-height: 1.6;
   white-space: pre-wrap;
   word-wrap: break-word;
-  max-height: 200px;
+  max-height: 350px;
   overflow-y: auto;
 }
 
@@ -509,6 +509,139 @@ textarea::placeholder {
 
 .settings-status.err {
   color: var(--error);
+}
+
+/* === Progress Bar === */
+.progress-section {
+  animation: fadeIn 200ms var(--ease);
+}
+
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--sp-1);
+}
+
+.progress-pct {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
+}
+
+.progress-elapsed {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-track {
+  height: 6px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 400ms var(--ease);
+}
+
+/* === History === */
+.history-section {
+  animation: fadeIn 200ms var(--ease);
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-1);
+}
+
+.history-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-tertiary);
+}
+
+.history-count {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.history-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--bg-white);
+  cursor: pointer;
+  transition: background var(--duration) var(--ease);
+}
+
+.history-item:hover {
+  background: var(--bg-secondary);
+}
+
+.history-item-text {
+  font-size: 12px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-item-meta {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+/* === History Detail === */
+.history-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  animation: fadeIn 200ms var(--ease);
+}
+
+.history-detail-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.history-detail-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.history-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.history-detail-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-tertiary);
 }
 
 /* === Animations === */

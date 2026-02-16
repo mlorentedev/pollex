@@ -1,10 +1,11 @@
-// Pollex popup — wires UI to api.js
+// Pollex popup — wires UI to background service worker via messaging.
 
 const MAX_CHARS = 1500;
 const WARN_THRESHOLD = 0.9;
 const MS_PER_CHAR = 36;
 const SLOW_SECONDS = 45;
 const DRAFT_DEBOUNCE_MS = 500;
+const STALE_TIMEOUT_MS = 150000;
 
 // --- DOM refs ---
 
@@ -24,6 +25,10 @@ const statusEl = document.getElementById("status");
 const resultSection = document.getElementById("result-section");
 const resultBox = document.getElementById("result");
 const elapsedEl = document.getElementById("elapsed");
+const progressSection = document.getElementById("progress-section");
+const progressPct = document.getElementById("progress-pct");
+const progressElapsed = document.getElementById("progress-elapsed");
+const progressFill = document.getElementById("progress-fill");
 
 // Settings panel
 const btnBack = document.getElementById("btn-back");
@@ -33,11 +38,25 @@ const btnTest = document.getElementById("btn-test");
 const btnSave = document.getElementById("btn-save");
 const settingsStatus = document.getElementById("settings-status");
 
-let abortController = null;
+// History
+const historySection = document.getElementById("history-section");
+const historyCount = document.getElementById("history-count");
+const historyList = document.getElementById("history-list");
+const historyDetail = document.getElementById("history-detail");
+const btnHistoryBack = document.getElementById("btn-history-back");
+const historyDetailMeta = document.getElementById("history-detail-meta");
+const historyDetailInput = document.getElementById("history-detail-input");
+const historyDetailOutput = document.getElementById("history-detail-output");
+const btnHistoryCopy = document.getElementById("btn-history-copy");
+const iconHistoryCopy = document.getElementById("icon-history-copy");
+const iconHistoryCheck = document.getElementById("icon-history-check");
+const historyCopyLabel = document.getElementById("history-copy-label");
+
 let timerInterval = null;
 let modelsLoaded = false;
 let singleModelId = null;
 let draftTimer = null;
+let estimatedSeconds = 0;
 
 // --- Init ---
 
@@ -45,6 +64,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   await restoreDraft();
   await loadModels();
   await loadSettings();
+  await recoverJobState();
+  await loadHistory();
   updateCharCount();
   input.focus();
 });
@@ -135,16 +156,12 @@ function saveDraft() {
   }, DRAFT_DEBOUNCE_MS);
 }
 
-function clearDraft() {
-  clearTimeout(draftTimer);
-  chrome.storage.local.remove("draftText");
-}
-
 // --- Character count ---
 
 input.addEventListener("input", () => {
   updateCharCount();
   clearTransientStatus();
+  clearStaleJob();
   saveDraft();
 });
 
@@ -172,13 +189,20 @@ function updateCharCount() {
 }
 
 function clearTransientStatus() {
-  // Dismiss error/cancelled messages when user starts editing
   if (statusEl.classList.contains("error") || statusEl.classList.contains("cancelled")) {
     hideStatus();
   }
 }
 
-// --- Polish ---
+function clearStaleJob() {
+  chrome.storage.local.get("polishJob", ({ polishJob }) => {
+    if (polishJob && polishJob.status !== "running") {
+      chrome.storage.local.remove("polishJob");
+    }
+  });
+}
+
+// --- Polish (via service worker) ---
 
 btnPolish.addEventListener("click", doPolish);
 
@@ -200,44 +224,211 @@ async function doPolish() {
   resultSection.classList.add("hidden");
   btnPolish.disabled = true;
   btnCancel.classList.remove("hidden");
+  estimatedSeconds = Math.max(1, Math.round((text.length * MS_PER_CHAR * 1.15) / 1000));
+  showPolishingStatus(0);
+  startLocalTimer(0);
 
-  // Start timer
-  let seconds = 0;
-  showStatus("Polishing... 0s", "polishing");
+  const resp = await chrome.runtime.sendMessage({
+    type: "POLISH_START",
+    payload: { text, modelId },
+  });
+
+  if (!resp || !resp.ok) {
+    stopLocalTimer();
+    hideProgress();
+    btnCancel.classList.add("hidden");
+    btnPolish.disabled = false;
+    showStatus(resp?.error || "Failed to start.", "error");
+  }
+  // On success, UI updates arrive via storage.onChanged
+}
+
+// --- Cancel (via service worker) ---
+
+btnCancel.addEventListener("click", async () => {
+  await chrome.runtime.sendMessage({ type: "POLISH_CANCEL" });
+});
+
+// --- Timer ---
+
+function startLocalTimer(startSeconds) {
+  let seconds = startSeconds;
+  stopLocalTimer();
   timerInterval = setInterval(() => {
     seconds++;
-    showStatus(`Polishing... ${seconds}s`, "polishing");
+    showPolishingStatus(seconds);
   }, 1000);
+}
 
-  abortController = new AbortController();
+function stopLocalTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
 
-  try {
-    const result = await fetchPolish(text, modelId, abortController.signal);
+// --- Storage change listener (reacts to background writes) ---
 
-    resultBox.textContent = result.polished;
-    elapsedEl.textContent = `${(result.elapsed_ms / 1000).toFixed(1)}s`;
+chrome.storage.onChanged.addListener((changes) => {
+  if (changes.polishJob) {
+    const job = changes.polishJob.newValue;
+    if (!job) return;
+    handleJobUpdate(job);
+  }
+  if (changes.history) {
+    renderHistory(changes.history.newValue || []);
+  }
+});
+
+function handleJobUpdate(job) {
+  if (job.status === "completed") {
+    stopLocalTimer();
+    hideProgress();
+    resultBox.textContent = job.result.polished;
+    elapsedEl.textContent = `${(job.result.elapsed_ms / 1000).toFixed(1)}s`;
     resultSection.classList.remove("hidden");
     hideStatus();
-    clearDraft();
-  } catch (err) {
-    if (err.name === "AbortError") {
-      showStatus("Cancelled.", "cancelled");
-    } else {
-      showStatus(err.message, "error");
-    }
-  } finally {
-    clearInterval(timerInterval);
-    abortController = null;
+    btnCancel.classList.add("hidden");
+    btnPolish.disabled = false;
+  } else if (job.status === "failed") {
+    stopLocalTimer();
+    hideProgress();
+    showStatus(job.error || "Request failed.", "error");
+    btnCancel.classList.add("hidden");
+    btnPolish.disabled = false;
+  } else if (job.status === "cancelled") {
+    stopLocalTimer();
+    hideProgress();
+    showStatus("Cancelled.", "cancelled");
     btnCancel.classList.add("hidden");
     btnPolish.disabled = false;
   }
 }
 
-// --- Cancel ---
+// --- Tick listener (best-effort timer from background) ---
 
-btnCancel.addEventListener("click", () => {
-  if (abortController) abortController.abort();
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg.type === "POLISH_TICK") {
+    showPolishingStatus(msg.seconds);
+  }
 });
+
+// --- Job recovery on popup open ---
+
+async function recoverJobState() {
+  const { polishJob } = await chrome.storage.local.get("polishJob");
+  if (!polishJob) return;
+
+  if (polishJob.status === "running") {
+    const elapsed = Date.now() - polishJob.startedAt;
+    if (elapsed > STALE_TIMEOUT_MS) {
+      // Stale job — mark failed, but don't clutter the UI
+      await chrome.storage.local.set({
+        polishJob: { status: "failed", error: "Request timed out." },
+      });
+    } else {
+      // Resume timer UI — only case where we show state on reopen
+      const seconds = Math.floor(elapsed / 1000);
+      estimatedSeconds = Math.max(1, Math.round(((polishJob.inputText || "").length * MS_PER_CHAR * 1.15) / 1000));
+      showPolishingStatus(seconds);
+      startLocalTimer(seconds);
+      btnPolish.disabled = true;
+      btnCancel.classList.remove("hidden");
+    }
+  } else {
+    // Completed/failed/cancelled — clean interface, result lives in history
+    await chrome.storage.local.remove("polishJob");
+  }
+}
+
+// --- History ---
+
+async function loadHistory() {
+  const { history = [] } = await chrome.storage.local.get("history");
+  renderHistory(history);
+}
+
+function renderHistory(history) {
+  if (history.length === 0) {
+    historySection.classList.add("hidden");
+    return;
+  }
+
+  historySection.classList.remove("hidden");
+  historyCount.textContent = `(${history.length})`;
+  historyList.innerHTML = "";
+
+  for (const entry of history) {
+    const item = document.createElement("div");
+    item.className = "history-item";
+    item.addEventListener("click", () => showHistoryDetail(entry));
+
+    const text = document.createElement("div");
+    text.className = "history-item-text";
+    text.textContent = entry.output;
+
+    const meta = document.createElement("div");
+    meta.className = "history-item-meta";
+    meta.textContent = `${entry.model} · ${formatRelativeTime(entry.timestamp)}`;
+
+    item.appendChild(text);
+    item.appendChild(meta);
+    historyList.appendChild(item);
+  }
+}
+
+function showHistoryDetail(entry) {
+  historyDetailMeta.textContent = `${entry.model} · ${formatRelativeTime(entry.timestamp)} · ${(entry.elapsed_ms / 1000).toFixed(1)}s`;
+  historyDetailInput.textContent = entry.input;
+  historyDetailOutput.textContent = entry.output;
+  historyDetail.classList.remove("hidden");
+
+  // Hide main content sections
+  document.querySelector(".input-group").classList.add("hidden");
+  document.querySelector(".controls").classList.add("hidden");
+  statusEl.classList.add("hidden");
+  progressSection.classList.add("hidden");
+  resultSection.classList.add("hidden");
+  historySection.classList.add("hidden");
+}
+
+btnHistoryBack.addEventListener("click", () => {
+  historyDetail.classList.add("hidden");
+
+  // Restore main content sections
+  document.querySelector(".input-group").classList.remove("hidden");
+  document.querySelector(".controls").classList.remove("hidden");
+  loadHistory();
+});
+
+btnHistoryCopy.addEventListener("click", async () => {
+  const text = historyDetailOutput.textContent;
+  if (!text) return;
+
+  await navigator.clipboard.writeText(text);
+
+  iconHistoryCopy.classList.add("hidden");
+  iconHistoryCheck.classList.remove("hidden");
+  historyCopyLabel.textContent = "Copied";
+
+  setTimeout(() => {
+    iconHistoryCheck.classList.add("hidden");
+    iconHistoryCopy.classList.remove("hidden");
+    historyCopyLabel.textContent = "Copy";
+  }, 1500);
+});
+
+function formatRelativeTime(timestamp) {
+  const diff = Date.now() - timestamp;
+  const seconds = Math.floor(diff / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
 
 // --- Copy ---
 
@@ -338,6 +529,22 @@ btnSave.addEventListener("click", async () => {
 });
 
 // --- Helpers ---
+
+function showPolishingStatus(seconds) {
+  const pct = estimatedSeconds > 0
+    ? Math.min(99, Math.round((seconds / estimatedSeconds) * 100))
+    : 0;
+  progressPct.textContent = `${pct}%`;
+  progressElapsed.textContent = `${seconds}s`;
+  progressFill.style.width = `${pct}%`;
+  progressSection.classList.remove("hidden");
+  hideStatus();
+}
+
+function hideProgress() {
+  progressSection.classList.add("hidden");
+  progressFill.style.width = "0%";
+}
 
 function showStatus(msg, type) {
   statusEl.textContent = msg;

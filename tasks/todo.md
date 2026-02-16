@@ -270,3 +270,30 @@ CWS publishing adds cost ($5), maintenance burden (privacy policy, review proces
 - [x] Push to GitHub → CI workflow runs (lint + test + build)
 - [x] `make bench-jetson` — baseline: ~4 tok/s on Qwen 2.5 1.5B Q4_K_M
 - [x] release-please + goreleaser + extension zip automation verified
+
+## Phase 16 — Extension: Service Worker + History
+
+### 16.1 — Service Worker for Persistent Requests
+- [x] `extension/manifest.json` — add `background.service_worker: "background.js"`
+- [x] `extension/background.js` — new file: message listener (POLISH_START/CANCEL), fetchPolish via api.js, polishJob state in storage, tick interval, appendHistory
+- [x] `extension/popup.js` — refactor: doPolish sends message to background, cancel sends message, storage.onChanged listener, recoverJobState on popup open, clearStaleJob on input
+
+### 16.2 — Rolling History (7 entries)
+- [x] `extension/popup.html` — history section + detail overlay
+- [x] `extension/popup.css` — history list/item/detail styles
+- [x] `extension/popup.js` — loadHistory, renderHistory, showHistoryDetail, formatRelativeTime, back button
+
+### 16.3 — Color Scheme Update
+- [x] Accent color changed from indigo (#6366f1) to cyan-700 (#0e7490) family
+- [x] Brand SVG + PNG icons (16/48/128) regenerated to match
+
+### 16.4 — UX Polish
+- [x] Progress bar with ETA percentage + elapsed time (replaces text status)
+- [x] ETA padded +15% for conservative estimate, capped at 99%
+- [x] Copy button in history detail view
+- [x] Clean interface on popup reopen (no stale results shown, history below for recovery)
+
+### 16.5 — Hardening
+- [x] Input validation in background.js (type check, empty, max length 1500)
+- [x] Error message truncation (200 chars max in storage)
+- [x] Prompt injection defense in `prompts/polish.txt`

@@ -6,6 +6,9 @@
   "version": "1.3.1",
   "homepage_url": "https://github.com/mlorentedev/pollex",
   "minimum_chrome_version": "110",
+  "background": {
+    "service_worker": "background.js"
+  },
   "permissions": [
     "storage"
   ],

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
-  <!-- Rounded indigo background -->
-  <rect x="8" y="8" width="112" height="112" rx="24" fill="#6366f1"/>
+  <!-- Rounded cyan background -->
+  <rect x="8" y="8" width="112" height="112" rx="24" fill="#0e7490"/>
   <!-- Three text lines -->
   <rect x="30" y="40" width="52" height="6" rx="3" fill="#fff" opacity="0.95"/>
   <rect x="30" y="56" width="42" height="6" rx="3" fill="#fff" opacity="0.75"/>

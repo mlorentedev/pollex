@@ -12,7 +12,7 @@
       <header class="header">
         <div class="brand">
           <svg class="brand-icon" viewBox="0 0 128 128" aria-hidden="true">
-            <rect x="8" y="8" width="112" height="112" rx="24" fill="#6366f1"/>
+            <rect x="8" y="8" width="112" height="112" rx="24" fill="#0e7490"/>
             <rect x="30" y="40" width="52" height="6" rx="3" fill="#fff" opacity="0.95"/>
             <rect x="30" y="56" width="42" height="6" rx="3" fill="#fff" opacity="0.75"/>
             <rect x="30" y="72" width="48" height="6" rx="3" fill="#fff" opacity="0.55"/>
@@ -52,6 +52,16 @@
 
       <div id="status" class="status hidden" role="status" aria-live="polite"></div>
 
+      <div id="progress-section" class="progress-section hidden">
+        <div class="progress-meta">
+          <span id="progress-pct" class="progress-pct">0%</span>
+          <span id="progress-elapsed" class="progress-elapsed">0s</span>
+        </div>
+        <div class="progress-track">
+          <div id="progress-fill" class="progress-fill"></div>
+        </div>
+      </div>
+
       <div id="result-section" class="result-section hidden">
         <div class="result-header">
           <span class="result-label">Result</span>
@@ -71,6 +81,48 @@
             </svg>
             <span id="copy-label">Copy</span>
           </button>
+        </div>
+      </div>
+
+      <!-- History -->
+      <div id="history-section" class="history-section hidden">
+        <div class="history-header">
+          <span class="history-label">History</span>
+          <span id="history-count" class="history-count"></span>
+        </div>
+        <div id="history-list" class="history-list"></div>
+      </div>
+
+      <!-- History Detail Overlay -->
+      <div id="history-detail" class="history-detail hidden">
+        <div class="history-detail-header">
+          <button id="btn-history-back" class="icon-btn" aria-label="Back to main view">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"/>
+              <polyline points="12 19 5 12 12 5"/>
+            </svg>
+          </button>
+          <span id="history-detail-meta" class="history-detail-meta"></span>
+        </div>
+        <div class="history-detail-section">
+          <span class="history-detail-label">Input</span>
+          <div id="history-detail-input" class="result-box"></div>
+        </div>
+        <div class="history-detail-section">
+          <span class="history-detail-label">Output</span>
+          <div id="history-detail-output" class="result-box"></div>
+          <div class="result-footer">
+            <button id="btn-history-copy" class="btn btn-ghost btn-copy" aria-label="Copy output">
+              <svg id="icon-history-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              <svg id="icon-history-check" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <span id="history-copy-label">Copy</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
