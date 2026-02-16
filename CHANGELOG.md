@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/mlorentedev/pollex/compare/v1.3.0...v1.3.1) (2026-02-16)
+
+
+### Bug Fixes
+
+* sync extension manifest version and fix release-please config ([7d0966c](https://github.com/mlorentedev/pollex/commit/7d0966c9c53864e4660e7275ae0fe4f5dfdf759f))
+
 ## [1.3.0](https://github.com/mlorentedev/pollex/compare/v1.2.0...v1.3.0) (2026-02-16)
 
 

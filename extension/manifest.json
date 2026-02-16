@@ -3,11 +3,15 @@
   "name": "Pollex — English Text Polisher",
   "short_name": "Pollex",
   "description": "Polish your English text with AI: fix grammar, improve coherence, and tighten wording. Self-hosted, private, and fast.",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "homepage_url": "https://github.com/mlorentedev/pollex",
   "minimum_chrome_version": "110",
-  "permissions": ["storage"],
-  "host_permissions": ["<all_urls>"],
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
