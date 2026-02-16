@@ -13,6 +13,7 @@ import (
 
 	"github.com/mlorentedev/pollex/internal/adapter"
 	"github.com/mlorentedev/pollex/internal/config"
+	"github.com/mlorentedev/pollex/internal/metrics"
 	"github.com/mlorentedev/pollex/internal/server"
 )
 
@@ -42,6 +43,8 @@ func main() {
 
 	adapters, models := buildAdapters(cfg, *useMock)
 	handler := server.SetupMux(adapters, models, systemPrompt, cfg.APIKey)
+
+	startAdapterProbe(adapters, 30*time.Second)
 
 	if cfg.APIKey != "" {
 		slog.Info("auth enabled", "mode", "X-API-Key header")
@@ -77,6 +80,27 @@ func main() {
 		os.Exit(1)
 	}
 	slog.Info("server stopped")
+}
+
+func probeAdapters(adapters map[string]adapter.LLMAdapter) {
+	for id, a := range adapters {
+		if a.Available() {
+			metrics.AdapterAvailable.WithLabelValues(id).Set(1)
+		} else {
+			metrics.AdapterAvailable.WithLabelValues(id).Set(0)
+		}
+	}
+}
+
+func startAdapterProbe(adapters map[string]adapter.LLMAdapter, interval time.Duration) {
+	probeAdapters(adapters)
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+		for range ticker.C {
+			probeAdapters(adapters)
+		}
+	}()
 }
 
 func buildAdapters(cfg config.Config, useMock bool) (map[string]adapter.LLMAdapter, []adapter.ModelInfo) {

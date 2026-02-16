@@ -1,0 +1,30 @@
+# Pollex — Alertmanager configuration
+# Replace SLACK_WEBHOOK_URL with your actual Slack incoming webhook URL.
+
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: slack
+  group_by: ["alertname", "severity"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - match:
+        severity: critical
+      repeat_interval: 1h
+
+receivers:
+  - name: slack
+    slack_configs:
+      - api_url: "SLACK_WEBHOOK_URL"
+        channel: "#pollex-alerts"
+        title: '{{ .Status | toUpper }}: {{ .GroupLabels.alertname }}'
+        text: >-
+          {{ range .Alerts }}
+          *{{ .Annotations.summary }}*
+          {{ .Annotations.description }}
+          {{ end }}
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'

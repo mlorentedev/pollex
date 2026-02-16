@@ -1,0 +1,75 @@
+# Pollex Alerting Rules — based on ADR-007 SLOs
+# SLO targets (7-day rolling): 99% availability, p50 < 20s, p95 < 60s, <1% error rate
+
+groups:
+  - name: pollex-availability
+    rules:
+      - alert: PollexDown
+        expr: up{job="pollex"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Pollex API is unreachable"
+          description: "Prometheus cannot scrape pollex /metrics for >2 minutes. Error budget: 100.8 min/week."
+
+      - alert: PollexLlamaCppDown
+        expr: pollex_adapter_available{adapter="llamacpp"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "llama-server inference backend is unavailable"
+          description: "LlamaCpp adapter reports unavailable for >5 minutes. Polish requests will fail with 5xx."
+
+  - name: pollex-latency
+    rules:
+      - alert: PollexHighLatencyP50
+        expr: histogram_quantile(0.50, rate(pollex_polish_duration_seconds_bucket[10m])) > 20
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Polish p50 latency exceeds 20s SLO"
+          description: "Median polish latency is {{ $value | humanizeDuration }} (SLO: <20s). Typical cause: GPU contention or model degradation."
+
+      - alert: PollexHighLatencyP95
+        expr: histogram_quantile(0.95, rate(pollex_polish_duration_seconds_bucket[10m])) > 60
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Polish p95 latency exceeds 60s SLO"
+          description: "95th percentile polish latency is {{ $value | humanizeDuration }} (SLO: <60s). Check llama-server load and GPU memory."
+
+  - name: pollex-errors
+    rules:
+      - alert: PollexHighErrorRate
+        expr: |
+          (
+            sum(rate(pollex_requests_total{path="/api/polish",status=~"5.."}[10m]))
+            /
+            sum(rate(pollex_requests_total{path="/api/polish"}[10m]))
+          ) > 0.01
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Polish error rate exceeds 1% SLO"
+          description: "5xx error rate is {{ $value | humanizePercentage }} over the last 10 minutes (SLO: <1%)."
+
+      - alert: PollexErrorBudgetBurn
+        expr: |
+          (
+            1 - (
+              sum(rate(pollex_requests_total{path="/api/polish",status=~"5.."}[1h]))
+              /
+              sum(rate(pollex_requests_total{path="/api/polish"}[1h]))
+            )
+          ) < 0.856
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Error budget burning too fast (14.4x rate)"
+          description: "At current error rate, the 7-day 1% error budget will be exhausted in ~12 hours. Investigate immediately."

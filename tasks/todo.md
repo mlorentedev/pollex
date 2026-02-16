@@ -202,14 +202,18 @@ Jetson behind double NAT (no router access). Cloudflare Tunnel for zero-config i
 - [x] Log adapter name + model in buildAdapters registration
 
 ### 13.3 — SLOs & SLIs
-- [ ] Define SLIs: availability (health check), latency (p50/p95/p99 polish), error rate
-- [ ] Define SLOs: 99.5% availability, p95 < 30s (short text), error rate < 1%
-- [ ] Document in vault as ADR-007
+- [x] Define SLIs: availability (composite: API up + llamacpp available), latency (p50/p95 polish), error rate (5xx on /api/polish)
+- [x] Define SLOs (7d rolling): 99% availability (100.8 min budget), p50 < 20s, p95 < 60s, error rate < 1%
+- [x] Error budget policy: healthy → warning → freeze → post-mortem
+- [x] Document in vault as ADR-007
 
 ### 13.4 — Alerting & Dashboard
-- [ ] Prometheus alerting rules file (`deploy/prometheus/alerts.yml`)
-- [ ] Grafana dashboard JSON (`deploy/grafana/pollex-dashboard.json`)
-- [ ] Configure scrape target in cubelab for `pollex.mlorente.dev/metrics`
+- [x] Prometheus alerting rules (`deploy/prometheus/alerts.yml`): PollexDown, LlamaCppDown, HighLatency p50/p95, HighErrorRate, ErrorBudgetBurn
+- [x] Alertmanager config template (`deploy/prometheus/alertmanager.yml`): Slack webhook routing, severity-based repeat intervals
+- [x] Prometheus scrape config (`deploy/prometheus/prometheus.yml`): pollex.mlorente.dev target, 30s interval
+- [x] Grafana dashboard (`deploy/grafana/pollex-dashboard.json`): SLO status row, traffic/errors, latency percentiles, adapter availability
+- [x] Background adapter probe goroutine (30s interval) in `cmd/pollex/main.go` — keeps `pollex_adapter_available` gauge fresh for Prometheus
+- [ ] Deploy: configure scrape target in Docker Prometheus on monitoring host
 
 ## Phase 14 — Containerization
 
