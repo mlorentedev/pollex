@@ -306,3 +306,101 @@ CWS publishing adds cost ($5), maintenance burden (privacy policy, review proces
 - [x] `Makefile` — VERSION from `git describe --tags`, LDFLAGS for build/build-arm64
 - [x] `.goreleaser.yml` — `-X main.version={{.Version}}` in ldflags
 - [x] Extension Settings — shows `API vX.Y.Z` fetched from `/api/health`
+
+## Phase 17 — Multi-Node: Office Jetson Deployment
+
+Second Jetson Nano 4GB in the office, connected via WiFi dongle (TP-Link TL-WN725N, RTL8188EUS).
+Office Jetson = primary node (24/7). Home Jetson = backup/dev. Single domain: `pollex.mlorente.dev`.
+
+### Fase 1 — Flash JetPack + Setup inicial del SO ✅
+- [x] Flash SD card 32GB con JetPack 4.6 via Raspberry Pi Imager (balenaEtcher v1.19+ broken)
+- [x] OEM wizard: user `manu`, hostname `jetson-office`, timezone America/Denver
+- [x] Verificar CUDA: `nvcc --version` (10.2, V10.2.300)
+- [x] RAM: 3.9G total, 2.9G free. Disco: 30G, 16G available
+- [x] Passwordless sudo: `/etc/sudoers.d/manu`
+- [x] SSH key copied (passwordless SSH)
+- [x] CUDA added to PATH: `~/.bashrc`
+- [ ] Set headless mode: `sudo systemctl set-default multi-user.target` (free ~400MB RAM)
+- [x] Doc vault: actualizar `runbooks/flash-jetson.md` — actualizado con variante WiFi, multi-nodo, lessons learned
+
+#### Problemas encontrados (Fase 1)
+- balenaEtcher v1.19+ falla con `Error: h.requestMetadata is not a function` → usar Raspberry Pi Imager
+- FAT32 no soporta imagenes >4GB → formatear USB como exFAT
+- Windows no asigna letra a USB exFAT automaticamente → `diskmgmt.msc` > asignar letra
+- J48 jumper obligatorio para barrel jack — sin el la placa no arranca
+- `ssh-copy-id` no existe en Windows → workaround con `type ... | ssh ... cat >>`
+
+### Fase 2 — Driver WiFi + Configuracion de red ✅
+- [x] WiFi dongle TL-WN725N (RTL8188EUS) reconocido automaticamente por JetPack 4.6.6
+- [x] **NO fue necesario compilar driver** — `rtl8xxxu` staging driver funciono out of the box
+- [x] Conectar WiFi oficina via nmcli + autoconnect
+- [x] Verificar: IP 10.251.24.83 (DHCP), ping 8.8.8.8 OK, HTTPS outbound OK
+- [x] Reboot + verificar reconexion automatica: OK (tarda 1-2 min)
+- [x] Doc vault: crear `runbooks/setup-wifi-jetson.md`
+
+#### Problemas encontrados (Fase 2)
+- Client isolation en WiFi de oficina: no se puede hacer SSH directo entre dispositivos en la misma red
+- `curl` no instalado en JetPack base → `sudo apt install -y curl` (o usar wget)
+
+### Fase 3 — Acceso SSH via Cloudflare Tunnel (transicion a remoto) ✅
+- [x] Instalar cloudflared (ARM64 binary) via curl
+- [x] Autenticar: `cloudflared tunnel login`
+- [x] Crear tunnel: `cloudflared tunnel create pollex-office`
+- [x] Config: `ssh-pollex.mlorente.dev` → `ssh://localhost:22` + `protocol: http2`
+- [x] DNS record: `cloudflared tunnel route dns pollex-office ssh-pollex.mlorente.dev`
+- [x] Instalar servicio systemd (sin User=manu, sin hardening directives)
+- [x] Instalar cloudflared en Windows: `winget install Cloudflare.cloudflared`
+- [x] Configurar SSH en dev machine (`~/.ssh/config` con ProxyCommand cloudflared)
+- [x] Probar: `ssh jetson-office` desde Windows — OK
+- [x] Desconectar HDMI/teclado — todo remoto desde aqui
+- [x] Doc vault: crear `runbooks/setup-cloudflare-ssh.md`
+
+#### Problemas encontrados (Fase 3)
+- QUIC (UDP 443) bloqueado por firewall de oficina → `protocol: http2` en config.yml obligatorio
+- `User=manu` en systemd falla en JetPack 4.6 con `failed to determine user credentials: No such process` → ejecutar como root
+- Hardening directives (`ProtectSystem=strict`, `ProtectHome=read-only`) tambien causan problemas → eliminadas
+- Tras reboot, SSH tarda 1-2 min en estar disponible (WiFi + tunnel boot sequence)
+- WSL y Windows tienen SSH config separados → cloudflared + ~/.ssh/config deben configurarse independientemente en cada entorno
+
+### Fase 4 — Despliegue de Pollex (remoto)
+- [ ] `make deploy-init JETSON_HOST=jetson-office`
+- [ ] `make deploy-llamacpp JETSON_HOST=jetson-office` (~85 min)
+- [ ] `make deploy JETSON_HOST=jetson-office`
+- [ ] `make deploy-secrets JETSON_HOST=jetson-office`
+- [ ] Verificar: `make jetson-status JETSON_HOST=jetson-office`
+- [ ] Verificar: `make jetson-test JETSON_HOST=jetson-office`
+- [ ] Doc vault: actualizar `runbooks/deploy-jetson.md` seccion "Multi-nodo"
+
+### Fase 5 — Cloudflare Tunnel para API (remoto)
+- [ ] Actualizar `~/.cloudflared/config.yml`: anadir ingress `pollex.mlorente.dev` → `http://localhost:8090`
+- [ ] `sudo systemctl restart cloudflared`
+- [ ] Verificar: `journalctl -u cloudflared -n 20` muestra "Registered tunnel connection"
+- [ ] NO cambiar DNS todavia
+
+### Fase 6 — DNS Cutover (oficina pasa a produccion)
+- [ ] Pre-cutover: verificar health + test en Jetson oficina
+- [ ] Cambiar CNAME `pollex` al tunnel UUID de oficina (CLI o dashboard)
+- [ ] Esperar 1-2 min propagacion
+- [ ] Parar cloudflared en Jetson casa: `ssh nvidia 'sudo systemctl stop cloudflared && sudo systemctl disable cloudflared'`
+- [ ] Verificar: `curl https://pollex.mlorente.dev/api/health`
+- [ ] Verificar: extension navegador funciona
+- [ ] Verificar: `ssh jetson-office` sigue funcionando (DNS independiente)
+
+### Fase 7 — Cambios en el codigo del repo
+- [ ] 7.1 Parametrizar `deploy/scripts/setup-cloudflared.sh` (TUNNEL_NAME, TUNNEL_HOSTNAME, SSH_HOSTNAME, LOCAL_PORT)
+- [ ] 7.2 Parametrizar `deploy/systemd/cloudflared.service` (ExecStart usa config file)
+- [ ] 7.3 Anadir variables y targets al `Makefile` (TUNNEL_*, deploy-office, deploy-home)
+- [ ] 7.4 Actualizar `deploy/prometheus/prometheus.yml` (host: jetson-office)
+- [ ] 7.5 Actualizar `deploy/prometheus/alerts.yml` (host label en annotations)
+- [ ] 7.6 Actualizar `deploy/grafana/pollex-dashboard.json` (variable template host + filtros)
+- [ ] Verificar: `make test`, `make monitoring-validate`
+
+### Fase 8 — Documentacion (Knowledge Vault)
+- [ ] Crear `runbooks/setup-wifi-jetson.md`
+- [ ] Crear `runbooks/setup-cloudflare-ssh.md`
+- [ ] Crear `adrs/008-multi-node-deployment.md`
+- [ ] Actualizar `runbooks/flash-jetson.md` (variante WiFi)
+- [ ] Actualizar `runbooks/deploy-jetson.md` (multi-nodo + DNS cutover)
+- [ ] Actualizar `runbooks/setup-cloudflare-tunnel.md` (parametrizado, multi-ingress)
+- [ ] Actualizar `architecture.md` (diagrama multi-nodo)
+- [ ] Actualizar `_index.md` (Jetson oficina en infra, link ADR-008)
