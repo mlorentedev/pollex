@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.5.0](https://github.com/mlorentedev/pollex/compare/v1.4.0...v1.5.0) (2026-02-18)
+
+
+### Features
+
+* multi-node blue-green deployment ([fecd95f](https://github.com/mlorentedev/pollex/commit/fecd95f937136307922c693c88f2f082f4804c76))
+
+
+### Bug Fixes
+
+* add .gitattributes to enforce LF line endings for deploy scripts ([b7177e9](https://github.com/mlorentedev/pollex/commit/b7177e9442840da8c152d9fe5fbb9d6b7485ff1d))
+* wrong model in llama server startup ([a8563ca](https://github.com/mlorentedev/pollex/commit/a8563cad86b8e0d5d8c593f5d4ab68c1a3453a12))
+
 ## [1.4.0](https://github.com/mlorentedev/pollex/compare/v1.3.1...v1.4.0) (2026-02-16)
 
 
