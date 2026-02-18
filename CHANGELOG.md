@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/mlorentedev/pollex/compare/v1.5.0...v1.6.0) (2026-02-18)
+
+
+### Features
+
+* add deploy-prod target with pre-flight guardrails ([f6fae81](https://github.com/mlorentedev/pollex/commit/f6fae8126dd4c56083946a990f8a6c74ccaf6e75))
+
 ## [1.5.0](https://github.com/mlorentedev/pollex/compare/v1.4.0...v1.5.0) (2026-02-18)
 
 
