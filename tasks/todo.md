@@ -1,66 +1,66 @@
 # Pollex — TODO
 
-## Fase 1 — Backend Core
+## Phase 1 — Backend Core
 - [x] `go.mod` + `config.go` + tests
-- [x] `adapter.go` (interfaz) + `adapter_mock.go` (respuestas simuladas con delay configurable)
-- [x] `adapter_ollama.go` + tests (con `httptest`)
+- [x] `adapter.go` (interface) + `adapter_mock.go` (simulated responses with configurable delay)
+- [x] `adapter_ollama.go` + tests (with `httptest`)
 - [x] `handler_health.go` + `handler_models.go` + `handler_polish.go` + tests
 - [x] `middleware.go` (CORS + logging + timeout)
-- [x] `main.go` (wiring, flag `--mock` para modo desarrollo sin Ollama)
+- [x] `main.go` (wiring, `--mock` flag for development mode without Ollama)
 - [x] `prompts/polish.txt`
-- [x] Verificar: `make test` pasa (26 tests), `curl` contra servidor funciona (mock)
+- [x] Verify: `make test` passes (26 tests), `curl` against server works (mock)
 
-## Fase 2 — Extension MVP
-- [x] `manifest.json` (Manifest V3, permisos: storage)
-- [x] `popup.html` + `popup.css` (layout completo)
-- [x] `api.js` (cliente HTTP con AbortController, 70s timeout)
-- [x] `popup.js` (UI wiring, Ctrl+Enter, timer en vivo, cancel, copy)
+## Phase 2 — Extension MVP
+- [x] `manifest.json` (Manifest V3, permissions: storage)
+- [x] `popup.html` + `popup.css` (full layout)
+- [x] `api.js` (HTTP client with AbortController, 70s timeout)
+- [x] `popup.js` (UI wiring, Ctrl+Enter, live timer, cancel, copy)
 - [x] `settings.html` + `settings.js` (API URL + Test Connection)
 - [x] Icons (16/48/128px PNG)
-- [x] Verificar: extensión carga en Chrome, flujo polish funciona end-to-end
+- [x] Verify: extension loads in Chrome, polish flow works end-to-end
 
-## Fase 3 — Claude Adapter
+## Phase 3 — Claude Adapter
 - [x] `adapter_claude.go` + tests (7 tests, Messages API)
-- [x] Actualizar config y `main.go` (auto-register when `claude_api_key` set)
-- [x] Verificar: dropdown muestra modelos locales + Claude (33 tests total)
+- [x] Update config and `main.go` (auto-register when `claude_api_key` set)
+- [x] Verify: dropdown shows local models + Claude (33 tests total)
 
-## Fase 4 — UX Polish
-- [x] Timer en vivo durante inference (built into Fase 2)
-- [x] Botón cancelar (built into Fase 2)
-- [x] Agrupación en dropdown (Local / Cloud) — optgroup by provider
-- [x] Estilos de error + cancelled state
+## Phase 4 — UX Polish
+- [x] Live timer during inference (built into Phase 2)
+- [x] Cancel button (built into Phase 2)
+- [x] Dropdown grouping (Local / Cloud) — optgroup by provider
+- [x] Error styles + cancelled state
 
-## Fase 5 — Deploy
-- [x] Archivos de deploy: `pollex-api.service`, `config.yaml`, `install.sh`, `ollama-models.sh`
-- [x] `Makefile` completo con todos los targets (deploy-setup SCPs service file)
-- [x] Binarios: local 10MB, ARM64 9.5MB
+## Phase 5 — Deploy
+- [x] Deploy files: `pollex-api.service`, `config.yaml`, `install.sh`, `ollama-models.sh`
+- [x] Complete `Makefile` with all targets (deploy-setup SCPs service file)
+- [x] Binaries: local 10MB, ARM64 9.5MB
 - [x] 33 tests passing, `go vet` clean
-- [x] `make deploy-setup` en Jetson (primera vez)
-- [x] `make deploy` + `make jetson-status` → servicio activo en Jetson
+- [x] `make deploy-setup` on Jetson (first time)
+- [x] `make deploy` + `make jetson-status` → service active on Jetson
 
 ## Phase 6 — E2E / Integration Testing
-- [x] Refactorizar `main.go`: extraer `buildAdapters()` + `setupMux()` para testabilidad
-- [x] `integration_test.go` con 8 tests E2E via `httptest.NewServer`
+- [x] Refactor `main.go`: extract `buildAdapters()` + `setupMux()` for testability
+- [x] `integration_test.go` with 8 E2E tests via `httptest.NewServer`
 - [x] Tests: PolishFullFlow, HealthFullFlow, ModelsFullFlow, OptionsPreflightCORS, UnknownRoute, ConcurrentPolish, ContextCancellation, AdapterErrorPropagation
 - [x] Vault: ADR-002 Testing Strategy
 
 ## Phase 7 — Hardening
 - [x] `requestid.go` + `requestid_test.go` (crypto/rand, 32 hex, context helpers)
-- [x] `requestIDMiddleware` + logging con request ID (`[req-id] METHOD PATH STATUS DURATION`)
-- [x] `maxBytesMiddleware(64KB)` + detección de `MaxBytesError` → 413 en handler_polish
-- [x] `maxTextLength = 10000` validación en handler_polish → 400
+- [x] `requestIDMiddleware` + logging with request ID (`[req-id] METHOD PATH STATUS DURATION`)
+- [x] `maxBytesMiddleware(64KB)` + `MaxBytesError` detection → 413 in handler_polish
+- [x] `maxTextLength = 10000` validation in handler_polish → 400
 - [x] `ratelimit.go` + `ratelimit_test.go` (sliding window, 10 req/min/IP, 429)
-- [x] Rich health check: `/api/health` reporta status por-adaptador
+- [x] Rich health check: `/api/health` reports per-adapter status
 - [x] Graceful shutdown: `http.Server` + `signal.Notify(SIGINT, SIGTERM)` + 10s drain
 - [x] Middleware chain: CORS → requestID → logging → rateLimit → maxBytes → timeout → mux
-- [x] Integration tests actualizados: RateLimit, OversizedBody, TextTooLong, X-Request-ID
+- [x] Updated integration tests: RateLimit, OversizedBody, TextTooLong, X-Request-ID
 - [x] Vault: ADR-003 Hardening Decisions
 
 ## Phase 8 — Documentation
-- [x] Reescribir `flash-jetson.md` (runbook completo desde cero)
-- [x] Actualizar `_index.md` (Go 1.26, status completo, links a ADR-002/003)
-- [x] Actualizar `deploy-jetson.md` (pre-flight checklist + procedimiento de rollback)
-- [x] Actualizar `jetson-memory.md` (sección de swap: file + ZRAM)
+- [x] Rewrite `flash-jetson.md` (full runbook from scratch)
+- [x] Update `_index.md` (Go 1.26, full status, links to ADR-002/003)
+- [x] Update `deploy-jetson.md` (pre-flight checklist + rollback procedure)
+- [x] Update `jetson-memory.md` (swap section: file + ZRAM)
 
 ## Phase 9 — llama.cpp GPU Acceleration on Jetson Nano
 
@@ -171,7 +171,7 @@ CWS publishing adds cost ($5), maintenance burden (privacy policy, review proces
 - [~] Zram tuning: WON'T DO — only 29MB/2GB used, negligible overhead, not worth the complexity
 
 ### 12.3 — Model Upgrade (deferred)
-- [x] **Skipped:** 3B model descartado — latencia ~2x haría textos >750 chars inutilizables (timeout 120s). 1.5B Q4_0 ya pasa los 5 quality samples. Reconsiderar solo si la calidad resulta insuficiente en uso real.
+- [x] **Skipped:** 3B model discarded — latency ~2x would make texts >750 chars unusable (120s timeout). 1.5B Q4_0 already passes all 5 quality samples. Reconsider only if quality proves insufficient in real usage.
 
 ### 12.4 — Benchmark Improvements
 - [x] Rate limiter: authenticated requests (X-API-Key) bypass rate limiting; APIKey moved before RateLimit in chain
@@ -312,107 +312,108 @@ CWS publishing adds cost ($5), maintenance burden (privacy policy, review proces
 Second Jetson Nano 4GB in the office, connected via WiFi dongle (TP-Link TL-WN725N, RTL8188EUS).
 Office Jetson = primary node (24/7). Home Jetson = backup/dev. Single domain: `pollex.mlorente.dev`.
 
-### Fase 1 — Flash JetPack + Setup inicial del SO ✅
-- [x] Flash SD card 32GB con JetPack 4.6 via Raspberry Pi Imager (balenaEtcher v1.19+ broken)
+### 17.1 — Flash JetPack + Initial OS Setup ✅
+- [x] Flash 32GB SD card with JetPack 4.6 via Raspberry Pi Imager (balenaEtcher v1.19+ broken)
 - [x] OEM wizard: user `manu`, hostname `jetson-office`, timezone America/Denver
-- [x] Verificar CUDA: `nvcc --version` (10.2, V10.2.300)
-- [x] RAM: 3.9G total, 2.9G free. Disco: 30G, 16G available
+- [x] Verify CUDA: `nvcc --version` (10.2, V10.2.300)
+- [x] RAM: 3.9G total, 2.9G free. Disk: 30G, 16G available
 - [x] Passwordless sudo: `/etc/sudoers.d/manu`
 - [x] SSH key copied (passwordless SSH)
 - [x] CUDA added to PATH: `~/.bashrc`
-- [ ] Set headless mode: `sudo systemctl set-default multi-user.target` (free ~400MB RAM)
-- [x] Doc vault: actualizar `runbooks/flash-jetson.md` — actualizado con variante WiFi, multi-nodo, lessons learned
+- [ ] Set headless mode: `sudo systemctl set-default multi-user.target` (frees ~400MB RAM)
+- [x] Vault: updated `runbooks/flash-jetson.md` — WiFi variant, multi-node, lessons learned
 
-#### Problemas encontrados (Fase 1)
-- balenaEtcher v1.19+ falla con `Error: h.requestMetadata is not a function` → usar Raspberry Pi Imager
-- FAT32 no soporta imagenes >4GB → formatear USB como exFAT
-- Windows no asigna letra a USB exFAT automaticamente → `diskmgmt.msc` > asignar letra
-- J48 jumper obligatorio para barrel jack — sin el la placa no arranca
-- `ssh-copy-id` no existe en Windows → workaround con `type ... | ssh ... cat >>`
+#### Issues found (17.1)
+- balenaEtcher v1.19+ fails with `Error: h.requestMetadata is not a function` → use Raspberry Pi Imager
+- FAT32 doesn't support images >4GB → format USB as exFAT
+- Windows doesn't auto-assign drive letter to exFAT USB → `diskmgmt.msc` > assign letter
+- J48 jumper mandatory for barrel jack — board won't boot without it
+- `ssh-copy-id` doesn't exist on Windows → workaround with `type ... | ssh ... cat >>`
 
-### Fase 2 — Driver WiFi + Configuracion de red ✅
-- [x] WiFi dongle TL-WN725N (RTL8188EUS) reconocido automaticamente por JetPack 4.6.6
-- [x] **NO fue necesario compilar driver** — `rtl8xxxu` staging driver funciono out of the box
-- [x] Conectar WiFi oficina via nmcli + autoconnect
-- [x] Verificar: IP 10.251.24.83 (DHCP), ping 8.8.8.8 OK, HTTPS outbound OK
-- [x] Reboot + verificar reconexion automatica: OK (tarda 1-2 min)
-- [x] Doc vault: crear `runbooks/setup-wifi-jetson.md`
+### 17.2 — WiFi Driver + Network Configuration ✅
+- [x] WiFi dongle TL-WN725N (RTL8188EUS) recognized automatically by JetPack 4.6.6
+- [x] **No driver compilation needed** — `rtl8xxxu` staging driver worked out of the box
+- [x] Connect to office WiFi via nmcli + autoconnect
+- [x] Verify: IP 10.251.24.83 (DHCP), ping 8.8.8.8 OK, HTTPS outbound OK
+- [x] Reboot + verify automatic reconnection: OK (takes 1-2 min)
+- [x] Vault: created `runbooks/setup-wifi-jetson.md`
 
-#### Problemas encontrados (Fase 2)
-- Client isolation en WiFi de oficina: no se puede hacer SSH directo entre dispositivos en la misma red
-- `curl` no instalado en JetPack base → `sudo apt install -y curl` (o usar wget)
+#### Issues found (17.2)
+- Client isolation on office WiFi: cannot SSH directly between devices on the same network
+- `curl` not installed in JetPack base image → `sudo apt install -y curl` (or use wget)
 
-### Fase 3 — Acceso SSH via Cloudflare Tunnel (transicion a remoto) ✅
-- [x] Instalar cloudflared (ARM64 binary) via curl
-- [x] Autenticar: `cloudflared tunnel login`
-- [x] Crear tunnel: `cloudflared tunnel create pollex-office`
+### 17.3 — SSH Access via Cloudflare Tunnel (transition to remote) ✅
+- [x] Install cloudflared (ARM64 binary) via curl
+- [x] Authenticate: `cloudflared tunnel login`
+- [x] Create tunnel: `cloudflared tunnel create pollex-office`
 - [x] Config: `ssh-pollex.mlorente.dev` → `ssh://localhost:22` + `protocol: http2`
 - [x] DNS record: `cloudflared tunnel route dns pollex-office ssh-pollex.mlorente.dev`
-- [x] Instalar servicio systemd (sin User=manu, sin hardening directives)
-- [x] Instalar cloudflared en Windows: `winget install Cloudflare.cloudflared`
-- [x] Configurar SSH en dev machine (`~/.ssh/config` con ProxyCommand cloudflared)
-- [x] Probar: `ssh jetson-office` desde Windows — OK
-- [x] Desconectar HDMI/teclado — todo remoto desde aqui
-- [x] Doc vault: crear `runbooks/setup-cloudflare-ssh.md`
+- [x] Install systemd service (no User=manu, no hardening directives)
+- [x] Install cloudflared on Windows: `winget install Cloudflare.cloudflared`
+- [x] Configure SSH on dev machine (`~/.ssh/config` with ProxyCommand cloudflared)
+- [x] Test: `ssh jetson-office` from Windows — OK
+- [x] Disconnect HDMI/keyboard — fully remote from here
+- [x] Vault: created `runbooks/setup-cloudflare-ssh.md`
 
-#### Problemas encontrados (Fase 3)
-- QUIC (UDP 443) bloqueado por firewall de oficina → `protocol: http2` en config.yml obligatorio
-- `User=manu` en systemd falla en JetPack 4.6 con `failed to determine user credentials: No such process` → ejecutar como root
-- Hardening directives (`ProtectSystem=strict`, `ProtectHome=read-only`) tambien causan problemas → eliminadas
-- Tras reboot, SSH tarda 1-2 min en estar disponible (WiFi + tunnel boot sequence)
-- WSL y Windows tienen SSH config separados → cloudflared + ~/.ssh/config deben configurarse independientemente en cada entorno
+#### Issues found (17.3)
+- QUIC (UDP 443) blocked by office firewall → `protocol: http2` in config.yml mandatory
+- `User=manu` in systemd fails on JetPack 4.6 with `failed to determine user credentials: No such process` → run as root
+- Hardening directives (`ProtectSystem=strict`, `ProtectHome=read-only`) also cause issues → removed
+- After reboot, SSH takes 1-2 min to become available (WiFi + tunnel boot sequence)
+- WSL and Windows have separate SSH configs → cloudflared + ~/.ssh/config must be configured independently in each environment
 
-### Fase 4 — Despliegue de Pollex (remoto) ✅
+### 17.4 — Pollex Deployment (remote) ✅
 - [x] `make deploy-init JETSON_HOST=jetson-office`
 - [x] `make deploy-llamacpp JETSON_HOST=jetson-office` (~85 min)
 - [x] `make deploy JETSON_HOST=jetson-office`
 - [x] `make deploy-secrets JETSON_HOST=jetson-office`
-- [x] Verificar: `make jetson-status JETSON_HOST=jetson-office` — OK, adapter available
-- [x] Verificar: `make jetson-test JETSON_HOST=jetson-office` — polish end-to-end OK
-- [x] Doc vault: actualizar `runbooks/deploy-jetson.md` seccion "Multi-nodo"
+- [x] Verify: `make jetson-status JETSON_HOST=jetson-office` — OK, adapter available
+- [x] Verify: `make jetson-test JETSON_HOST=jetson-office` — polish end-to-end OK
+- [x] Vault: updated `runbooks/deploy-jetson.md` multi-node section
 
-#### Problemas encontrados (Fase 4)
-- CRLF en scripts/services: `.gitattributes` anadido para forzar LF en `.sh`, `.service`, `.yml`, `Makefile`
-- WSL necesita cloudflared + SSH config + Go 1.26 instalados independientemente de Windows
-- `sudo apt install golang-go` instala Go 1.22 (demasiado viejo) → instalar manualmente desde go.dev
-- PATH: `/usr/local/go/bin` debe ir antes de `/usr/bin` en PATH (anadir a `~/.zshrc`)
-- `ssh-agent` necesario en WSL para evitar passphrase repetida: `eval $(ssh-agent) && ssh-add`
-- Bug en repo: `llama-server.service` referenciaba `q4_0.gguf` pero `build-llamacpp.sh` descarga `q4_k_m.gguf` → corregido
-- Bug en repo: `jetson-test` no pasaba `X-API-Key` → corregido
+#### Issues found (17.4)
+- CRLF in scripts/services: `.gitattributes` added to force LF in `.sh`, `.service`, `.yml`, `Makefile`
+- WSL needs cloudflared + SSH config + Go 1.26 installed independently from Windows
+- `sudo apt install golang-go` installs Go 1.22 (too old) → install manually from go.dev
+- PATH: `/usr/local/go/bin` must come before `/usr/bin` in PATH (add to `~/.zshrc`)
+- `ssh-agent` needed in WSL to avoid repeated passphrase: `eval $(ssh-agent) && ssh-add`
+- Bug in repo: `llama-server.service` referenced `q4_0.gguf` but `build-llamacpp.sh` downloaded `q4_k_m.gguf` → fixed
+- Bug in repo: `jetson-test` didn't pass `X-API-Key` → fixed
 
-### Fase 5 — Cloudflare Tunnel para API + Blue-Green Endpoints ✅
-- [x] Actualizar `~/.cloudflared/config.yml` en office: dual ingress (API + SSH)
-- [x] Crear DNS route: `pollex-office.mlorente.dev` → tunnel `pollex-office`
-- [x] Actualizar `~/.cloudflared/config.yml` en home: dual ingress (production + direct)
-- [x] Crear DNS route: `pollex-home.mlorente.dev` → tunnel `pollex`
-- [x] Verificar: `curl pollex-home.mlorente.dev/api/health` — OK
-- [x] Verificar: `curl pollex-office.mlorente.dev/api/health` — OK
-- [x] Doc vault: actualizar `runbooks/setup-cloudflare-tunnel.md` y `runbooks/deploy-jetson.md` con endpoint architecture
+### 17.5 — Cloudflare Tunnel for API + Blue-Green Endpoints ✅
+- [x] Update `~/.cloudflared/config.yml` on office: dual ingress (API + SSH)
+- [x] Create DNS route: `pollex-office.mlorente.dev` → tunnel `pollex-office`
+- [x] Update `~/.cloudflared/config.yml` on home: dual ingress (production + direct)
+- [x] Create DNS route: `pollex-home.mlorente.dev` → tunnel `pollex`
+- [x] Verify: `curl pollex-home.mlorente.dev/api/health` — OK
+- [x] Verify: `curl pollex-office.mlorente.dev/api/health` — OK
+- [x] Vault: updated `runbooks/setup-cloudflare-tunnel.md` and `runbooks/deploy-jetson.md` with endpoint architecture
 
-### Fase 6 — DNS Cutover (oficina pasa a produccion) ✅
-- [x] Pre-cutover: verificar health via endpoint directo `pollex-office.mlorente.dev`
-- [x] Cambiar CNAME: `cloudflared tunnel route dns --overwrite-dns pollex-office pollex.mlorente.dev`
-- [x] Esperar propagacion DNS (~30s)
-- [x] Verificar: `pollex.mlorente.dev` ahora devuelve version de office
-- [x] Verificar: `pollex-home.mlorente.dev` sigue accesible (tunnel home NO se para, sirve endpoint directo)
-- [x] Verificar: `ssh jetson-office` sigue funcionando (DNS independiente)
-- [x] Nota: tunnel home se mantiene activo para monitoring via `pollex-home.mlorente.dev`
+### 17.6 — DNS Cutover (office becomes production) ✅
+- [x] Pre-cutover: verify health via direct endpoint `pollex-office.mlorente.dev`
+- [x] Change CNAME: `cloudflared tunnel route dns --overwrite-dns pollex-office pollex.mlorente.dev`
+- [x] Wait for DNS propagation (~30s)
+- [x] Verify: `pollex.mlorente.dev` now returns office version
+- [x] Verify: `pollex-home.mlorente.dev` still accessible (home tunnel NOT stopped, serves direct endpoint)
+- [x] Verify: `ssh jetson-office` still works (independent DNS)
+- [x] Note: home tunnel kept active for monitoring via `pollex-home.mlorente.dev`
 
-### Fase 7 — Cambios en el codigo del repo
-- [ ] 7.1 Parametrizar `deploy/scripts/setup-cloudflared.sh` (TUNNEL_NAME, TUNNEL_HOSTNAME, SSH_HOSTNAME, LOCAL_PORT)
-- [ ] 7.2 Parametrizar `deploy/systemd/cloudflared.service` (ExecStart usa config file)
-- [ ] 7.3 Anadir variables y targets al `Makefile` (TUNNEL_*, deploy-office, deploy-home)
-- [ ] 7.4 Actualizar `deploy/prometheus/prometheus.yml` (host: jetson-office)
-- [ ] 7.5 Actualizar `deploy/prometheus/alerts.yml` (host label en annotations)
-- [ ] 7.6 Actualizar `deploy/grafana/pollex-dashboard.json` (variable template host + filtros)
-- [ ] Verificar: `make test`, `make monitoring-validate`
+### 17.7 — Repository Code Changes ✅
+- [x] 7.1 Parametrize `deploy/scripts/setup-cloudflared.sh` (TUNNEL_NAME, API_HOSTNAME, SSH_HOSTNAME, TUNNEL_PROTOCOL via env vars)
+- [x] 7.2 Parametrize `deploy/systemd/cloudflared.service` (ExecStart uses --config, no User=manu, no hardening)
+- [x] 7.3 Makefile: already parametrized with `JETSON_HOST` — all targets accept override, no new targets needed
+- [x] 7.4 Update `deploy/prometheus/prometheus.yml` (host: jetson-office)
+- [x] 7.5 `deploy/prometheus/alerts.yml` — already generic (no hardcoded host labels), no changes needed
+- [x] 7.6 `deploy/grafana/pollex-dashboard.json` — already generic (no hardcoded host labels), no changes needed
+- [x] Fix bug: `build-llamacpp.sh` + `llama-server.service` downloaded `q4_k_m.gguf` instead of `q4_0.gguf`
+- [ ] Verify: `make test`, `make monitoring-validate`
 
-### Fase 8 — Documentacion (Knowledge Vault)
-- [ ] Crear `runbooks/setup-wifi-jetson.md`
-- [ ] Crear `runbooks/setup-cloudflare-ssh.md`
-- [ ] Crear `adrs/008-multi-node-deployment.md`
-- [ ] Actualizar `runbooks/flash-jetson.md` (variante WiFi)
-- [ ] Actualizar `runbooks/deploy-jetson.md` (multi-nodo + DNS cutover)
-- [ ] Actualizar `runbooks/setup-cloudflare-tunnel.md` (parametrizado, multi-ingress)
-- [ ] Actualizar `architecture.md` (diagrama multi-nodo)
-- [ ] Actualizar `_index.md` (Jetson oficina en infra, link ADR-008)
+### 17.8 — Documentation (Knowledge Vault) ✅
+- [x] Create `runbooks/setup-wifi-jetson.md`
+- [x] Create `runbooks/setup-cloudflare-ssh.md` (+ SSH multiplexing for Cloudflare Tunnel)
+- [x] Create `adrs/008-multi-node-deployment.md`
+- [x] Update `runbooks/flash-jetson.md` (WiFi variant, q4_k_m mismatch lesson resolved)
+- [x] Update `runbooks/deploy-jetson.md` (multi-node, deploy-prod removed)
+- [x] Update `runbooks/setup-cloudflare-tunnel.md` (deploy-tunnel, generic command)
+- [ ] Update `architecture.md` (multi-node diagram)
+- [ ] Update `_index.md` (office Jetson in infra, link ADR-008)

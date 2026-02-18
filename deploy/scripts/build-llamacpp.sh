@@ -5,9 +5,9 @@ export PATH="$HOME/.local/bin:/usr/local/cuda/bin:$PATH"
 # === Configuration ===
 LLAMA_COMMIT="23106f9"
 BUILD_DIR="/opt/llama.cpp-build"
-MODEL_URL="https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf"
+MODEL_URL="https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_0.gguf"
 MODEL_DIR="/opt/llama-models"
-MODEL_PATH="${MODEL_DIR}/qwen2.5-1.5b-instruct-q4_k_m.gguf"
+MODEL_PATH="${MODEL_DIR}/qwen2.5-1.5b-instruct-q4_0.gguf"
 
 echo "=== llama.cpp GPU build for Jetson Nano (CUDA 10.2) ==="
 
