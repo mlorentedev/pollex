@@ -1,6 +1,6 @@
 # Pollex — Makefile
 # Configurable variables
-JETSON_HOST ?= nvidia
+JETSON_HOST ?= jetson-home
 JETSON_USER ?= manu
 API_PORT    ?= 8090
 

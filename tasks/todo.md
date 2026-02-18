@@ -380,20 +380,23 @@ Office Jetson = primary node (24/7). Home Jetson = backup/dev. Single domain: `p
 - Bug en repo: `llama-server.service` referenciaba `q4_0.gguf` pero `build-llamacpp.sh` descarga `q4_k_m.gguf` → corregido
 - Bug en repo: `jetson-test` no pasaba `X-API-Key` → corregido
 
-### Fase 5 — Cloudflare Tunnel para API (remoto)
-- [ ] Actualizar `~/.cloudflared/config.yml`: anadir ingress `pollex.mlorente.dev` → `http://localhost:8090`
-- [ ] `sudo systemctl restart cloudflared`
-- [ ] Verificar: `journalctl -u cloudflared -n 20` muestra "Registered tunnel connection"
-- [ ] NO cambiar DNS todavia
+### Fase 5 — Cloudflare Tunnel para API + Blue-Green Endpoints ✅
+- [x] Actualizar `~/.cloudflared/config.yml` en office: dual ingress (API + SSH)
+- [x] Crear DNS route: `pollex-office.mlorente.dev` → tunnel `pollex-office`
+- [x] Actualizar `~/.cloudflared/config.yml` en home: dual ingress (production + direct)
+- [x] Crear DNS route: `pollex-home.mlorente.dev` → tunnel `pollex`
+- [x] Verificar: `curl pollex-home.mlorente.dev/api/health` — OK
+- [x] Verificar: `curl pollex-office.mlorente.dev/api/health` — OK
+- [x] Doc vault: actualizar `runbooks/setup-cloudflare-tunnel.md` y `runbooks/deploy-jetson.md` con endpoint architecture
 
-### Fase 6 — DNS Cutover (oficina pasa a produccion)
-- [ ] Pre-cutover: verificar health + test en Jetson oficina
-- [ ] Cambiar CNAME `pollex` al tunnel UUID de oficina (CLI o dashboard)
-- [ ] Esperar 1-2 min propagacion
-- [ ] Parar cloudflared en Jetson casa: `ssh nvidia 'sudo systemctl stop cloudflared && sudo systemctl disable cloudflared'`
-- [ ] Verificar: `curl https://pollex.mlorente.dev/api/health`
-- [ ] Verificar: extension navegador funciona
-- [ ] Verificar: `ssh jetson-office` sigue funcionando (DNS independiente)
+### Fase 6 — DNS Cutover (oficina pasa a produccion) ✅
+- [x] Pre-cutover: verificar health via endpoint directo `pollex-office.mlorente.dev`
+- [x] Cambiar CNAME: `cloudflared tunnel route dns --overwrite-dns pollex-office pollex.mlorente.dev`
+- [x] Esperar propagacion DNS (~30s)
+- [x] Verificar: `pollex.mlorente.dev` ahora devuelve version de office
+- [x] Verificar: `pollex-home.mlorente.dev` sigue accesible (tunnel home NO se para, sirve endpoint directo)
+- [x] Verificar: `ssh jetson-office` sigue funcionando (DNS independiente)
+- [x] Nota: tunnel home se mantiene activo para monitoring via `pollex-home.mlorente.dev`
 
 ### Fase 7 — Cambios en el codigo del repo
 - [ ] 7.1 Parametrizar `deploy/scripts/setup-cloudflared.sh` (TUNNEL_NAME, TUNNEL_HOSTNAME, SSH_HOSTNAME, LOCAL_PORT)

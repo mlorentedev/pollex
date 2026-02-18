@@ -20,7 +20,17 @@ echo "Setting up /etc/pollex/..."
 sudo mkdir -p /etc/pollex
 sudo chown "$(whoami):$(whoami)" /etc/pollex
 
-# 4. Install systemd services
+# 4. Set headless mode (frees ~400MB RAM for inference)
+CURRENT_TARGET=$(systemctl get-default)
+if [ "$CURRENT_TARGET" != "multi-user.target" ]; then
+  echo "Setting headless mode (multi-user.target)..."
+  sudo systemctl set-default multi-user.target
+  echo "Headless mode set (effective after reboot)"
+else
+  echo "Already in headless mode"
+fi
+
+# 5. Install systemd services
 echo "Installing systemd services..."
 sudo cp /tmp/pollex-api.service /etc/systemd/system/pollex-api.service
 sudo cp /tmp/llama-server.service /etc/systemd/system/llama-server.service

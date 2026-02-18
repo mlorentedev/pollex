@@ -27,10 +27,10 @@
 - **Sudo sin password necesario** para scripts de deploy remoto (`/etc/sudoers.d/manu`).
 - **SSH a Jetson requiere jump host** — el Jetson está en 192.168.2.x detrás del Proxmox. Configurar `~/.ssh/config` con `ProxyJump pve`.
 - **WiFi dongles necesitan drivers** — usar Ethernet para setup inicial.
-- **Makefile usa `JETSON_HOST=nvidia`** — resuelve vía SSH config, no por DNS.
+- **Makefile usa `JETSON_HOST=jetson-home`** — resuelve vía SSH config, no por DNS.
 - **SCP a `/usr/local/bin` falla por permisos** — SCP a `/tmp/` primero, luego `sudo mv` vía SSH. Mismo patrón para `/etc/pollex/`.
 - **`zstd` necesario para Ollama** — el instalador de Ollama usa zstd para descomprimir. Añadir al `install.sh` junto con `curl`.
-- **`curl` directo al Jetson no funciona** — está detrás de NAT. `jetson-status` debe hacer `ssh nvidia 'curl -s localhost:8090/...'`.
+- **`curl` directo al Jetson no funciona** — está detrás de NAT. `jetson-status` debe hacer `ssh jetson-home 'curl -s localhost:8090/...'`.
 
 ## Phase 9 — llama.cpp GPU Acceleration
 
@@ -86,6 +86,13 @@
 - **Progress bar ETA: pad +15%** — usuarios prefieren que termine "antes de lo esperado" que "después". Multiplicar estimate por 1.15 y cap al 99%.
 - **Clean interface on reopen** — no mostrar resultado stale del último polish al abrir popup. Limpiar polishJob de storage para completed/failed/cancelled. Historia abajo para recovery.
 - **`git describe --tags --always --dirty`** — genera versión descriptiva (e.g., `v1.3.1-3-g014b4b2-dirty`). Útil para saber exactamente qué commit corre en producción.
+
+## Phase 17 — Multi-Node Deployment
+
+- **`cloudflared tunnel route dns` no sobrescribe** — si el CNAME ya existe, falla con `An A, AAAA, or CNAME record with that host already exists`. Usar `--overwrite-dns` para cutover entre tunnels.
+- **No parar tunnel del nodo inactivo** — con endpoints directos (`pollex-home.mlorente.dev`, `pollex-office.mlorente.dev`), ambos tunnels deben seguir activos para monitoring independiente. Solo se redirige el CNAME de producción.
+- **Restart de cloudflared corta tu SSH** — si accedes al Jetson via el mismo tunnel que reinicias, la conexión se pierde (`Broken pipe`). Esperar ~15s y reconectar.
+- **`hostnamectl set-hostname` + actualizar `/etc/hosts`** — al renombrar un Jetson, cambiar ambos. El hostname en `/etc/hosts` afecta a la resolución local (`127.0.1.1`).
 
 ## General — Project Organization
 
