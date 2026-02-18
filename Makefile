@@ -83,7 +83,7 @@ deploy-prod: ## Safe deploy to production: pre-flight + download release from Gi
 	@echo "=== Deploying $(TAG) to $(PROD_HOST) via GitHub Releases ==="
 	scp deploy/systemd/pollex-api.service $(JETSON_USER)@$(PROD_HOST):/tmp/pollex-api.service
 	ssh $(JETSON_USER)@$(PROD_HOST) '\
-		curl -sL $(RELEASE_URL) -o /tmp/pollex-release.tar.gz && \
+		curl -fL --progress-bar $(RELEASE_URL) -o /tmp/pollex-release.tar.gz && \
 		mkdir -p /tmp/pollex-release && \
 		tar xz -C /tmp/pollex-release -f /tmp/pollex-release.tar.gz && \
 		sudo mv /tmp/pollex-release/pollex /usr/local/bin/pollex && \
