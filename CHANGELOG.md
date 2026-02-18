@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.6](https://github.com/mlorentedev/pollex/compare/v1.6.5...v1.6.6) (2026-02-18)
+
+
+### Bug Fixes
+
+* parametrize multi-Jetson deploy scripts and fix q4_0 model bug ([a603aa0](https://github.com/mlorentedev/pollex/commit/a603aa03654113859ec7fee0b1063274b63c6b2b))
+
 ## [1.6.5](https://github.com/mlorentedev/pollex/compare/v1.6.4...v1.6.5) (2026-02-18)
 
 
