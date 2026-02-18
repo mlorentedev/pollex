@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.3](https://github.com/mlorentedev/pollex/compare/v1.6.2...v1.6.3) (2026-02-18)
+
+
+### Bug Fixes
+
+* deploy-prod downloads release binary from GitHub instead of SCP ([0d9bbfd](https://github.com/mlorentedev/pollex/commit/0d9bbfd220a7d7d7afa52f991aa2cd7748585998))
+
 ## [1.6.2](https://github.com/mlorentedev/pollex/compare/v1.6.1...v1.6.2) (2026-02-18)
 
 
