@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.1](https://github.com/mlorentedev/pollex/compare/v1.6.0...v1.6.1) (2026-02-18)
+
+
+### Bug Fixes
+
+* unify release-please and goreleaser into single workflow ([f8fbc8d](https://github.com/mlorentedev/pollex/commit/f8fbc8dcbbdf6433dea9a648067d4a908b1dfc25))
+
 ## [1.6.0](https://github.com/mlorentedev/pollex/compare/v1.5.0...v1.6.0) (2026-02-18)
 
 
