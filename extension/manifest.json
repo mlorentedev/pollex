@@ -3,7 +3,7 @@
   "name": "Pollex — English Text Polisher",
   "short_name": "Pollex",
   "description": "Polish your English text with AI: fix grammar, improve coherence, and tighten wording. Self-hosted, private, and fast.",
-  "version": "1.6.3",
+  "version": "1.6.4",
   "homepage_url": "https://github.com/mlorentedev/pollex",
   "minimum_chrome_version": "110",
   "background": {

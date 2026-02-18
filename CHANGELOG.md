@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.4](https://github.com/mlorentedev/pollex/compare/v1.6.3...v1.6.4) (2026-02-18)
+
+
+### Bug Fixes
+
+* add curl progress bar to deploy-prod to prevent tunnel timeout ([4b3bf44](https://github.com/mlorentedev/pollex/commit/4b3bf443b425dce4f343ce66f86a8d2a79031e86))
+
 ## [1.6.3](https://github.com/mlorentedev/pollex/compare/v1.6.2...v1.6.3) (2026-02-18)
 
 
