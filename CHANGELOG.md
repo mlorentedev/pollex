@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.5](https://github.com/mlorentedev/pollex/compare/v1.6.4...v1.6.5) (2026-02-18)
+
+
+### Bug Fixes
+
+* simplify Makefile by removing broken deploy-prod target ([096b368](https://github.com/mlorentedev/pollex/commit/096b368c54604a89149f674d69393dc9bfde5946))
+
 ## [1.6.4](https://github.com/mlorentedev/pollex/compare/v1.6.3...v1.6.4) (2026-02-18)
 
 
