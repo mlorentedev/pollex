@@ -362,14 +362,23 @@ Office Jetson = primary node (24/7). Home Jetson = backup/dev. Single domain: `p
 - Tras reboot, SSH tarda 1-2 min en estar disponible (WiFi + tunnel boot sequence)
 - WSL y Windows tienen SSH config separados → cloudflared + ~/.ssh/config deben configurarse independientemente en cada entorno
 
-### Fase 4 — Despliegue de Pollex (remoto)
-- [ ] `make deploy-init JETSON_HOST=jetson-office`
-- [ ] `make deploy-llamacpp JETSON_HOST=jetson-office` (~85 min)
-- [ ] `make deploy JETSON_HOST=jetson-office`
-- [ ] `make deploy-secrets JETSON_HOST=jetson-office`
-- [ ] Verificar: `make jetson-status JETSON_HOST=jetson-office`
-- [ ] Verificar: `make jetson-test JETSON_HOST=jetson-office`
-- [ ] Doc vault: actualizar `runbooks/deploy-jetson.md` seccion "Multi-nodo"
+### Fase 4 — Despliegue de Pollex (remoto) ✅
+- [x] `make deploy-init JETSON_HOST=jetson-office`
+- [x] `make deploy-llamacpp JETSON_HOST=jetson-office` (~85 min)
+- [x] `make deploy JETSON_HOST=jetson-office`
+- [x] `make deploy-secrets JETSON_HOST=jetson-office`
+- [x] Verificar: `make jetson-status JETSON_HOST=jetson-office` — OK, adapter available
+- [x] Verificar: `make jetson-test JETSON_HOST=jetson-office` — polish end-to-end OK
+- [x] Doc vault: actualizar `runbooks/deploy-jetson.md` seccion "Multi-nodo"
+
+#### Problemas encontrados (Fase 4)
+- CRLF en scripts/services: `.gitattributes` anadido para forzar LF en `.sh`, `.service`, `.yml`, `Makefile`
+- WSL necesita cloudflared + SSH config + Go 1.26 instalados independientemente de Windows
+- `sudo apt install golang-go` instala Go 1.22 (demasiado viejo) → instalar manualmente desde go.dev
+- PATH: `/usr/local/go/bin` debe ir antes de `/usr/bin` en PATH (anadir a `~/.zshrc`)
+- `ssh-agent` necesario en WSL para evitar passphrase repetida: `eval $(ssh-agent) && ssh-add`
+- Bug en repo: `llama-server.service` referenciaba `q4_0.gguf` pero `build-llamacpp.sh` descarga `q4_k_m.gguf` → corregido
+- Bug en repo: `jetson-test` no pasaba `X-API-Key` → corregido
 
 ### Fase 5 — Cloudflare Tunnel para API (remoto)
 - [ ] Actualizar `~/.cloudflared/config.yml`: anadir ingress `pollex.mlorente.dev` → `http://localhost:8090`

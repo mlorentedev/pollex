@@ -92,8 +92,8 @@ jetson-logs: ## Tail pollex-api service logs on Jetson
 jetson-status: ## Remote health check (via SSH)
 	@ssh $(JETSON_USER)@$(JETSON_HOST) 'curl -s localhost:$(API_PORT)/api/health' | python3 -m json.tool
 
-jetson-test: ## Test polish request on Jetson (end-to-end)
-	@ssh $(JETSON_USER)@$(JETSON_HOST) 'curl -s -X POST localhost:$(API_PORT)/api/polish -H "Content-Type: application/json" -d '"'"'{"text":"This is a test to see if pollex works end to end on the jetson nano.","model_id":"qwen2.5-1.5b-gpu"}'"'"'' | python3 -m json.tool
+jetson-test: ## Test polish request on Jetson (end-to-end, needs POLLEX_API_KEY)
+	@ssh $(JETSON_USER)@$(JETSON_HOST) 'curl -s -X POST localhost:$(API_PORT)/api/polish -H "Content-Type: application/json" -H "X-API-Key: '"$$POLLEX_API_KEY"'" -d '"'"'{"text":"This is a test to see if pollex works end to end on the jetson nano.","model_id":"qwen2.5-1.5b-gpu"}'"'"'' | python3 -m json.tool
 
 jetson-tunnel-start: ## Start Cloudflare Tunnel on Jetson
 	ssh $(JETSON_USER)@$(JETSON_HOST) 'sudo systemctl start cloudflared && sudo systemctl status cloudflared'
