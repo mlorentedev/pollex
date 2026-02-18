@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.2](https://github.com/mlorentedev/pollex/compare/v1.6.1...v1.6.2) (2026-02-18)
+
+
+### Bug Fixes
+
+* correct goreleaser archive path from config.yaml.example to config.yaml ([ad4ff21](https://github.com/mlorentedev/pollex/commit/ad4ff2165c5d335aba3773310cbbae42fe4c6ae8))
+
 ## [1.6.1](https://github.com/mlorentedev/pollex/compare/v1.6.0...v1.6.1) (2026-02-18)
 
 
