@@ -47,7 +47,10 @@ quality-jetson: ## Run quality test against Jetson (via Cloudflare Tunnel)
 	go run ./cmd/benchmark --quality --url https://pollex.mlorente.dev --api-key $$POLLEX_API_KEY
 
 # ─── Deploy (Jetson) ────────────────────────────────────────
-.PHONY: deploy deploy-init deploy-secrets deploy-llamacpp deploy-tunnel
+PROD_HOST     ?= jetson-office
+PROD_ENDPOINT ?= pollex-office.mlorente.dev
+
+.PHONY: deploy deploy-prod deploy-init deploy-secrets deploy-llamacpp deploy-tunnel
 
 deploy-init: ## First-time Jetson setup (packages, CUDA, dirs, systemd)
 	scp deploy/systemd/pollex-api.service $(JETSON_USER)@$(JETSON_HOST):/tmp/pollex-api.service
@@ -61,6 +64,26 @@ deploy: build-arm64 ## Build + deploy binary, config, prompt, and service to Jet
 	scp prompts/polish.txt $(JETSON_USER)@$(JETSON_HOST):/tmp/pollex-polish.txt
 	scp deploy/systemd/pollex-api.service $(JETSON_USER)@$(JETSON_HOST):/tmp/pollex-api.service
 	ssh $(JETSON_USER)@$(JETSON_HOST) 'sudo mv /tmp/pollex /usr/local/bin/pollex && sudo chmod +x /usr/local/bin/pollex && sudo mv /tmp/pollex-config.yaml /etc/pollex/config.yaml && sudo mv /tmp/pollex-polish.txt /etc/pollex/polish.txt && sudo cp /tmp/pollex-api.service /etc/systemd/system/pollex-api.service && sudo systemctl daemon-reload && sudo systemctl restart pollex-api'
+
+deploy-prod: ## Safe deploy to production: clean tree + tests + build + deploy + verify
+	@echo "=== Pre-flight checks ==="
+	@test -z "$$(git status --porcelain)" || (echo "ERROR: Dirty tree. Commit changes first." && exit 1)
+	@test "$$(git branch --show-current)" = "master" || (echo "ERROR: Not on master branch." && exit 1)
+	@git fetch origin master --quiet
+	@test "$$(git rev-parse HEAD)" = "$$(git rev-parse origin/master)" || (echo "ERROR: Not up to date with origin/master. Push first." && exit 1)
+	@echo "Pre-flight OK: clean tree, master, up to date"
+	@echo ""
+	@echo "=== Running tests ==="
+	@go test -race ./...
+	@echo ""
+	@echo "=== Deploying to $(PROD_HOST) ==="
+	@$(MAKE) deploy JETSON_HOST=$(PROD_HOST)
+	@echo ""
+	@echo "=== Verifying (waiting 5s for service restart) ==="
+	@sleep 5
+	@curl -sf https://$(PROD_ENDPOINT)/api/health | python3 -m json.tool
+	@echo ""
+	@echo "=== Production deploy complete: $$(git describe --tags --always) → $(PROD_HOST) ==="
 
 deploy-secrets: ## Deploy API key from dotfiles to Jetson
 	@test -n "$$POLLEX_API_KEY" || (echo "Error: POLLEX_API_KEY not set. Run: secrets_refresh" && exit 1)
