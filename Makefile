@@ -47,10 +47,7 @@ quality-jetson: ## Run quality test against Jetson (via Cloudflare Tunnel)
 	go run ./cmd/benchmark --quality --url https://pollex.mlorente.dev --api-key $$POLLEX_API_KEY
 
 # ─── Deploy (Jetson) ────────────────────────────────────────
-PROD_HOST     ?= jetson-office
-PROD_ENDPOINT ?= pollex-office.mlorente.dev
-
-.PHONY: deploy deploy-prod deploy-init deploy-secrets deploy-llamacpp deploy-tunnel
+.PHONY: deploy deploy-init deploy-secrets deploy-llamacpp deploy-tunnel
 
 deploy-init: ## First-time Jetson setup (packages, CUDA, dirs, systemd)
 	scp deploy/systemd/pollex-api.service $(JETSON_USER)@$(JETSON_HOST):/tmp/pollex-api.service
@@ -64,42 +61,6 @@ deploy: build-arm64 ## Build + deploy binary, config, prompt, and service to Jet
 	scp prompts/polish.txt $(JETSON_USER)@$(JETSON_HOST):/tmp/pollex-polish.txt
 	scp deploy/systemd/pollex-api.service $(JETSON_USER)@$(JETSON_HOST):/tmp/pollex-api.service
 	ssh $(JETSON_USER)@$(JETSON_HOST) 'sudo mv /tmp/pollex /usr/local/bin/pollex && sudo chmod +x /usr/local/bin/pollex && sudo mv /tmp/pollex-config.yaml /etc/pollex/config.yaml && sudo mv /tmp/pollex-polish.txt /etc/pollex/polish.txt && sudo cp /tmp/pollex-api.service /etc/systemd/system/pollex-api.service && sudo systemctl daemon-reload && sudo systemctl restart pollex-api'
-
-deploy-prod: ## Safe deploy to production: pre-flight + download release from GitHub + verify
-	@echo "=== Pre-flight checks ==="
-	@test -z "$$(git status --porcelain)" || (echo "ERROR: Dirty tree. Commit changes first." && exit 1)
-	@test "$$(git branch --show-current)" = "master" || (echo "ERROR: Not on master branch." && exit 1)
-	@git fetch origin master --quiet
-	@test "$$(git rev-parse HEAD)" = "$$(git rev-parse origin/master)" || (echo "ERROR: Not up to date with origin/master. Pull first." && exit 1)
-	$(eval TAG := $(shell git describe --tags --abbrev=0))
-	$(eval REL := $(shell echo $(TAG) | sed 's/^v//'))
-	$(eval RELEASE_URL := https://github.com/mlorentedev/pollex/releases/download/$(TAG)/pollex_$(REL)_linux_arm64.tar.gz)
-	@echo "Pre-flight OK: clean tree, master, up to date"
-	@echo "Release: $(TAG) → $(PROD_HOST)"
-	@echo ""
-	@echo "=== Running tests ==="
-	@go test -race ./...
-	@echo ""
-	@echo "=== Deploying $(TAG) to $(PROD_HOST) via GitHub Releases ==="
-	scp deploy/systemd/pollex-api.service $(JETSON_USER)@$(PROD_HOST):/tmp/pollex-api.service
-	ssh $(JETSON_USER)@$(PROD_HOST) '\
-		curl -fL --progress-bar $(RELEASE_URL) -o /tmp/pollex-release.tar.gz && \
-		mkdir -p /tmp/pollex-release && \
-		tar xz -C /tmp/pollex-release -f /tmp/pollex-release.tar.gz && \
-		sudo mv /tmp/pollex-release/pollex /usr/local/bin/pollex && \
-		sudo chmod +x /usr/local/bin/pollex && \
-		sudo mv /tmp/pollex-release/deploy/config.yaml /etc/pollex/config.yaml && \
-		sudo mv /tmp/pollex-release/prompts/polish.txt /etc/pollex/polish.txt && \
-		sudo cp /tmp/pollex-api.service /etc/systemd/system/pollex-api.service && \
-		sudo systemctl daemon-reload && \
-		sudo systemctl restart pollex-api && \
-		rm -rf /tmp/pollex-release /tmp/pollex-release.tar.gz'
-	@echo ""
-	@echo "=== Verifying (waiting 5s for service restart) ==="
-	@sleep 5
-	@curl -sf https://$(PROD_ENDPOINT)/api/health | python3 -m json.tool
-	@echo ""
-	@echo "=== Production deploy complete: $(TAG) → $(PROD_HOST) ==="
 
 deploy-secrets: ## Deploy API key from dotfiles to Jetson
 	@test -n "$$POLLEX_API_KEY" || (echo "Error: POLLEX_API_KEY not set. Run: secrets_refresh" && exit 1)
