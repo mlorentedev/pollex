@@ -15,7 +15,7 @@ archives:
   - formats: [tar.gz]
     files:
       - prompts/polish.txt
-      - deploy/config.yaml.example
+      - deploy/config.yaml
 
 changelog:
   use: github
