@@ -36,3 +36,5 @@ Thumbs.db
 # AI
 .claude/
 GEMINI.md
+**/CLAUDE.md
+!CLAUDE.md
