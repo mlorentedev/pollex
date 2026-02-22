@@ -2,19 +2,18 @@
 
 Phases 1–17 complete. Full task history → vault `_index.md` and `roadmap.md`.
 
-## Phase 17 — Pending
+## Phase 17 — Remaining
 
 ### Fase 7 — Cambios en el código del repo
-- [ ] 7.1 Parametrizar `deploy/scripts/setup-cloudflared.sh` (TUNNEL_NAME, TUNNEL_HOSTNAME, SSH_HOSTNAME, LOCAL_PORT)
-- [ ] 7.2 Parametrizar `deploy/systemd/cloudflared.service` (ExecStart usa config file)
-- [ ] 7.3 Añadir variables y targets al `Makefile` (TUNNEL_*, deploy-office, deploy-home)
-- [ ] 7.4 Actualizar `deploy/prometheus/prometheus.yml` (host: jetson-office)
-- [ ] 7.5 Actualizar `deploy/prometheus/alerts.yml` (host label en annotations)
-- [ ] 7.6 Actualizar `deploy/grafana/pollex-dashboard.json` (variable template host + filtros)
-- [ ] Verificar: `make test`, `make monitoring-validate`
+- [x] 7.1 setup-cloudflared.sh — ya parametrizado (TUNNEL_NAME, LOCAL_PORT). SSH_HOSTNAME WON'T DO (SSH via headscale) ✓ 2026-02-22
+- [x] 7.2 cloudflared.service — ahora usa `--config` file, eliminado User=manu y hardening incompatibles con JetPack 4.6 ✓ 2026-02-22
+- [~] 7.3 Makefile TUNNEL_*/deploy-office/deploy-home — WON'T DO: office Jetson retirado, single-node architecture
+- [x] 7.4 prometheus.yml — host: jetson-nano → kubelab-jet1 ✓ 2026-02-22
+- [~] 7.5 alerts.yml — no hardcoded host references, no changes needed
+- [~] 7.6 grafana pollex-dashboard.json — DEFER: dashboard genérico, no host-specific
 
 ### Fase 8 — Documentación (Knowledge Vault)
-- [ ] Crear `runbooks/setup-wifi-jetson.md`
-- [ ] Actualizar `runbooks/flash-jetson.md` (variante WiFi)
-- [ ] Actualizar `runbooks/setup-cloudflare-tunnel.md` (parametrizado, multi-ingress)
-- [ ] Actualizar `architecture.md` (diagrama actualizado: single-node + headscale)
+- [~] Crear `runbooks/setup-wifi-jetson.md` — DEFER: solo relevante si se redespliega en oficina
+- [~] Actualizar `runbooks/flash-jetson.md` — DEFER: procedimiento sigue siendo válido
+- [~] Actualizar `runbooks/setup-cloudflare-tunnel.md` — DEFER
+- [~] Actualizar `architecture.md` — diagrama sigue siendo válido (single-node, Cloudflare Tunnel)

@@ -9,5 +9,8 @@ ExecStart=/usr/local/bin/cloudflared tunnel --config /home/manu/.cloudflared/con
 Restart=on-failure
 RestartSec=10
 
+# Note: User=manu and hardening directives (ProtectSystem, ProtectHome) are intentionally
+# omitted — they cause failures on JetPack 4.6 (Ubuntu 18.04) systemd. See ADR-008.
+
 [Install]
 WantedBy=multi-user.target
