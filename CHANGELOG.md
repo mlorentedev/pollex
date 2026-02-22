@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.7](https://github.com/mlorentedev/pollex/compare/v1.6.6...v1.6.7) (2026-02-22)
+
+
+### Bug Fixes
+
+* fix cloudflared.service JetPack 4.6 compatibility + prometheus host label ([ca5ce76](https://github.com/mlorentedev/pollex/commit/ca5ce76e9bf04507961b4f22073478df90bb11b4))
+
 ## [1.6.6](https://github.com/mlorentedev/pollex/compare/v1.6.5...v1.6.6) (2026-02-18)
 
 
