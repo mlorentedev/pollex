@@ -1,13 +1,13 @@
-/* Pollex brand: Cyan-700 (#0e7490) */
+/* Pollex brand: Cyan */
 
 :root {
-	--sl-color-accent-low: #cffafe;
-	--sl-color-accent: #0e7490;
-	--sl-color-accent-high: #164e63;
+	--sl-color-accent-low: #d4f4fa;
+	--sl-color-accent: #0b5e74;
+	--sl-color-accent-high: #083344;
 }
 
 :root[data-theme='dark'] {
-	--sl-color-accent-low: #164e63;
-	--sl-color-accent: #22d3ee;
-	--sl-color-accent-high: #cffafe;
+	--sl-color-accent-low: #0b3d4d;
+	--sl-color-accent: #2dd4e0;
+	--sl-color-accent-high: #baf0fa;
 }
