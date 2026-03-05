@@ -9,7 +9,12 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			title: 'Pollex',
+			favicon: '/favicon.svg',
+			logo: {
+				src: './public/favicon.svg',
+			},
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/mlorentedev/pollex' }],
+			customCss: ['./src/styles/custom.css'],
 			sidebar: [
 				{ label: 'Getting Started', slug: 'getting-started' },
 			],
