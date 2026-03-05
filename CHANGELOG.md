@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.8](https://github.com/mlorentedev/pollex/compare/v1.6.7...v1.6.8) (2026-03-05)
+
+
+### Bug Fixes
+
+* improve accent color contrast for light mode buttons and links ([65af826](https://github.com/mlorentedev/pollex/commit/65af826962c087c2107988977372041beee8606b))
+* remove gray/white/black overrides that broke Starlight theme contrast ([c963ed7](https://github.com/mlorentedev/pollex/commit/c963ed74ea04b58e34d9b2d057b0a5426c29d80a))
+
 ## [1.6.7](https://github.com/mlorentedev/pollex/compare/v1.6.6...v1.6.7) (2026-02-22)
 
 
