@@ -6,7 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Pollex is a text polishing tool: Go API backend + Chrome browser extension + llama.cpp GPU inference on Jetson Nano 4GB. Users paste text in the extension popup, select an LLM model, and get polished English back. Remote access via Cloudflare Tunnel with API key auth.
 
-Vault: `~/Projects/knowledge/10_projects/pollex/`
+Docs: `docs/` (ADRs, architecture, runbooks, troubleshooting, benchmarks, lessons — project-bound).
+Vault: `~/Projects/knowledge/10_projects/pollex/` (strategic context only).
 
 ## Commands
 
@@ -88,7 +89,7 @@ Single Jetson Nano 4GB (`kubelab-jet1`, headscale `100.64.0.8`, LAN `172.16.1.4`
 
 ## Vault
 
-`~/Projects/knowledge/10_projects/pollex/` — architecture, ADRs, runbooks, benchmarks.
+Project-bound docs (architecture, ADRs, runbooks, troubleshooting, benchmarks, lessons) live in the repo `docs/`. The vault `~/Projects/knowledge/10_projects/pollex/` holds only strategic context (roadmap, tasks) and session memory.
 
 Key files: `_index.md` (overview + status), `architecture.md` (diagrams), `extension.md`,
 `02-runbooks/deploy-jetson.md`, `02-runbooks/cicd.md`, `01-adrs/` (ADR-001–008).

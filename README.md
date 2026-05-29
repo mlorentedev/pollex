@@ -314,3 +314,7 @@ make jetson-tunnel-logs     # Tail tunnel logs
 ## License
 
 [MIT](LICENSE)
+
+## Documentation
+
+Project-bound knowledge lives in [`docs/`](docs/) (docs-as-code): ADRs, runbooks, troubleshooting, and lessons.
