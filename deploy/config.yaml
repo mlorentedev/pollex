@@ -7,3 +7,5 @@ prompt_path: "/etc/pollex/polish.txt"
 # NaN cloud engine: nan_api_key set via POLLEX_NAN_API_KEY in /etc/pollex/secrets.env.
 # When present, exposes a "Nous Cloud (auto)" model. Chain defaults to
 # mimo-v2.5,qwen3.6,gemma4; override with POLLEX_NAN_MODELS (CSV) or nan_models.
+# Concurrent NaN calls are capped by nan_max_concurrent / POLLEX_NAN_MAX_CONCURRENT
+# (default 3; 0 = unlimited) to stay under the gateway's 5-concurrent account cap.

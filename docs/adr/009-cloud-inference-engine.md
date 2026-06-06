@@ -27,6 +27,7 @@ The `nan.builders` gateway is already part of this ecosystem (consumed by the He
 3. The cloud entry coexists with the Jetson `llama.cpp` model in `GET /api/models`; the user selects the engine through the existing `model_id` mechanism — **no new "engine" concept**.
 4. **Fallback policy:** advance to the next model only on availability/quota errors (HTTP 429, 404, 5xx, network/timeout); fail fast on client errors (400, 401) and caller cancellation, which would recur identically.
 5. The key is sourced from the existing `nan.api-key` age-secret, surfaced as `POLLEX_NAN_API_KEY` and deployed to `/etc/pollex/secrets.env`. The chain is config-driven via `POLLEX_NAN_MODELS` so rotating slugs need no code change.
+6. A `Throttle` decorator wraps the cloud chain and bounds concurrent NaN calls (`POLLEX_NAN_MAX_CONCURRENT`, default 3) so Pollex stays under the gateway's account-wide 5-concurrent cap and leaves headroom for other consumers. It bounds *concurrency*, not request *rate* (the ~100 RPM cap would need a separate token-bucket).
 
 ## Consequences
 
@@ -39,7 +40,7 @@ The `nan.builders` gateway is already part of this ecosystem (consumed by the He
 **Negative / trade-offs**
 
 - "Cloud" still depends on the Go API host (the Jetson) being up; this mitigates GPU/`llama-server` failure, not total host loss. (Automatic Jetson→cloud failover is explicitly out of scope — see Alternatives.)
-- Pollex shares the account-wide NaN rate limit with the user's interactive tooling; an extension traffic burst can contend (429). The cloud path stays API-key gated.
+- Pollex shares the account-wide NaN rate limit with the user's interactive tooling; an extension traffic burst can contend (429). Mitigated for the *concurrency* cap by the `Throttle` semaphore (default 3); the ~100 RPM *rate* cap is not yet bounded (token-bucket = future work). The cloud path stays API-key gated.
 - Default `mimo-v2.5` trades latency for a quality ceiling (~2–3× slower; capped pool). The chain absorbs quota/availability hits by falling to the unlimited tail.
 
 ## Alternatives considered

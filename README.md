@@ -165,7 +165,8 @@ pollex/
 │   │   ├── claude.go        #   Claude API (optional)
 │   │   ├── llamacpp.go      #   llama.cpp (primary, GPU)
 │   │   ├── nous.go          #   NaN cloud (nan.builders, OpenAI-compatible)
-│   │   └── fallback.go      #   FallbackChain — ordered auto-failover engine
+│   │   ├── fallback.go      #   FallbackChain — ordered auto-failover engine
+│   │   └── throttle.go      #   Throttle — concurrency-limiting decorator
 │   ├── config/              # YAML + env overrides (POLLEX_*)
 │   ├── handler/             # HTTP handlers + response helpers
 │   ├── metrics/             # Prometheus metric declarations (promauto)

@@ -14,7 +14,8 @@ Map every acceptance criterion from `proposal.md` to concrete proof.
 - [x] AC3 all 3 models work live (mimo/qwen/gemma) -> `TestNousIntegrationModels` (`c9fe978`); live run 2026-06-05 PASS for all three (mimo 2.9s, qwen 1.0s, gemma 1.0s)
 - [x] AC4 FallbackChain fall-through -> `TestFallbackChain_*` (advance on quota/network, fail-fast on 400, all-fail wrapped) (`054a293`)
 - [x] AC5 /api/models lists single "Nous Cloud (auto)" gated on key -> `TestBuildAdaptersNanCloud` / `TestBuildAdaptersNoNanWithoutKey` (`0897c22`)
-- [ ] AC6 cross-browser polish via cloud engine -> **PENDING manual smoke** (Chrome/Edge/Brave) — requires deployed key on Jetson
+- [x] AC6 concurrent NaN calls bounded + ctx-cancel respected -> `TestThrottle_*` (`de148ef`)
+- [ ] AC7 cross-browser polish via cloud engine -> **PENDING manual smoke** (Chrome/Edge/Brave) — requires deployed key on Jetson
 
 ## Pre-implementation smoke test (2026-06-05)
 
@@ -51,6 +52,8 @@ Findings acted on (commit `1ca8032`):
 
 - 2 not-covered mutants in `FallbackChain.Name()` composed branch → added `TestFallbackChain_NameComposed` (adapter coverage 86.7% → 100%).
 - Manual-review hardening: `NousAdapter` now errors on a 200 with blank content (chain advances); covered `Polish` empty-adapters path and the `buildAdapters` key-but-no-models guard.
+
+The later `Throttle` decorator + config field were also mutation-tested: `internal/adapter` and `internal/config` stayed at 100% mutator coverage with 0 survivors.
 
 Notes: `cmd/pollex` overall mutator coverage is low (~27%) because `main()`, the adapter-probe loop, and the pre-existing llama.cpp/Claude/Ollama branches are not unit-tested — **pre-existing debt, not introduced here**; the NaN wiring block is fully covered. The many gremlins "timed out" results in `internal/adapter` are an artifact of HTTP tests with real client timeouts/sleeps, not survivors.
 

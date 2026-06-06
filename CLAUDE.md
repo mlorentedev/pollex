@@ -41,10 +41,10 @@ Module: `github.com/mlorentedev/pollex`. Dependencies: stdlib `net/http` + `gopk
 
 - `LLMAdapter` interface: `Name()`, `Polish(ctx, text, systemPrompt)`, `Available()`
 - Adapters: MockAdapter (dev), OllamaAdapter (legacy), ClaudeAdapter (API), LlamaCppAdapter (primary GPU), NousAdapter (NaN cloud)
-- `FallbackChain` is itself an `LLMAdapter` — wraps an ordered list and returns the first success, advancing only on availability/quota errors. The NaN cloud engine is exposed as a single `nous-cloud` model (`mimo-v2.5` → `qwen3.6` → `gemma4`). See ADR-009.
+- `FallbackChain` and `Throttle` are themselves `LLMAdapter`s (composable decorators). The NaN cloud engine = `Throttle(FallbackChain(mimo-v2.5 → qwen3.6 → gemma4))`, exposed as a single `nous-cloud` model: ordered failover on availability/quota errors + a concurrency semaphore. See ADR-009.
 - Middleware chain (order matters): CORS → RequestID → Logging → Metrics → APIKey → RateLimit → MaxBytes(64KB) → Timeout(120s) → mux
 - `server.SetupMux(adapters, models, systemPrompt, apiKey, version)` — extracted for `httptest.NewServer` testability
-- Config: YAML file + `POLLEX_*` env var overrides. `POLLEX_API_KEY` and `POLLEX_NAN_API_KEY` → `/etc/pollex/secrets.env` on Jetson (both from dotfiles age-secrets). NaN chain order via `POLLEX_NAN_MODELS` (CSV)
+- Config: YAML file + `POLLEX_*` env var overrides. `POLLEX_API_KEY` and `POLLEX_NAN_API_KEY` → `/etc/pollex/secrets.env` on Jetson (both from dotfiles age-secrets). NaN chain order via `POLLEX_NAN_MODELS` (CSV), concurrency cap via `POLLEX_NAN_MAX_CONCURRENT`
 
 ### Package Layout
 
