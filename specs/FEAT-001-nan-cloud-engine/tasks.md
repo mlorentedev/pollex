@@ -39,7 +39,7 @@ created: "2026-06-05"
 - [x] No feature scope creep (pre-existing gofmt + stale extension label fixed in their own commits)
 - [ ] **Final cross-browser deployment test** (AC6): extension + cloud-engine polish in Chrome, Edge, Brave; document Firefox/MV3 status. Record in `verification.md`. — needs key deployed to Jetson
 - [x] `verification.md` filled in
-- [ ] PR opened referencing this spec folder
+- [x] PR opened referencing this spec folder — https://github.com/mlorentedev/pollex/pull/18
 
 ## Learning note — your call to make (FallbackChain error policy)
 
