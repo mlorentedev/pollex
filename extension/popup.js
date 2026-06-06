@@ -79,6 +79,7 @@ const providerLabels = {
   claude: "Cloud",
   llamacpp: "Kubelab (GPU)",
   nan: "Cloud",
+  auto: "Auto",
 };
 
 // --- Models ---

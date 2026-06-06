@@ -9,3 +9,6 @@ prompt_cloud_path: "/etc/pollex/polish-cloud.txt"
 # Chain defaults to mimo-v2.5,qwen3.6,gemma4; override with POLLEX_NAN_MODELS (CSV).
 # Concurrent NaN calls capped by nan_max_concurrent / POLLEX_NAN_MAX_CONCURRENT
 # (default 3; 0 = unlimited) to stay under the gateway's 5-concurrent account cap.
+# Auto-routing threshold: texts with >= routing_threshold sentences route to cloud.
+# Set to 0 to disable auto routing (no "auto" model exposed).
+routing_threshold: 8
