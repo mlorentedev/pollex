@@ -137,12 +137,16 @@ func buildAdapters(cfg config.Config, useMock bool) (map[string]adapter.LLMAdapt
 	// qwen3.6 -> gemma4). The user selects the engine via the existing model_id.
 	if cfg.NanAPIKey != "" && len(cfg.NanModels) > 0 {
 		chain := make([]adapter.LLMAdapter, 0, len(cfg.NanModels))
+		// Per-model timeout kept tight so the whole chain (worst case N x timeout)
+		// fits inside the 120s request middleware budget and a hung model fails
+		// over fast — the safety-net model must still be reachable in time.
+		perModelTimeout := 30 * time.Second
 		for _, model := range cfg.NanModels {
 			chain = append(chain, &adapter.NousAdapter{
 				BaseURL: cfg.NanBaseURL,
 				APIKey:  cfg.NanAPIKey,
 				Model:   model,
-				Client:  &http.Client{Timeout: 60 * time.Second},
+				Client:  &http.Client{Timeout: perModelTimeout},
 			})
 		}
 		const nousCloudID = "nous-cloud"
