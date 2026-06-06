@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/mlorentedev/pollex/compare/v1.7.0...v1.8.0) (2026-06-06)
+
+
+### Features
+
+* rebrand nous-cloud -&gt; nan-cloud, language-aware prompt, unify deploy ([319082e](https://github.com/mlorentedev/pollex/commit/319082e62347999dd623c2150a3288270aa6a88f))
+
 ## [1.7.0](https://github.com/mlorentedev/pollex/compare/v1.6.8...v1.7.0) (2026-06-06)
 
 
