@@ -36,3 +36,21 @@ jobs:
           go-version: "1.26"
       - run: go build -o dist/pollex ./cmd/pollex
       - run: GOOS=linux GOARCH=arm64 go build -o dist/pollex-arm64 ./cmd/pollex
+
+  mutation:
+    name: Mutation Testing (adapter + config)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache: true
+      - name: Install gremlins
+        run: go install github.com/go-gremlins/gremlins/cmd/gremlins@latest
+      - name: Mutate adapter package
+        run: gremlins unleash --timeout-coefficient 5 ./internal/adapter/...
+      - name: Mutate config package
+        run: gremlins unleash --timeout-coefficient 5 ./internal/config/...
