@@ -12,11 +12,13 @@ import (
 )
 
 // SetupMux wires handlers with the full middleware chain.
-func SetupMux(adapters map[string]adapter.LLMAdapter, models []adapter.ModelInfo, systemPrompt, apiKey, version string) http.Handler {
+// promptSelector maps a model ID to its system prompt, allowing local and cloud adapters
+// to use different prompts without changing the adapter interface.
+func SetupMux(adapters map[string]adapter.LLMAdapter, models []adapter.ModelInfo, promptSelector func(string) string, apiKey, version string) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/health", handler.Health(adapters, version))
 	mux.HandleFunc("/api/models", handler.Models(models))
-	mux.HandleFunc("/api/polish", handler.Polish(adapters, systemPrompt))
+	mux.HandleFunc("/api/polish", handler.Polish(adapters, promptSelector))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	rl := middleware.NewRateLimiter(10, time.Minute)

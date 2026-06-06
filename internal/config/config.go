@@ -23,6 +23,7 @@ type Config struct {
 	NanModels        []string `yaml:"nan_models"`
 	NanMaxConcurrent int      `yaml:"nan_max_concurrent"` // 0 => unlimited
 	PromptPath       string   `yaml:"prompt_path"`
+	PromptCloudPath  string   `yaml:"prompt_cloud_path"`
 	APIKey           string   `yaml:"api_key"`
 }
 
@@ -33,6 +34,7 @@ func defaults() Config {
 		NanModels:        []string{"mimo-v2.5", "qwen3.6", "gemma4"},
 		NanMaxConcurrent: 3, // stay under the gateway's 5-concurrent cap, leave headroom
 		PromptPath:       "prompts/polish.txt",
+		PromptCloudPath:  "prompts/polish-cloud.txt",
 	}
 }
 
@@ -102,6 +104,9 @@ func Load(path string) (Config, error) {
 	}
 	if v := os.Getenv("POLLEX_PROMPT_PATH"); v != "" {
 		cfg.PromptPath = v
+	}
+	if v := os.Getenv("POLLEX_PROMPT_CLOUD_PATH"); v != "" {
+		cfg.PromptCloudPath = v
 	}
 	if v := os.Getenv("POLLEX_API_KEY"); v != "" {
 		cfg.APIKey = v

@@ -70,8 +70,9 @@ deploy: _resolve-jetson build-arm64 ## Build + deploy binary, config, prompt, se
 	rsync -Pz dist/pollex-arm64 $(JETSON_USER)@$(EFFECTIVE_HOST):/tmp/pollex
 	rsync -Pz deploy/config.yaml $(JETSON_USER)@$(EFFECTIVE_HOST):/tmp/pollex-config.yaml
 	rsync -Pz prompts/polish.txt $(JETSON_USER)@$(EFFECTIVE_HOST):/tmp/pollex-polish.txt
+	rsync -Pz prompts/polish-cloud.txt $(JETSON_USER)@$(EFFECTIVE_HOST):/tmp/pollex-polish-cloud.txt
 	rsync -Pz deploy/systemd/pollex-api.service $(JETSON_USER)@$(EFFECTIVE_HOST):/tmp/pollex-api.service
-	ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'sudo mv /tmp/pollex /usr/local/bin/pollex && sudo chmod +x /usr/local/bin/pollex && sudo mv /tmp/pollex-config.yaml /etc/pollex/config.yaml && sudo mv /tmp/pollex-polish.txt /etc/pollex/polish.txt && sudo cp /tmp/pollex-api.service /etc/systemd/system/pollex-api.service && sudo systemctl daemon-reload'
+	ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'sudo mv /tmp/pollex /usr/local/bin/pollex && sudo chmod +x /usr/local/bin/pollex && sudo mv /tmp/pollex-config.yaml /etc/pollex/config.yaml && sudo mv /tmp/pollex-polish.txt /etc/pollex/polish.txt && sudo mv /tmp/pollex-polish-cloud.txt /etc/pollex/polish-cloud.txt && sudo cp /tmp/pollex-api.service /etc/systemd/system/pollex-api.service && sudo systemctl daemon-reload'
 	@test -n "$$POLLEX_API_KEY" && ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'sudo mkdir -p /etc/pollex && echo "POLLEX_API_KEY='"$$POLLEX_API_KEY"'" | sudo tee /etc/pollex/secrets.env > /dev/null && sudo chmod 600 /etc/pollex/secrets.env' || true
 	@test -n "$$NAN_API_KEY" && ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'echo "NAN_API_KEY='"$$NAN_API_KEY"'" | sudo tee -a /etc/pollex/secrets.env > /dev/null' || true
 	@echo "Restarting pollex-api..."

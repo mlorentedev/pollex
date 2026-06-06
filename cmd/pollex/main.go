@@ -41,10 +41,33 @@ func main() {
 		slog.Error("prompt read failed", "path", cfg.PromptPath, "error", err)
 		os.Exit(1)
 	}
-	systemPrompt := string(promptData)
+	localPrompt := string(promptData)
+	cloudPrompt := localPrompt
+	if cfg.PromptCloudPath != "" {
+		data, err := os.ReadFile(cfg.PromptCloudPath)
+		if err != nil {
+			slog.Error("cloud prompt read failed", "path", cfg.PromptCloudPath, "error", err)
+			os.Exit(1)
+		}
+		cloudPrompt = string(data)
+	}
 
 	adapters, models := buildAdapters(cfg, *useMock)
-	handler := server.SetupMux(adapters, models, systemPrompt, cfg.APIKey, version)
+
+	cloudModelIDs := make(map[string]bool)
+	for _, m := range models {
+		if m.Provider == "nan" {
+			cloudModelIDs[m.ID] = true
+		}
+	}
+	promptSelector := func(modelID string) string {
+		if cloudModelIDs[modelID] {
+			return cloudPrompt
+		}
+		return localPrompt
+	}
+
+	handler := server.SetupMux(adapters, models, promptSelector, cfg.APIKey, version)
 
 	startAdapterProbe(adapters, 30*time.Second)
 

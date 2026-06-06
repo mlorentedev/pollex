@@ -51,6 +51,9 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.NanMaxConcurrent != 3 {
 		t.Errorf("default nan_max_concurrent: got %d, want 3", cfg.NanMaxConcurrent)
 	}
+	if cfg.PromptCloudPath != "prompts/polish-cloud.txt" {
+		t.Errorf("default prompt_cloud_path: got %q, want %q", cfg.PromptCloudPath, "prompts/polish-cloud.txt")
+	}
 }
 
 func TestLoadFromYAML(t *testing.T) {
@@ -133,6 +136,7 @@ ollama_url: "http://from-yaml:11434"
 	t.Setenv("POLLEX_NAN_BASE_URL", "https://env.nan")
 	t.Setenv("POLLEX_NAN_MODELS", "m1, m2 ,m3") // intentional spaces — must be trimmed
 	t.Setenv("POLLEX_NAN_MAX_CONCURRENT", "4")
+	t.Setenv("POLLEX_PROMPT_CLOUD_PATH", "/etc/pollex/polish-cloud.txt")
 	t.Setenv("POLLEX_API_KEY", "env-api-key")
 
 	cfg, err := Load(yamlPath)
@@ -153,6 +157,7 @@ ollama_url: "http://from-yaml:11434"
 		{"nan_api_key from env", cfg.NanAPIKey, "sk-nan-env"},
 		{"nan_base_url from env", cfg.NanBaseURL, "https://env.nan"},
 		{"nan_max_concurrent from env", cfg.NanMaxConcurrent, 4},
+		{"prompt_cloud_path from env", cfg.PromptCloudPath, "/etc/pollex/polish-cloud.txt"},
 		{"api_key from env", cfg.APIKey, "env-api-key"},
 	}
 

@@ -24,7 +24,9 @@ type polishResponse struct {
 	ElapsedMs int64  `json:"elapsed_ms"`
 }
 
-func Polish(adapters map[string]adapter.LLMAdapter, systemPrompt string) http.HandlerFunc {
+// Polish handles POST /api/polish. promptSelector returns the system prompt for a given model ID,
+// allowing local and cloud adapters to use different prompts without changing the adapter interface.
+func Polish(adapters map[string]adapter.LLMAdapter, promptSelector func(modelID string) string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -64,7 +66,7 @@ func Polish(adapters map[string]adapter.LLMAdapter, systemPrompt string) http.Ha
 		}
 
 		start := time.Now()
-		polished, err := a.Polish(r.Context(), req.Text, systemPrompt)
+		polished, err := a.Polish(r.Context(), req.Text, promptSelector(req.ModelID))
 		elapsed := time.Since(start)
 
 		if err != nil {
