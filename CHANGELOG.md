@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.7.0](https://github.com/mlorentedev/pollex/compare/v1.6.8...v1.7.0) (2026-06-06)
+
+
+### Features
+
+* add FallbackChain adapter with availability-aware retry ([054a293](https://github.com/mlorentedev/pollex/commit/054a293a05067112bac600653f9004b4096caf92))
+* add NaN cloud config fields and POLLEX_NAN_* overrides ([0e59fd4](https://github.com/mlorentedev/pollex/commit/0e59fd4d53a4473f698dac00f5058a4f8077d0b4))
+* add NousAdapter for NaN (nan.builders) cloud inference ([495beb5](https://github.com/mlorentedev/pollex/commit/495beb524e0184e0420bd331eac84a17afd2b662))
+* bound concurrent NaN calls with a semaphore to avoid 429s ([de148ef](https://github.com/mlorentedev/pollex/commit/de148ef4381e7c26da47707b576e7dfcd152130e))
+* register NaN cloud engine as a single auto-fallback model ([0897c22](https://github.com/mlorentedev/pollex/commit/0897c22ef7c8b196d920631a28dd220292a35250))
+* surface NaN cloud engine in extension and deploy tooling ([484572f](https://github.com/mlorentedev/pollex/commit/484572f2faf45a3815aa7b01f70dd17594838980))
+
+
+### Bug Fixes
+
+* accept NaN base URL with or without trailing /v1 ([6fd9447](https://github.com/mlorentedev/pollex/commit/6fd9447d2098bb048e6b6701a9701b174fe75b98))
+* cap NaN per-model timeout so the chain fits the request budget ([2cf8bda](https://github.com/mlorentedev/pollex/commit/2cf8bdab8241e018fa0c11f70395c89e63db214d))
+
 ## [1.6.8](https://github.com/mlorentedev/pollex/compare/v1.6.7...v1.6.8) (2026-03-05)
 
 
