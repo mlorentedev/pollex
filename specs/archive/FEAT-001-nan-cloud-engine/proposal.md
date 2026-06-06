@@ -1,7 +1,7 @@
 ---
 id: "FEAT-001-nan-cloud-engine"
 type: spec
-status: draft # draft | implementing | verifying | archived
+status: archived
 created: "2026-06-05"
 tags: [spec, proposal]
 template_version: "1.0"
@@ -53,7 +53,7 @@ Observable outcomes. Each must be testable.
 - [ ] `FallbackChain` returns the qwen result when mimo errors, the gemma result when mimo+qwen error, and a wrapped error when all three fail (unit test, `httptest`).
 - [ ] `GET /api/models` lists exactly one `"NaN Cloud (auto)"` entry when the NaN key is set, and none when it is unset.
 - [ ] Concurrent NaN calls are bounded to `NanMaxConcurrent` (unit test); a request blocked on a full semaphore respects context cancellation.
-- [ ] **Final cross-browser test**: the extension loads and successfully polishes text via the cloud engine against the deployed Jetson API in **Chrome, Edge, and Brave** (≥2 Chromium browsers; Firefox status documented). [AGENT-SUGGESTION — confirm exact browser list before archive]
+- [ ] **Final cross-browser test**: the extension loads and successfully polishes text via the cloud engine against the deployed Jetson API in **Chrome, Edge, and Brave** (≥2 Chromium browsers; Firefox/MV3 status documented). Pending Jetson deploy of NAN key.
 
 ## References
 
