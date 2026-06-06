@@ -40,10 +40,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Package extension
-        run: cd extension && zip -r ../pollex-extension.zip . -x '*.gitkeep' -x '*.svg'
+        env:
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: cd extension && zip -r "../pollex-extension-${TAG}.zip" . -x '*.gitkeep' -x '*.svg'
 
       - name: Upload extension zip
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.release-please.outputs.tag_name }}
-          files: pollex-extension.zip
+          files: pollex-extension-${{ needs.release-please.outputs.tag_name }}.zip
