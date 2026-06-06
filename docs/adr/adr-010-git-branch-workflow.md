@@ -17,8 +17,8 @@ All production changes to `master` must go through pull requests. No direct push
 
 ### Branch Protection Rules
 
-- **Required PR reviews**: 1 approving review
-- **Dismiss stale reviews**: On new push
+- **Required PR reviews**: 0 (single maintainer — no self-approval on GitHub)
+- **Dismiss stale reviews**: Disabled
 - **Force pushes**: Blocked
 - **Branch deletion**: Blocked
 - **Admin enforcement**: Yes (even maintainer goes through PRs)
@@ -31,8 +31,11 @@ All production changes to `master` must go through pull requests. No direct push
 3. Push branch: `git push origin <branch>`
 4. Create PR: `gh pr create --base master`
 5. CI runs (lint + test)
-6. At least 1 review/approval
-7. Squash merge to master
+6. Squash merge to master
+
+### Rationale for 0 required reviews
+
+This repo has a single maintainer. GitHub blocks self-approval (`Review Can not approve your own pull request`), so requiring `required_approving_review_count: 1` would make PRs unmergeable. Other single-maintainer repos in the ecosystem (e.g. `hive`) use 0 required reviews. Multi-collaborator repos (e.g. `ts-bridge`) use 1.
 
 ### Branch Naming
 
