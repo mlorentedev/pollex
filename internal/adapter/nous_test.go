@@ -137,6 +137,23 @@ func TestNousAdapterPolishEmptyChoices(t *testing.T) {
 	}
 }
 
+// A 200 with blank content must be an error so the chain advances rather than
+// returning an empty polish.
+func TestNousAdapterEmptyContent(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(nousChatResponse{
+			Choices: []nousChoice{{Message: nousMessageResp{Role: "assistant", Content: "   "}}},
+		})
+	}))
+	defer srv.Close()
+
+	a := &NousAdapter{BaseURL: srv.URL, APIKey: "k", Model: "mimo-v2.5", Client: &http.Client{Timeout: 5 * time.Second}}
+	if _, err := a.Polish(context.Background(), "hello", "prompt"); err == nil {
+		t.Error("expected error on blank content, got nil")
+	}
+}
+
 func TestNousAdapterAvailable(t *testing.T) {
 	if (&NousAdapter{APIKey: "k"}).Available() != true {
 		t.Error("expected available when API key is set")

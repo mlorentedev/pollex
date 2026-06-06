@@ -142,8 +142,14 @@ func (n *NousAdapter) Polish(ctx context.Context, text, systemPrompt string) (st
 		return "", fmt.Errorf("nous: empty response choices")
 	}
 
-	// Only the answer — reasoning_content is intentionally discarded.
-	return strings.TrimSpace(chatResp.Choices[0].Message.Content), nil
+	// Only the answer — reasoning_content is intentionally discarded. A blank
+	// answer is treated as a failure so the FallbackChain advances to the next
+	// model rather than returning an empty polish.
+	out := strings.TrimSpace(chatResp.Choices[0].Message.Content)
+	if out == "" {
+		return "", fmt.Errorf("nous: empty content in response")
+	}
+	return out, nil
 }
 
 func (n *NousAdapter) Available() bool {

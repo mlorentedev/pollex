@@ -57,29 +57,9 @@ func (c *FallbackChain) Available() bool {
 }
 
 // shouldFallback reports whether an error from one adapter is worth retrying on
-// the NEXT adapter in the chain.
-//
-// TODO(manu): implement this classifier — it encodes your "si no está o ha
-// saturado, usa el siguiente" intent. Guidance:
-//
-//   - ADVANCE (return true) on availability / quota failures: network or
-//     timeout errors (no *StatusError), HTTP 429 (rate/quota), 404 (model not
-//     in catalog), and any 5xx.
-//   - STOP (return false) on errors another model cannot fix: HTTP 400 (bad
-//     request) and 401 (bad key) recur identically, so failing fast saves calls.
-//   - context.Canceled / context.DeadlineExceeded -> STOP (the caller gave up).
-//
-// NousAdapter exposes the HTTP status via *StatusError, so the shape is:
-//
-//	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-//	    return false
-//	}
-//	var se *StatusError
-//	if errors.As(err, &se) {
-//	    // decide based on se.Code
-//	}
-//	// no status code => network/timeout/decode => availability problem
-//	return true
+// the next adapter in the chain. It advances on availability/quota failures
+// (network/timeout, HTTP 429, 404, 5xx) and stops on errors another model cannot
+// fix (HTTP 400/401, which recur identically) or when the caller cancelled.
 func shouldFallback(err error) bool {
 	// The caller gave up (request cancelled or overall deadline hit) — trying
 	// more models is pointless and would only burn the shared rate limit.

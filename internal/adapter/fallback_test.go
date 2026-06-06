@@ -173,3 +173,22 @@ func TestFallbackChain_Name(t *testing.T) {
 		t.Errorf("got %q, want %q", chain.Name(), "Nous Cloud (auto)")
 	}
 }
+
+// With no Label, Name composes the children's names.
+func TestFallbackChain_NameComposed(t *testing.T) {
+	chain := &FallbackChain{Adapters: []LLMAdapter{
+		&NousAdapter{Model: "mimo-v2.5"},
+		&NousAdapter{Model: "qwen3.6"},
+	}}
+	want := "FallbackChain(Nous (mimo-v2.5) -> Nous (qwen3.6))"
+	if chain.Name() != want {
+		t.Errorf("got %q, want %q", chain.Name(), want)
+	}
+}
+
+func TestFallbackChain_EmptyAdaptersError(t *testing.T) {
+	chain := &FallbackChain{}
+	if _, err := chain.Polish(context.Background(), "x", "p"); err == nil {
+		t.Error("expected error when chain has no adapters, got nil")
+	}
+}

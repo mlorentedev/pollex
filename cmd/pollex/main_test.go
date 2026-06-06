@@ -63,3 +63,15 @@ func TestBuildAdaptersNoNanWithoutKey(t *testing.T) {
 		}
 	}
 }
+
+// TestBuildAdaptersNanKeyButNoModels: a key with an empty model list must not
+// register an empty (useless) cloud chain.
+func TestBuildAdaptersNanKeyButNoModels(t *testing.T) {
+	cfg := config.Config{NanAPIKey: "sk-test", NanModels: nil}
+
+	adapters, _ := buildAdapters(cfg, false)
+
+	if _, ok := adapters["nous-cloud"]; ok {
+		t.Error("nous-cloud should NOT be registered with an empty model list")
+	}
+}
