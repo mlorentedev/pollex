@@ -2,7 +2,9 @@
 id: 008-multi-node-deployment
 type: adr
 status: active
+tags: [adr, pollex, jetson, multi-node]
 created: "2026-05-11"
+owner: manu
 ---
 
 # ADR-008: Multi-Node Deployment

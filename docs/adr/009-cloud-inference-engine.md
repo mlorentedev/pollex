@@ -2,7 +2,9 @@
 id: 009-cloud-inference-engine
 type: adr
 status: active
+tags: [adr, pollex, nan, cloud, inference]
 created: "2026-06-05"
+owner: manu
 ---
 
 # ADR-009: Cloud Inference Engine (NaN) with Fixed Fallback Chain
