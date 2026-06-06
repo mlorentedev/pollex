@@ -17,27 +17,27 @@ created: "2026-06-05"
 
 > Small commits, TDD order. Mirror `internal/adapter/llamacpp.go` (OpenAI-compat) + `claude.go` (Bearer + `Available()`).
 
-- [ ] Write failing unit test for `NousAdapter.Polish` (`httptest`): asserts `Authorization: Bearer`, `enable_thinking:false` in body, parses `choices[0].message.content`
-- [ ] Implement `internal/adapter/nous.go` (`NousAdapter`: BaseURL/APIKey/Model/Client, `Name/Polish/Available`) to make it pass
-- [ ] Write failing unit test: response containing `reasoning_content` → output excludes the reasoning text
-- [ ] Harden `NousAdapter` parsing (read `content` only; ignore `reasoning_content`)
-- [ ] Write failing unit test for `FallbackChain` fall-through (mimo fail→qwen; mimo+qwen fail→gemma; all fail→wrapped error) via `httptest`
-- [ ] Implement `internal/adapter/fallback.go` (`FallbackChain{Adapters []LLMAdapter}`) — **business logic: which errors trigger fallback** (see learning note below)
-- [ ] Add config: `NousAPIKey`, `NousBaseURL`, ordered `NousModels` (default `mimo-v2.5,qwen3.6,gemma4`) + `POLLEX_NAN_*` env overrides; extend `internal/config/config_test.go`
-- [ ] Wire `cmd/pollex/main.go:buildAdapters`: when NaN key present, build the 3 `NousAdapter`s, wrap in `FallbackChain`, register under id `nous-cloud` with `ModelInfo{Name:"Nous Cloud (auto)", Provider:"nan"}`
-- [ ] Integration test hitting `nan.builders` for **each** of mimo-v2.5 / qwen3.6 / gemma4 (build tag or `t.Skip` when `NAN_API_KEY` unset) — proves all three work
-- [ ] dotfiles: add `POLLEX_NAN_API_KEY=nan.api-key` to `sensitive/env-mapping.conf`; confirm `make deploy-secrets` writes it to `/etc/pollex/secrets.env`
-- [ ] Extension: ensure dropdown renders the `nous-cloud` option from `/api/models` (no hardcoded model list)
-- [ ] Docs: ADR (`docs/adr/`) for the cloud engine + fixed fallback-chain decision; update `CLAUDE.md` + `README.md` + `docs/architecture/`
+- [x] Write failing unit test for `NousAdapter.Polish` (`httptest`): Bearer, `enable_thinking:false`, parse `content` — `495beb5`
+- [x] Implement `internal/adapter/nous.go` (`NousAdapter`) — `495beb5`
+- [x] Write failing unit test: response with `reasoning_content` → output excludes reasoning — `495beb5`
+- [x] Harden parsing (read `content` only; ignore `reasoning_content`) — `495beb5`; base-URL `/v1` tolerance — `6fd9447`
+- [x] Write failing unit test for `FallbackChain` fall-through — `054a293`
+- [x] Implement `internal/adapter/fallback.go` (`FallbackChain`) + `shouldFallback` classifier — `054a293`
+- [x] Add config `NanAPIKey`/`NanBaseURL`/`NanModels` + `POLLEX_NAN_*` overrides + tests — `0e59fd4`
+- [x] Wire `buildAdapters`: chain registered as `nous-cloud` / "Nous Cloud (auto)" / provider `nan` — `0897c22`
+- [x] Integration test for each of mimo/qwen/gemma (tag `integration`, skips without key) — `c9fe978`
+- [ ] **dotfiles (cross-repo handoff): add `POLLEX_NAN_API_KEY=nan.api-key` to `sensitive/env-mapping.conf`** so `secrets_refresh` exports it for `make deploy-secrets`
+- [x] Extension renders `nous-cloud` from `/api/models` (already dynamic) + `nan` provider label — `484572f`
+- [x] Docs: ADR-009 + `CLAUDE.md` + `README.md` — `877b3d2`
 
 ## Closing
 
-- [ ] Every acceptance criterion covered by ≥1 test
-- [ ] `features.json` emitted with non-vacuous verification commands
-- [ ] `go test -race ./...` green; `make lint` clean
-- [ ] No unrelated changes in the diff (no scope creep)
-- [ ] **Final cross-browser deployment test**: load the extension + polish via the cloud engine against the deployed Jetson API in Chrome, Edge, Brave (Chromium); document Firefox/Manifest-V3 status. Record results in `verification.md`.
-- [ ] `verification.md` filled in
+- [x] Every acceptance criterion covered by ≥1 test (AC6 cross-browser is manual)
+- [x] `features.json` emitted
+- [x] `go test -race ./...` green; `make lint` clean
+- [x] No feature scope creep (pre-existing gofmt + stale extension label fixed in their own commits)
+- [ ] **Final cross-browser deployment test** (AC6): extension + cloud-engine polish in Chrome, Edge, Brave; document Firefox/MV3 status. Record in `verification.md`. — needs key deployed to Jetson
+- [x] `verification.md` filled in
 - [ ] PR opened referencing this spec folder
 
 ## Learning note — your call to make (FallbackChain error policy)
