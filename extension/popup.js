@@ -77,7 +77,8 @@ const providerLabels = {
   ollama: "Local",
   mock: "Local",
   claude: "Cloud",
-  "llama.cpp": "Local (GPU)",
+  llamacpp: "Local (GPU)",
+  nan: "Cloud",
 };
 
 // --- Models ---
