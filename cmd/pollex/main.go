@@ -41,10 +41,33 @@ func main() {
 		slog.Error("prompt read failed", "path", cfg.PromptPath, "error", err)
 		os.Exit(1)
 	}
-	systemPrompt := string(promptData)
+	localPrompt := string(promptData)
+	cloudPrompt := localPrompt
+	if cfg.PromptCloudPath != "" {
+		data, err := os.ReadFile(cfg.PromptCloudPath)
+		if err != nil {
+			slog.Error("cloud prompt read failed", "path", cfg.PromptCloudPath, "error", err)
+			os.Exit(1)
+		}
+		cloudPrompt = string(data)
+	}
 
 	adapters, models := buildAdapters(cfg, *useMock)
-	handler := server.SetupMux(adapters, models, systemPrompt, cfg.APIKey, version)
+
+	cloudModelIDs := make(map[string]bool)
+	for _, m := range models {
+		if m.Provider == "nan" {
+			cloudModelIDs[m.ID] = true
+		}
+	}
+	promptSelector := func(modelID string) string {
+		if cloudModelIDs[modelID] {
+			return cloudPrompt
+		}
+		return localPrompt
+	}
+
+	handler := server.SetupMux(adapters, models, promptSelector, cfg.APIKey, version)
 
 	startAdapterProbe(adapters, 30*time.Second)
 
@@ -108,6 +131,7 @@ func startAdapterProbe(adapters map[string]adapter.LLMAdapter, interval time.Dur
 func buildAdapters(cfg config.Config, useMock bool) (map[string]adapter.LLMAdapter, []adapter.ModelInfo) {
 	adapters := make(map[string]adapter.LLMAdapter)
 	var models []adapter.ModelInfo
+	var llamaAdapter adapter.LLMAdapter // tracked for AutoRouter wiring
 
 	if useMock {
 		adapters["mock"] = &adapter.MockAdapter{Delay: 500 * time.Millisecond}
@@ -154,6 +178,7 @@ func buildAdapters(cfg config.Config, useMock bool) (map[string]adapter.LLMAdapt
 			Client:  &http.Client{Timeout: 120 * time.Second},
 		}
 		adapters[model] = llama
+		llamaAdapter = llama
 		models = append(models, adapter.ModelInfo{ID: model, Name: "llama.cpp (" + model + ")", Provider: "llamacpp"})
 		slog.Info("adapter registered", "adapter", "llamacpp", "url", cfg.LlamaCppURL, "model", model)
 	}
@@ -170,7 +195,22 @@ func buildAdapters(cfg config.Config, useMock bool) (map[string]adapter.LLMAdapt
 		slog.Info("adapter registered", "adapter", "claude", "model", cfg.ClaudeModel)
 	}
 
-	// 4. Ollama (Optional or legacy fallback)
+	// 4. Auto-routing (when both nan-cloud and llama.cpp are configured)
+	// Exposes a single "auto" model that routes short texts to local GPU and
+	// long texts to cloud based on sentence count vs RoutingThreshold.
+	if cfg.RoutingThreshold > 0 && llamaAdapter != nil && adapters["nan-cloud"] != nil {
+		auto := &adapter.AutoRouter{
+			Local:     llamaAdapter,
+			Cloud:     adapters["nan-cloud"],
+			Threshold: cfg.RoutingThreshold,
+		}
+		adapters["auto"] = auto
+		// Prepend so "auto" appears first in the extension dropdown
+		models = append([]adapter.ModelInfo{{ID: "auto", Name: "Auto (Smart Routing)", Provider: "auto"}}, models...)
+		slog.Info("adapter registered", "adapter", "auto", "threshold_sentences", cfg.RoutingThreshold)
+	}
+
+	// 5. Ollama (Optional or legacy fallback)
 	if cfg.OllamaURL != "" {
 		model := "qwen2.5:1.5b"
 		ollama := &adapter.OllamaAdapter{

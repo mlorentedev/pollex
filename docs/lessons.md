@@ -698,3 +698,45 @@ created: "2026-03-28"
 **Solution:** Changed provider label from "Local (GPU)" to "Kubelab (GPU)".
 
 **Tags:** `#extension` `#ui`
+
+---
+
+### [2026-06-05] NaN gateway: reasoning lives in `reasoning_content`, suppress with `enable_thinking:false`
+
+**Context:** Integrating nan.builders OpenAI-compatible gateway for cloud inference (mimo-v2.5, qwen3.6, gemma4).
+
+**Problem:** Reasoning models return a non-standard `reasoning_content` field alongside `choices[0].message.content`. Leaving `enable_thinking` at default causes reasoning tokens to be generated silently, burning quota and adding 3–10× latency.
+
+**Solution:** Send `chat_template_kwargs: {"enable_thinking": false}` in every request. Parse only `choices[0].message.content`; ignore `reasoning_content` entirely. Confirmed: reasoning_tokens=0 in smoke test.
+
+**Why:** The gateway honors `enable_thinking:false` at the model level, not just in the response schema. Without it, reasoning runs even if you don't read the output.
+
+**Tags:** `#nan` `#llm` `#api` `#performance`
+
+---
+
+### [2026-06-05] Account-wide rate limit on nan.builders is shared with all tooling
+
+**Context:** Pollex uses the same `nan.api-key` as Hermes, `qq`, and other TUI tools.
+
+**Problem:** The gateway caps at 100 RPM / 5 concurrent **per account**, not per app. A traffic burst through Pollex (semi-public via Cloudflare Tunnel) starves interactive tooling.
+
+**Solution:** Wrap the chain with a `Throttle` concurrency semaphore (default 3, `POLLEX_NAN_MAX_CONCURRENT`). Cloud path stays API-key gated. Consider per-client backoff for future semi-public deployments.
+
+**Why:** The 5-concurrent cap is shared. If Pollex holds 5 slots, `qq` and Hermes get 429s even for single-turn interactive use.
+
+**Tags:** `#nan` `#rate-limiting` `#concurrency` `#cloud`
+
+---
+
+### [2026-06-05] FallbackChain error policy: advance on availability, fail fast on client errors
+
+**Context:** Implementing a 3-model fallback chain (mimo-v2.5 → qwen3.6 → gemma4) over nan.builders.
+
+**Problem:** "Advance on any error" is simple but re-tries a 400 (malformed prompt) against all models — same error, wasted calls, full latency.
+
+**Solution:** Advance only on availability/quota errors (HTTP 429, 404, 5xx, network/timeout). Fail fast on client errors (400, 401) and context cancellation. Carry HTTP status via a typed `*StatusError` sentinel so the classifier is a simple switch, not string matching.
+
+**Why:** 400/401 are deterministic — retrying against a different model produces the same result. Availability/quota errors are transient and model-specific — the next model may succeed.
+
+**Tags:** `#go` `#fallback` `#error-handling` `#nan`

@@ -2,9 +2,13 @@ port: 8090
 llamacpp_url: "http://localhost:8080"
 llamacpp_model: "qwen2.5-1.5b-gpu"
 prompt_path: "/etc/pollex/polish.txt"
+prompt_cloud_path: "/etc/pollex/polish-cloud.txt"
 # api_key set via POLLEX_API_KEY in /etc/pollex/secrets.env (managed by dotfiles)
 # NaN cloud engine: nan_api_key set via NAN_API_KEY in /etc/pollex/secrets.env
 # (from dotfiles nan.api-key age-secret). When present, exposes "NaN Cloud (auto)".
 # Chain defaults to mimo-v2.5,qwen3.6,gemma4; override with POLLEX_NAN_MODELS (CSV).
 # Concurrent NaN calls capped by nan_max_concurrent / POLLEX_NAN_MAX_CONCURRENT
 # (default 3; 0 = unlimited) to stay under the gateway's 5-concurrent account cap.
+# Auto-routing threshold: texts with >= routing_threshold sentences route to cloud.
+# Set to 0 to disable auto routing (no "auto" model exposed).
+routing_threshold: 8

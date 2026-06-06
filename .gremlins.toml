@@ -1,0 +1,8 @@
+[gremlins]
+  # Minimum mutation score to pass. CI fails below this threshold.
+  # Current state: 100% on internal/adapter and internal/config (verified 2026-06-05).
+  threshold = 80
+
+[gremlins.mutants]
+  # Exclude test files from mutation (we mutate production code only)
+  excluding = ["_test.go"]

@@ -1,8 +1,10 @@
 ---
-id: adr-010-git-branch-workflow
+id: 010-git-branch-workflow
 type: adr
 status: active
-tags: [git, workflow, branch-protection]
+tags: [adr, git, workflow, branch-protection]
+created: "2026-06-06"
+owner: manu
 ---
 
 # ADR-010: Git Branch Workflow and Branch Protection

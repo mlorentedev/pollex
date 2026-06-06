@@ -1,5 +1,4 @@
 # Pollex — Makefile
-# Configurable variables
 JETSON_HOST     ?= jet1
 JETSON_FALLBACK ?= jet1-lan
 JETSON_USER     ?= manu
@@ -22,7 +21,7 @@ lint: ## Run go vet + check formatting
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 LDFLAGS  = -ldflags "-X main.version=$(VERSION)"
 
-.PHONY: build build-arm64 ext-zip
+.PHONY: build build-arm64
 
 build: ## Build binary for current platform
 	go build $(LDFLAGS) -o dist/pollex ./cmd/pollex
@@ -30,28 +29,20 @@ build: ## Build binary for current platform
 build-arm64: ## Cross-compile for ARM64 (Jetson Nano)
 	GOOS=linux GOARCH=arm64 go build $(LDFLAGS) -o dist/pollex-arm64 ./cmd/pollex
 
-ext-zip: ## Package extension into dist/pollex-ext.zip
-	cd extension && zip -r ../dist/pollex-ext.zip . -x '*.gitkeep'
-
 # ─── Benchmark ──────────────────────────────────────────────
-.PHONY: bench bench-jetson quality quality-jetson
+.PHONY: bench bench-jetson
 
-bench: ## Run performance benchmark against local API
-	go run ./cmd/benchmark --url http://localhost:$(API_PORT)
+bench: ## Run benchmark against local API (add --quality for input/output view)
+	go run ./cmd/benchmark --url http://localhost:$(API_PORT) $(BENCH_ARGS)
 
 bench-jetson: ## Run benchmark against Jetson (via Cloudflare Tunnel)
-	go run ./cmd/benchmark --url https://pollex.mlorente.dev --api-key $$POLLEX_API_KEY
-
-quality: ## Run quality test against local API (shows input/output)
-	go run ./cmd/benchmark --quality --url http://localhost:$(API_PORT)
-
-quality-jetson: ## Run quality test against Jetson (via Cloudflare Tunnel)
-	go run ./cmd/benchmark --quality --url https://pollex.mlorente.dev --api-key $$POLLEX_API_KEY
+	go run ./cmd/benchmark --url https://pollex.mlorente.dev --api-key $$POLLEX_API_KEY $(BENCH_ARGS)
 
 # ─── Deploy (Jetson) ────────────────────────────────────────
-.PHONY: deploy deploy-init deploy-llamacpp deploy-tunnel _resolve-jetson
+.PHONY: deploy deploy-init deploy-llamacpp deploy-tunnel deploy-secrets _resolve-jetson
 
-_resolve-jetson: ## (internal) probe JETSON_HOST, fall back to JETSON_FALLBACK with warning
+# Internal: probe JETSON_HOST, fall back to JETSON_FALLBACK with warning
+_resolve-jetson:
 	$(eval EFFECTIVE_HOST := $(shell \
 	  if ssh -o ConnectTimeout=3 -o BatchMode=yes $(JETSON_HOST) true 2>/dev/null; then \
 	    echo $(JETSON_HOST); \
@@ -66,17 +57,25 @@ deploy-init: _resolve-jetson ## First-time Jetson setup (packages, CUDA, dirs, s
 	rsync -Pz deploy/systemd/jetson-clocks.service $(JETSON_USER)@$(EFFECTIVE_HOST):/tmp/jetson-clocks.service
 	ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'bash -s' < deploy/scripts/init.sh
 
-deploy: _resolve-jetson build-arm64 ## Build + deploy binary, config, prompt, secrets, and restart to Jetson
+deploy: _resolve-jetson build-arm64 ## Build + deploy binary, config, prompts, and restart to Jetson
 	rsync -Pz dist/pollex-arm64 $(JETSON_USER)@$(EFFECTIVE_HOST):/tmp/pollex
 	rsync -Pz deploy/config.yaml $(JETSON_USER)@$(EFFECTIVE_HOST):/tmp/pollex-config.yaml
 	rsync -Pz prompts/polish.txt $(JETSON_USER)@$(EFFECTIVE_HOST):/tmp/pollex-polish.txt
+	rsync -Pz prompts/polish-cloud.txt $(JETSON_USER)@$(EFFECTIVE_HOST):/tmp/pollex-polish-cloud.txt
 	rsync -Pz deploy/systemd/pollex-api.service $(JETSON_USER)@$(EFFECTIVE_HOST):/tmp/pollex-api.service
-	ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'sudo mv /tmp/pollex /usr/local/bin/pollex && sudo chmod +x /usr/local/bin/pollex && sudo mv /tmp/pollex-config.yaml /etc/pollex/config.yaml && sudo mv /tmp/pollex-polish.txt /etc/pollex/polish.txt && sudo cp /tmp/pollex-api.service /etc/systemd/system/pollex-api.service && sudo systemctl daemon-reload'
-	@test -n "$$POLLEX_API_KEY" && ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'sudo mkdir -p /etc/pollex && echo "POLLEX_API_KEY='"$$POLLEX_API_KEY"'" | sudo tee /etc/pollex/secrets.env > /dev/null && sudo chmod 600 /etc/pollex/secrets.env' || true
-	@test -n "$$NAN_API_KEY" && ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'echo "NAN_API_KEY='"$$NAN_API_KEY"'" | sudo tee -a /etc/pollex/secrets.env > /dev/null' || true
+	ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'bash -s' < scripts/jetson-install.sh
 	@echo "Restarting pollex-api..."
 	@ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'sudo systemctl restart pollex-api'
 	@echo "Done."
+
+deploy-secrets: _resolve-jetson ## Deploy API keys from env to Jetson secrets.env
+	@test -n "$$POLLEX_API_KEY" || (echo "POLLEX_API_KEY not set" && exit 1)
+	@ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'sudo mkdir -p /etc/pollex && \
+	  echo "POLLEX_API_KEY='"$$POLLEX_API_KEY"'" | sudo tee /etc/pollex/secrets.env > /dev/null && \
+	  sudo chmod 600 /etc/pollex/secrets.env'
+	@test -n "$$NAN_API_KEY" && \
+	  ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'echo "NAN_API_KEY='"$$NAN_API_KEY"'" | sudo tee -a /etc/pollex/secrets.env > /dev/null' || true
+	@echo "Secrets deployed."
 
 deploy-llamacpp: _resolve-jetson ## Build llama.cpp with CUDA on Jetson (~85 min)
 	rsync -Pz deploy/scripts/build-llamacpp.sh $(JETSON_USER)@$(EFFECTIVE_HOST):/tmp/build-llamacpp.sh
@@ -88,12 +87,8 @@ deploy-tunnel: _resolve-jetson ## Setup Cloudflare Tunnel on Jetson (interactive
 	rsync -Pz deploy/systemd/cloudflared.service $(JETSON_USER)@$(EFFECTIVE_HOST):/tmp/cloudflared.service
 	ssh -t $(JETSON_USER)@$(EFFECTIVE_HOST) 'bash /tmp/setup-cloudflared.sh'
 
-deploy-tunnel-route: _resolve-jetson ## Register tunnel DNS routes (pollex.mlorente.dev + pollex-home.mlorente.dev)
-	@ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'cloudflared tunnel route dns pollex pollex.mlorente.dev && cloudflared tunnel route dns pollex pollex-home.mlorente.dev'
-	@echo "DNS routes registered."
-
 # ─── Jetson Remote ──────────────────────────────────────────
-.PHONY: jetson-ssh jetson-logs jetson-status jetson-test jetson-tunnel-start jetson-tunnel-status jetson-tunnel-logs
+.PHONY: jetson-ssh jetson-logs jetson-status jetson-test jetson-tunnel-status jetson-tunnel-logs
 
 jetson-ssh: _resolve-jetson ## SSH into Jetson
 	ssh $(JETSON_USER)@$(EFFECTIVE_HOST)
@@ -101,14 +96,14 @@ jetson-ssh: _resolve-jetson ## SSH into Jetson
 jetson-logs: _resolve-jetson ## Tail pollex-api service logs on Jetson
 	ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'sudo journalctl -u pollex-api -f'
 
-jetson-status: _resolve-jetson ## Remote health check (via SSH)
+jetson-status: _resolve-jetson ## Health check via SSH (per-adapter status)
 	@ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'curl -s localhost:$(API_PORT)/api/health' | python3 -m json.tool
 
-jetson-test: _resolve-jetson ## Test polish request on Jetson (end-to-end, needs POLLEX_API_KEY)
-	@ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'curl -s -X POST localhost:$(API_PORT)/api/polish -H "Content-Type: application/json" -H "X-API-Key: '"$$POLLEX_API_KEY"'" -d '"'"'{"text":"This is a test to see if pollex works end to end on the jetson nano.","model_id":"qwen2.5-1.5b-gpu"}'"'"'' | python3 -m json.tool
-
-jetson-tunnel-start: _resolve-jetson ## Start Cloudflare Tunnel on Jetson
-	ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'sudo systemctl start cloudflared && sudo systemctl status cloudflared'
+jetson-test: _resolve-jetson ## End-to-end polish test on Jetson (needs POLLEX_API_KEY)
+	@ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'curl -s -X POST localhost:$(API_PORT)/api/polish \
+	  -H "Content-Type: application/json" \
+	  -H "X-API-Key: '"$$POLLEX_API_KEY"'" \
+	  -d '"'"'{"text":"This is a test to see if pollex works end to end on the jetson nano.","model_id":"qwen2.5-1.5b-gpu"}'"'"'' | python3 -m json.tool
 
 jetson-tunnel-status: _resolve-jetson ## Check Cloudflare Tunnel status
 	ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'sudo systemctl status cloudflared'
@@ -119,7 +114,7 @@ jetson-tunnel-logs: _resolve-jetson ## Tail Cloudflare Tunnel logs on Jetson
 # ─── Docker ────────────────────────────────────────────────
 .PHONY: docker-build docker-dev docker-down
 
-docker-build: ## Build pollex Docker image
+docker-build: ## Build pollex Docker image (alpine:3.21, 24.7MB)
 	docker build \
 		--build-arg VERSION=$$(git describe --tags --always 2>/dev/null || echo dev) \
 		--build-arg VCS_REF=$$(git rev-parse --short HEAD) \
@@ -150,7 +145,7 @@ monitoring-validate: ## Validate Prometheus rules and config syntax
 loadtest: ## Run k6 load test against local API (normal + burst)
 	k6 run -e API_KEY=$$POLLEX_API_KEY deploy/loadtest/pollex.js
 
-loadtest-jetson: ## Run k6 load test against Jetson (single-user, via Cloudflare Tunnel)
+loadtest-jetson: ## Run k6 load test against Jetson (via Cloudflare Tunnel)
 	k6 run -e SCENARIO=jetson -e BASE_URL=https://pollex.mlorente.dev -e API_KEY=$$POLLEX_API_KEY deploy/loadtest/pollex.js
 
 loadtest-soak: ## Run 30-min soak test against Jetson
@@ -165,4 +160,4 @@ clean: ## Remove dist/ directory
 # ─── Help ───────────────────────────────────────────────────
 .DEFAULT_GOAL := help
 help: ## Show this help
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_][a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}'

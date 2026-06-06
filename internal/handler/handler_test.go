@@ -193,7 +193,7 @@ func TestHandlePolish(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
 
-			Polish(adapters, "system prompt").ServeHTTP(w, req)
+			Polish(adapters, func(string) string { return "system prompt" }).ServeHTTP(w, req)
 
 			if w.Code != tt.wantCode {
 				t.Errorf("status: got %d, want %d", w.Code, tt.wantCode)
@@ -225,7 +225,7 @@ func TestHandlePolishTextTooLong(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 
-		Polish(adapters, "prompt").ServeHTTP(w, req)
+		Polish(adapters, func(string) string { return "prompt" }).ServeHTTP(w, req)
 
 		if w.Code != http.StatusBadRequest {
 			t.Errorf("status: got %d, want %d", w.Code, http.StatusBadRequest)
@@ -244,7 +244,7 @@ func TestHandlePolishTextTooLong(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 
-		Polish(adapters, "prompt").ServeHTTP(w, req)
+		Polish(adapters, func(string) string { return "prompt" }).ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("status: got %d, want %d", w.Code, http.StatusOK)
@@ -259,7 +259,7 @@ func TestHandlePolishInvalidJSON(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	Polish(adapters, "prompt").ServeHTTP(w, req)
+	Polish(adapters, func(string) string { return "prompt" }).ServeHTTP(w, req)
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("status: got %d, want %d", w.Code, http.StatusBadRequest)
@@ -274,7 +274,7 @@ func TestHandlePolishResponseHasElapsedMs(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	Polish(adapters, "prompt").ServeHTTP(w, req)
+	Polish(adapters, func(string) string { return "prompt" }).ServeHTTP(w, req)
 
 	var resp polishResponse
 	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
@@ -302,9 +302,36 @@ func TestHandlePolishNanCloudUnknown(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	Polish(adapters, "prompt").ServeHTTP(w, req)
+	Polish(adapters, func(string) string { return "prompt" }).ServeHTTP(w, req)
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("status: got %d, want %d", w.Code, http.StatusBadRequest)
+	}
+}
+
+// TestHandlePolishPromptSelector verifies that the prompt selector receives the
+// correct model ID from the request, enabling per-model prompt routing.
+func TestHandlePolishPromptSelector(t *testing.T) {
+	const wantModelID = "mock"
+	var gotModelID string
+
+	adapters := map[string]adapter.LLMAdapter{wantModelID: &adapter.MockAdapter{}}
+	selector := func(modelID string) string {
+		gotModelID = modelID
+		return "test prompt"
+	}
+
+	body, _ := json.Marshal(polishRequest{Text: "hello", ModelID: wantModelID})
+	req := httptest.NewRequest(http.MethodPost, "/api/polish", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	Polish(adapters, selector).ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("status: got %d, want %d", w.Code, http.StatusOK)
+	}
+	if gotModelID != wantModelID {
+		t.Errorf("selector called with model %q, want %q", gotModelID, wantModelID)
 	}
 }
