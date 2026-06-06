@@ -51,6 +51,6 @@ jobs:
       - name: Install gremlins
         run: go install github.com/go-gremlins/gremlins/cmd/gremlins@latest
       - name: Mutate adapter package
-        run: gremlins unleash --timeout-coefficient 5 ./internal/adapter/...
+        run: gremlins unleash --timeout-coefficient 5 ./internal/adapter
       - name: Mutate config package
-        run: gremlins unleash --timeout-coefficient 5 ./internal/config/...
+        run: gremlins unleash --timeout-coefficient 5 ./internal/config
