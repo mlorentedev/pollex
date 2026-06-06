@@ -109,7 +109,10 @@ func (n *NousAdapter) Polish(ctx context.Context, text, systemPrompt string) (st
 	if baseURL == "" {
 		baseURL = nousDefaultBaseURL
 	}
-	url := strings.TrimRight(baseURL, "/") + "/v1/chat/completions"
+	// Accept the base URL either as the host root or with a trailing "/v1" (the
+	// ecosystem's NAN_BASE_URL convention), so we never produce "/v1/v1/...".
+	baseURL = strings.TrimSuffix(strings.TrimRight(baseURL, "/"), "/v1")
+	url := baseURL + "/v1/chat/completions"
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {

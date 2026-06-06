@@ -153,3 +153,26 @@ func TestNousAdapterName(t *testing.T) {
 		t.Errorf("got %q, want %q", a.Name(), want)
 	}
 }
+
+// TestNousAdapterBaseURLWithV1 verifies a base URL carrying a trailing /v1
+// (the NAN_BASE_URL convention) does not produce a doubled /v1/v1 path.
+func TestNousAdapterBaseURLWithV1(t *testing.T) {
+	hit := false
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/chat/completions" {
+			t.Errorf("path: got %s, want /v1/chat/completions", r.URL.Path)
+		}
+		hit = true
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(nousChatResponse{Choices: []nousChoice{{Message: nousMessageResp{Content: "ok"}}}})
+	}))
+	defer srv.Close()
+
+	a := &NousAdapter{BaseURL: srv.URL + "/v1", APIKey: "k", Model: "mimo-v2.5", Client: &http.Client{Timeout: 5 * time.Second}}
+	if _, err := a.Polish(context.Background(), "x", "p"); err != nil {
+		t.Fatalf("Polish: %v", err)
+	}
+	if !hit {
+		t.Error("server was never hit at the expected path")
+	}
+}
