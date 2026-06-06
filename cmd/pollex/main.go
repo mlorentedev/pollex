@@ -132,7 +132,32 @@ func buildAdapters(cfg config.Config, useMock bool) (map[string]adapter.LLMAdapt
 		slog.Info("adapter registered", "adapter", "llamacpp", "url", cfg.LlamaCppURL, "model", model)
 	}
 
-	// 2. Claude (Optional cloud fallback)
+	// 2. NaN cloud (nan.builders) — a single "Nous Cloud (auto)" entry backed by
+	// an ordered fallback chain over the configured models (default mimo-v2.5 ->
+	// qwen3.6 -> gemma4). The user selects the engine via the existing model_id.
+	if cfg.NanAPIKey != "" && len(cfg.NanModels) > 0 {
+		chain := make([]adapter.LLMAdapter, 0, len(cfg.NanModels))
+		// Per-model timeout kept tight so the whole chain (worst case N x timeout)
+		// fits inside the 120s request middleware budget and a hung model fails
+		// over fast — the safety-net model must still be reachable in time.
+		perModelTimeout := 30 * time.Second
+		for _, model := range cfg.NanModels {
+			chain = append(chain, &adapter.NousAdapter{
+				BaseURL: cfg.NanBaseURL,
+				APIKey:  cfg.NanAPIKey,
+				Model:   model,
+				Client:  &http.Client{Timeout: perModelTimeout},
+			})
+		}
+		const nousCloudID = "nous-cloud"
+		cloud := &adapter.FallbackChain{Label: "Nous Cloud (auto)", Adapters: chain}
+		// Bound concurrent calls to stay under the gateway's account-wide limit.
+		adapters[nousCloudID] = adapter.NewThrottle(cloud, cfg.NanMaxConcurrent)
+		models = append(models, adapter.ModelInfo{ID: nousCloudID, Name: "Nous Cloud (auto)", Provider: "nan"})
+		slog.Info("adapter registered", "adapter", "nan-cloud", "models", cfg.NanModels, "max_concurrent", cfg.NanMaxConcurrent)
+	}
+
+	// 3. Claude (Optional cloud fallback)
 	if cfg.ClaudeAPIKey != "" {
 		claude := &adapter.ClaudeAdapter{
 			APIKey: cfg.ClaudeAPIKey,
@@ -144,7 +169,7 @@ func buildAdapters(cfg config.Config, useMock bool) (map[string]adapter.LLMAdapt
 		slog.Info("adapter registered", "adapter", "claude", "model", cfg.ClaudeModel)
 	}
 
-	// 3. Ollama (Optional or legacy fallback)
+	// 4. Ollama (Optional or legacy fallback)
 	if cfg.OllamaURL != "" {
 		model := "qwen2.5:1.5b"
 		ollama := &adapter.OllamaAdapter{

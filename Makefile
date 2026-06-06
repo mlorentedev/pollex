@@ -77,6 +77,7 @@ deploy-secrets: _resolve-jetson ## Deploy API key from dotfiles to Jetson
 	@test -n "$$POLLEX_API_KEY" || (echo "Error: POLLEX_API_KEY not set. Run: secrets_refresh" && exit 1)
 	@echo "Deploying secrets to Jetson..."
 	@ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'sudo mkdir -p /etc/pollex && echo "POLLEX_API_KEY='"$$POLLEX_API_KEY"'" | sudo tee /etc/pollex/secrets.env > /dev/null && sudo chmod 600 /etc/pollex/secrets.env'
+	@test -z "$$POLLEX_NAN_API_KEY" || (echo "Deploying NaN cloud key..." && ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'echo "POLLEX_NAN_API_KEY='"$$POLLEX_NAN_API_KEY"'" | sudo tee -a /etc/pollex/secrets.env > /dev/null')
 	@echo "Secrets deployed. Restarting pollex-api..."
 	@ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'sudo systemctl restart pollex-api'
 	@echo "Done."

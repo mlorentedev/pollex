@@ -1,0 +1,44 @@
+[
+  {
+    "id": "FEAT-001-nan-cloud-engine-f1",
+    "behavior": "NousAdapter sends Authorization: Bearer and enable_thinking:false, parsing choices[0].message.content",
+    "verification": "source ~/.zshrc && go test -race -run TestNousAdapterPolish ./internal/adapter/",
+    "state": "pending",
+    "evidence": ""
+  },
+  {
+    "id": "FEAT-001-nan-cloud-engine-f2",
+    "behavior": "NousAdapter never surfaces reasoning_content in the polished output",
+    "verification": "source ~/.zshrc && go test -race -run TestNousAdapterIgnoresReasoningContent ./internal/adapter/",
+    "state": "pending",
+    "evidence": ""
+  },
+  {
+    "id": "FEAT-001-nan-cloud-engine-f3",
+    "behavior": "mimo-v2.5, qwen3.6 and gemma4 each polish text against the live nan.builders gateway",
+    "verification": "source ~/.zshrc && NAN_API_KEY=$NAN_API_KEY go test -tags integration -run TestNousIntegrationModels ./internal/adapter/",
+    "state": "pending",
+    "evidence": ""
+  },
+  {
+    "id": "FEAT-001-nan-cloud-engine-f4",
+    "behavior": "FallbackChain advances on availability/quota errors, fails fast on client errors, wraps an all-failed error",
+    "verification": "source ~/.zshrc && go test -race -run TestFallbackChain ./internal/adapter/",
+    "state": "pending",
+    "evidence": ""
+  },
+  {
+    "id": "FEAT-001-nan-cloud-engine-f5",
+    "behavior": "buildAdapters exposes exactly one 'Nous Cloud (auto)' model gated on the NaN API key",
+    "verification": "source ~/.zshrc && go test -race -run TestBuildAdapters ./cmd/pollex/",
+    "state": "pending",
+    "evidence": ""
+  },
+  {
+    "id": "FEAT-001-nan-cloud-engine-f6",
+    "behavior": "Extension polishes via the cloud engine in Chrome, Edge and Brave against the deployed Jetson API",
+    "verification": "manual: load extension, select 'Nous Cloud (auto)', polish text in each browser; record results in verification.md",
+    "state": "pending",
+    "evidence": ""
+  }
+]
