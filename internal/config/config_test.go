@@ -47,6 +47,9 @@ func TestLoadDefaults(t *testing.T) {
 	if len(cfg.NanModels) != 3 || cfg.NanModels[0] != "mimo-v2.5" || cfg.NanModels[1] != "qwen3.6" || cfg.NanModels[2] != "gemma4" {
 		t.Errorf("default nan_models: got %v, want [mimo-v2.5 qwen3.6 gemma4]", cfg.NanModels)
 	}
+	if cfg.NanMaxConcurrent != 3 {
+		t.Errorf("default nan_max_concurrent: got %d, want 3", cfg.NanMaxConcurrent)
+	}
 }
 
 func TestLoadFromYAML(t *testing.T) {
@@ -65,6 +68,7 @@ nan_base_url: "https://api.nan.builders"
 nan_models:
   - "alpha"
   - "beta"
+nan_max_concurrent: 7
 prompt_path: "/etc/pollex/polish.txt"
 api_key: "my-secret-key"
 `
@@ -91,6 +95,7 @@ api_key: "my-secret-key"
 		{"llamacpp_model", cfg.LlamaCppModel, "qwen2.5-1.5b"},
 		{"nan_api_key", cfg.NanAPIKey, "sk-nan-test"},
 		{"nan_base_url", cfg.NanBaseURL, "https://api.nan.builders"},
+		{"nan_max_concurrent", cfg.NanMaxConcurrent, 7},
 		{"api_key", cfg.APIKey, "my-secret-key"},
 	}
 
@@ -125,6 +130,7 @@ ollama_url: "http://from-yaml:11434"
 	t.Setenv("POLLEX_NAN_API_KEY", "sk-nan-env")
 	t.Setenv("POLLEX_NAN_BASE_URL", "https://env.nan")
 	t.Setenv("POLLEX_NAN_MODELS", "m1, m2 ,m3") // intentional spaces — must be trimmed
+	t.Setenv("POLLEX_NAN_MAX_CONCURRENT", "4")
 	t.Setenv("POLLEX_API_KEY", "env-api-key")
 
 	cfg, err := Load(yamlPath)
@@ -144,6 +150,7 @@ ollama_url: "http://from-yaml:11434"
 		{"llamacpp_model from env", cfg.LlamaCppModel, "custom-model"},
 		{"nan_api_key from env", cfg.NanAPIKey, "sk-nan-env"},
 		{"nan_base_url from env", cfg.NanBaseURL, "https://env.nan"},
+		{"nan_max_concurrent from env", cfg.NanMaxConcurrent, 4},
 		{"api_key from env", cfg.APIKey, "env-api-key"},
 	}
 

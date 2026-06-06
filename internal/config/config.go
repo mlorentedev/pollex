@@ -18,19 +18,21 @@ type Config struct {
 	LlamaCppModel string `yaml:"llamacpp_model"`
 	// NaN (nan.builders) cloud engine — an OpenAI-compatible gateway serving the
 	// Nous-family models. NanModels is the ordered fallback chain tried in turn.
-	NanAPIKey  string   `yaml:"nan_api_key"`
-	NanBaseURL string   `yaml:"nan_base_url"`
-	NanModels  []string `yaml:"nan_models"`
-	PromptPath string   `yaml:"prompt_path"`
-	APIKey     string   `yaml:"api_key"`
+	NanAPIKey        string   `yaml:"nan_api_key"`
+	NanBaseURL       string   `yaml:"nan_base_url"`
+	NanModels        []string `yaml:"nan_models"`
+	NanMaxConcurrent int      `yaml:"nan_max_concurrent"` // 0 => unlimited
+	PromptPath       string   `yaml:"prompt_path"`
+	APIKey           string   `yaml:"api_key"`
 }
 
 func defaults() Config {
 	return Config{
-		Port:        8090,
-		ClaudeModel: "claude-sonnet-4-5-20250929",
-		NanModels:   []string{"mimo-v2.5", "qwen3.6", "gemma4"},
-		PromptPath:  "prompts/polish.txt",
+		Port:             8090,
+		ClaudeModel:      "claude-sonnet-4-5-20250929",
+		NanModels:        []string{"mimo-v2.5", "qwen3.6", "gemma4"},
+		NanMaxConcurrent: 3, // stay under the gateway's 5-concurrent cap, leave headroom
+		PromptPath:       "prompts/polish.txt",
 	}
 }
 
@@ -90,6 +92,13 @@ func Load(path string) (Config, error) {
 	}
 	if v := os.Getenv("POLLEX_NAN_MODELS"); v != "" {
 		cfg.NanModels = splitAndTrim(v)
+	}
+	if v := os.Getenv("POLLEX_NAN_MAX_CONCURRENT"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			return Config{}, fmt.Errorf("config: invalid POLLEX_NAN_MAX_CONCURRENT %q: %w", v, err)
+		}
+		cfg.NanMaxConcurrent = n
 	}
 	if v := os.Getenv("POLLEX_PROMPT_PATH"); v != "" {
 		cfg.PromptPath = v

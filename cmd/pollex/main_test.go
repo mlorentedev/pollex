@@ -26,9 +26,13 @@ func TestBuildAdaptersNanCloud(t *testing.T) {
 		t.Errorf("adapter name: got %q, want %q", a.Name(), "Nous Cloud (auto)")
 	}
 
-	fc, ok := a.(*adapter.FallbackChain)
+	th, ok := a.(*adapter.Throttle)
 	if !ok {
-		t.Fatalf("nous-cloud adapter should be *FallbackChain, got %T", a)
+		t.Fatalf("nous-cloud adapter should be *Throttle, got %T", a)
+	}
+	fc, ok := th.Adapter.(*adapter.FallbackChain)
+	if !ok {
+		t.Fatalf("throttle should wrap *FallbackChain, got %T", th.Adapter)
 	}
 	if len(fc.Adapters) != 3 {
 		t.Errorf("chain length: got %d, want 3", len(fc.Adapters))

@@ -150,9 +150,11 @@ func buildAdapters(cfg config.Config, useMock bool) (map[string]adapter.LLMAdapt
 			})
 		}
 		const nousCloudID = "nous-cloud"
-		adapters[nousCloudID] = &adapter.FallbackChain{Label: "Nous Cloud (auto)", Adapters: chain}
+		cloud := &adapter.FallbackChain{Label: "Nous Cloud (auto)", Adapters: chain}
+		// Bound concurrent calls to stay under the gateway's account-wide limit.
+		adapters[nousCloudID] = adapter.NewThrottle(cloud, cfg.NanMaxConcurrent)
 		models = append(models, adapter.ModelInfo{ID: nousCloudID, Name: "Nous Cloud (auto)", Provider: "nan"})
-		slog.Info("adapter registered", "adapter", "nan-cloud", "models", cfg.NanModels)
+		slog.Info("adapter registered", "adapter", "nan-cloud", "models", cfg.NanModels, "max_concurrent", cfg.NanMaxConcurrent)
 	}
 
 	// 3. Claude (Optional cloud fallback)
