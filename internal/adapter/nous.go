@@ -69,6 +69,21 @@ type nousErrorResponse struct {
 	} `json:"error"`
 }
 
+// StatusError is returned when the gateway responds with a non-200 status. It
+// exposes the HTTP code so a FallbackChain can decide whether another model
+// could recover (availability/quota) or whether the request is hopeless (4xx).
+type StatusError struct {
+	Code    int
+	Message string
+}
+
+func (e *StatusError) Error() string {
+	if e.Message != "" {
+		return fmt.Sprintf("nous: API error %d: %s", e.Code, e.Message)
+	}
+	return fmt.Sprintf("nous: unexpected status %d", e.Code)
+}
+
 func (n *NousAdapter) Name() string {
 	return fmt.Sprintf("Nous (%s)", n.Model)
 }
@@ -111,10 +126,8 @@ func (n *NousAdapter) Polish(ctx context.Context, text, systemPrompt string) (st
 
 	if resp.StatusCode != http.StatusOK {
 		var errResp nousErrorResponse
-		if err := json.NewDecoder(resp.Body).Decode(&errResp); err != nil || errResp.Error.Message == "" {
-			return "", fmt.Errorf("nous: unexpected status %d", resp.StatusCode)
-		}
-		return "", fmt.Errorf("nous: API error: %s", errResp.Error.Message)
+		_ = json.NewDecoder(resp.Body).Decode(&errResp)
+		return "", &StatusError{Code: resp.StatusCode, Message: errResp.Error.Message}
 	}
 
 	var chatResp nousChatResponse
