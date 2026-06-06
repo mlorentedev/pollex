@@ -36,8 +36,8 @@ type polishResponse struct {
 }
 
 type healthResponse struct {
-	Status   string                      `json:"status"`
-	Adapters map[string]json.RawMessage  `json:"adapters"`
+	Status   string                     `json:"status"`
+	Adapters map[string]json.RawMessage `json:"adapters"`
 }
 
 type errorResponse struct {
