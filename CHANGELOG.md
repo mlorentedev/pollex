@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/mlorentedev/pollex/compare/v1.8.0...v1.8.1) (2026-06-06)
+
+
+### Bug Fixes
+
+* remove trailing ... from gremlins paths in CI ([#33](https://github.com/mlorentedev/pollex/issues/33)) ([2ce872a](https://github.com/mlorentedev/pollex/commit/2ce872a306b7c542ec18fb0a8dd48c5e041b88dc))
+
 ## [1.8.0](https://github.com/mlorentedev/pollex/compare/v1.7.0...v1.8.0) (2026-06-06)
 
 
