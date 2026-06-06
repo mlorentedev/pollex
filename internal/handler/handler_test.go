@@ -288,3 +288,23 @@ func TestHandlePolishResponseHasElapsedMs(t *testing.T) {
 		t.Errorf("elapsed_ms should be >= 0, got %d", resp.ElapsedMs)
 	}
 }
+
+// TestHandlePolishNanCloudUnknown verifies that the polish handler returns
+// 400 for an unregistered nan-cloud model (the adapter is never wired without
+// a real API key, so the endpoint must refuse the request).
+func TestHandlePolishNanCloudUnknown(t *testing.T) {
+	adapters := map[string]adapter.LLMAdapter{
+		"mock": &adapter.MockAdapter{},
+	}
+
+	body, _ := json.Marshal(polishRequest{Text: "hello", ModelID: "nan-cloud"})
+	req := httptest.NewRequest(http.MethodPost, "/api/polish", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	Polish(adapters, "prompt").ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("status: got %d, want %d", w.Code, http.StatusBadRequest)
+	}
+}

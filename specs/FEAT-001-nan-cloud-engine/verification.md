@@ -13,7 +13,7 @@ Map every acceptance criterion from `proposal.md` to concrete proof.
 - [x] AC2 reasoning_content ignored -> `TestNousAdapterIgnoresReasoningContent` (`495beb5`)
 - [x] AC3 all 3 models work live (mimo/qwen/gemma) -> `TestNousIntegrationModels` (`c9fe978`); live run 2026-06-05 PASS for all three (mimo 2.9s, qwen 1.0s, gemma 1.0s)
 - [x] AC4 FallbackChain fall-through -> `TestFallbackChain_*` (advance on quota/network, fail-fast on 400, all-fail wrapped) (`054a293`)
-- [x] AC5 /api/models lists single "Nous Cloud (auto)" gated on key -> `TestBuildAdaptersNanCloud` / `TestBuildAdaptersNoNanWithoutKey` (`0897c22`)
+- [x] AC5 /api/models lists single "NaN Cloud (auto)" gated on key -> `TestBuildAdaptersNanCloud` / `TestBuildAdaptersNoNanWithoutKey` (`0897c22`)
 - [x] AC6 concurrent NaN calls bounded + ctx-cancel respected -> `TestThrottle_*` (`de148ef`)
 - [ ] AC7 cross-browser polish via cloud engine -> **PENDING manual smoke** (Chrome/Edge/Brave) — requires deployed key on Jetson
 

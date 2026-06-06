@@ -29,7 +29,7 @@
   },
   {
     "id": "FEAT-001-nan-cloud-engine-f5",
-    "behavior": "buildAdapters exposes exactly one 'Nous Cloud (auto)' model gated on the NaN API key",
+    "behavior": "buildAdapters exposes exactly one 'NaN Cloud (auto)' model gated on the NaN API key",
     "verification": "source ~/.zshrc && go test -race -run TestBuildAdapters ./cmd/pollex/",
     "state": "pending",
     "evidence": ""
@@ -37,7 +37,7 @@
   {
     "id": "FEAT-001-nan-cloud-engine-f6",
     "behavior": "Extension polishes via the cloud engine in Chrome, Edge and Brave against the deployed Jetson API",
-    "verification": "manual: load extension, select 'Nous Cloud (auto)', polish text in each browser; record results in verification.md",
+    "verification": "manual: load extension, select 'NaN Cloud (auto)', polish text in each browser; record results in verification.md",
     "state": "pending",
     "evidence": ""
   }

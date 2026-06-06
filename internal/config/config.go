@@ -84,7 +84,7 @@ func Load(path string) (Config, error) {
 	if v := os.Getenv("POLLEX_LLAMACPP_MODEL"); v != "" {
 		cfg.LlamaCppModel = v
 	}
-	if v := os.Getenv("POLLEX_NAN_API_KEY"); v != "" {
+	if v := os.Getenv("NAN_API_KEY"); v != "" {
 		cfg.NanAPIKey = v
 	}
 	if v := os.Getenv("POLLEX_NAN_BASE_URL"); v != "" {

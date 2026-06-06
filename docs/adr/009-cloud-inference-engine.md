@@ -23,10 +23,10 @@ The `nan.builders` gateway is already part of this ecosystem (consumed by the He
 ## Decision
 
 1. Add `NousAdapter` — an OpenAI-compatible adapter for `nan.builders` with Bearer auth. It reads `choices[0].message.content`, **ignores** `reasoning_content`, and sends `enable_thinking:false`. It accepts the base URL with or without a trailing `/v1`.
-2. Expose the cloud option as a **single** `"Nous Cloud (auto)"` entry (`model_id` `nous-cloud`) backed by a `FallbackChain` — a composite `LLMAdapter` over an **ordered, non-user-selectable** list: **`mimo-v2.5` → `qwen3.6` → `gemma4`**. Unlimited models sit at the tail so the chain almost always returns something.
+2. Expose the cloud option as a **single** `"NaN Cloud (auto)"` entry (`model_id` `nan-cloud`) backed by a `FallbackChain` — a composite `LLMAdapter` over an **ordered, non-user-selectable** list: **`mimo-v2.5` → `qwen3.6` → `gemma4`**. Unlimited models sit at the tail so the chain almost always returns something.
 3. The cloud entry coexists with the Jetson `llama.cpp` model in `GET /api/models`; the user selects the engine through the existing `model_id` mechanism — **no new "engine" concept**.
 4. **Fallback policy:** advance to the next model only on availability/quota errors (HTTP 429, 404, 5xx, network/timeout); fail fast on client errors (400, 401) and caller cancellation, which would recur identically.
-5. The key is sourced from the existing `nan.api-key` age-secret, surfaced as `POLLEX_NAN_API_KEY` and deployed to `/etc/pollex/secrets.env`. The chain is config-driven via `POLLEX_NAN_MODELS` so rotating slugs need no code change.
+5. The key is sourced from the existing `nan.api-key` age-secret, exported as `NAN_API_KEY` by dotfiles and deployed to `/etc/pollex/secrets.env`. The chain is config-driven via `POLLEX_NAN_MODELS` so rotating slugs need no code change.
 6. A `Throttle` decorator wraps the cloud chain and bounds concurrent NaN calls (`POLLEX_NAN_MAX_CONCURRENT`, default 3) so Pollex stays under the gateway's account-wide 5-concurrent cap and leaves headroom for other consumers. It bounds *concurrency*, not request *rate* (the ~100 RPM cap would need a separate token-bucket).
 
 ## Consequences

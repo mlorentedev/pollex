@@ -8,6 +8,7 @@ import (
 
 func TestLoadDefaults(t *testing.T) {
 	t.Setenv("POLLEX_API_KEY", "")
+	t.Setenv("NAN_API_KEY", "")
 
 	cfg, err := Load("")
 	if err != nil {
@@ -54,6 +55,7 @@ func TestLoadDefaults(t *testing.T) {
 
 func TestLoadFromYAML(t *testing.T) {
 	t.Setenv("POLLEX_API_KEY", "")
+	t.Setenv("NAN_API_KEY", "")
 
 	dir := t.TempDir()
 	yamlPath := filepath.Join(dir, "config.yaml")
@@ -127,7 +129,7 @@ ollama_url: "http://from-yaml:11434"
 	t.Setenv("POLLEX_CLAUDE_API_KEY", "sk-env-key")
 	t.Setenv("POLLEX_LLAMACPP_URL", "http://from-env:8080")
 	t.Setenv("POLLEX_LLAMACPP_MODEL", "custom-model")
-	t.Setenv("POLLEX_NAN_API_KEY", "sk-nan-env")
+	t.Setenv("NAN_API_KEY", "sk-nan-env")
 	t.Setenv("POLLEX_NAN_BASE_URL", "https://env.nan")
 	t.Setenv("POLLEX_NAN_MODELS", "m1, m2 ,m3") // intentional spaces — must be trimmed
 	t.Setenv("POLLEX_NAN_MAX_CONCURRENT", "4")

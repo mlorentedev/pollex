@@ -48,7 +48,7 @@ graph LR
 | Tunnel | Cloudflare Tunnel | Zero-config ingress (Jetson behind double NAT) |
 | API | Go 1.26, stdlib `net/http` | Routes text to LLM backends, returns polished result |
 | LLM (local) | llama.cpp + Qwen 2.5 1.5B Q4_0 | Local GPU inference on Jetson Nano (~3s short, ~16s medium) |
-| LLM (cloud, optional) | NaN gateway (`nan.builders`) | "Nous Cloud (auto)" engine — auto-failover chain `mimo-v2.5` → `qwen3.6` → `gemma4` (see ADR-009) |
+| LLM (cloud, optional) | NaN gateway (`nan.builders`) | "NaN Cloud (auto)" engine — auto-failover chain `mimo-v2.5` → `qwen3.6` → `gemma4` (see ADR-009) |
 | Monitoring | Prometheus + Alertmanager + Grafana | SLO tracking, alerting, dashboards |
 
 ## How It Works

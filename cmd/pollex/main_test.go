@@ -7,7 +7,7 @@ import (
 	"github.com/mlorentedev/pollex/internal/config"
 )
 
-// TestBuildAdaptersNanCloud: with a NaN key configured, a single "Nous Cloud
+// TestBuildAdaptersNanCloud: with a NaN key configured, a single "NaN Cloud
 // (auto)" entry is registered, backed by a fallback chain over every configured
 // model. (Acceptance criterion AC5.)
 func TestBuildAdaptersNanCloud(t *testing.T) {
@@ -18,17 +18,17 @@ func TestBuildAdaptersNanCloud(t *testing.T) {
 
 	adapters, models := buildAdapters(cfg, false)
 
-	a, ok := adapters["nous-cloud"]
+	a, ok := adapters["nan-cloud"]
 	if !ok {
-		t.Fatal("expected nous-cloud adapter to be registered when NanAPIKey is set")
+		t.Fatal("expected nan-cloud adapter to be registered when NanAPIKey is set")
 	}
-	if a.Name() != "Nous Cloud (auto)" {
-		t.Errorf("adapter name: got %q, want %q", a.Name(), "Nous Cloud (auto)")
+	if a.Name() != "NaN Cloud (auto)" {
+		t.Errorf("adapter name: got %q, want %q", a.Name(), "NaN Cloud (auto)")
 	}
 
 	th, ok := a.(*adapter.Throttle)
 	if !ok {
-		t.Fatalf("nous-cloud adapter should be *Throttle, got %T", a)
+		t.Fatalf("nan-cloud adapter should be *Throttle, got %T", a)
 	}
 	fc, ok := th.Adapter.(*adapter.FallbackChain)
 	if !ok {
@@ -40,15 +40,15 @@ func TestBuildAdaptersNanCloud(t *testing.T) {
 
 	var count int
 	for _, m := range models {
-		if m.ID == "nous-cloud" {
+		if m.ID == "nan-cloud" {
 			count++
-			if m.Name != "Nous Cloud (auto)" || m.Provider != "nan" {
+			if m.Name != "NaN Cloud (auto)" || m.Provider != "nan" {
 				t.Errorf("model info: got %+v", m)
 			}
 		}
 	}
 	if count != 1 {
-		t.Errorf("expected exactly one nous-cloud model entry, got %d", count)
+		t.Errorf("expected exactly one nan-cloud model entry, got %d", count)
 	}
 }
 
@@ -58,12 +58,12 @@ func TestBuildAdaptersNoNanWithoutKey(t *testing.T) {
 
 	adapters, models := buildAdapters(cfg, false)
 
-	if _, ok := adapters["nous-cloud"]; ok {
-		t.Error("nous-cloud should NOT be registered without an API key")
+	if _, ok := adapters["nan-cloud"]; ok {
+		t.Error("nan-cloud should NOT be registered without an API key")
 	}
 	for _, m := range models {
-		if m.ID == "nous-cloud" {
-			t.Error("nous-cloud should not appear in /api/models without a key")
+		if m.ID == "nan-cloud" {
+			t.Error("nan-cloud should not appear in /api/models without a key")
 		}
 	}
 }
@@ -75,7 +75,7 @@ func TestBuildAdaptersNanKeyButNoModels(t *testing.T) {
 
 	adapters, _ := buildAdapters(cfg, false)
 
-	if _, ok := adapters["nous-cloud"]; ok {
-		t.Error("nous-cloud should NOT be registered with an empty model list")
+	if _, ok := adapters["nan-cloud"]; ok {
+		t.Error("nan-cloud should NOT be registered with an empty model list")
 	}
 }

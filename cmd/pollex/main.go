@@ -116,25 +116,10 @@ func buildAdapters(cfg config.Config, useMock bool) (map[string]adapter.LLMAdapt
 		return adapters, models
 	}
 
-	// 1. llama.cpp (Highest priority for local GPU)
-	if cfg.LlamaCppURL != "" {
-		model := cfg.LlamaCppModel
-		if model == "" {
-			model = "qwen2.5-1.5b-gpu"
-		}
-		llama := &adapter.LlamaCppAdapter{
-			BaseURL: cfg.LlamaCppURL,
-			Model:   model,
-			Client:  &http.Client{Timeout: 120 * time.Second},
-		}
-		adapters[model] = llama
-		models = append(models, adapter.ModelInfo{ID: model, Name: "llama.cpp (" + model + ")", Provider: "llamacpp"})
-		slog.Info("adapter registered", "adapter", "llamacpp", "url", cfg.LlamaCppURL, "model", model)
-	}
-
-	// 2. NaN cloud (nan.builders) — a single "Nous Cloud (auto)" entry backed by
-	// an ordered fallback chain over the configured models (default mimo-v2.5 ->
-	// qwen3.6 -> gemma4). The user selects the engine via the existing model_id.
+	// 1. NaN cloud (nan.builders) — default selection: a single "NaN Cloud (auto)"
+	// entry backed by an ordered fallback chain over the configured models
+	// (default mimo-v2.5 -> qwen3.6 -> gemma4). The user selects the engine via
+	// the existing model_id.
 	if cfg.NanAPIKey != "" && len(cfg.NanModels) > 0 {
 		chain := make([]adapter.LLMAdapter, 0, len(cfg.NanModels))
 		// Per-model timeout kept tight so the whole chain (worst case N x timeout)
@@ -149,12 +134,28 @@ func buildAdapters(cfg config.Config, useMock bool) (map[string]adapter.LLMAdapt
 				Client:  &http.Client{Timeout: perModelTimeout},
 			})
 		}
-		const nousCloudID = "nous-cloud"
-		cloud := &adapter.FallbackChain{Label: "Nous Cloud (auto)", Adapters: chain}
+		const nanCloudID = "nan-cloud"
+		cloud := &adapter.FallbackChain{Label: "NaN Cloud (auto)", Adapters: chain}
 		// Bound concurrent calls to stay under the gateway's account-wide limit.
-		adapters[nousCloudID] = adapter.NewThrottle(cloud, cfg.NanMaxConcurrent)
-		models = append(models, adapter.ModelInfo{ID: nousCloudID, Name: "Nous Cloud (auto)", Provider: "nan"})
+		adapters[nanCloudID] = adapter.NewThrottle(cloud, cfg.NanMaxConcurrent)
+		models = append(models, adapter.ModelInfo{ID: nanCloudID, Name: "NaN Cloud (auto)", Provider: "nan"})
 		slog.Info("adapter registered", "adapter", "nan-cloud", "models", cfg.NanModels, "max_concurrent", cfg.NanMaxConcurrent)
+	}
+
+	// 2. llama.cpp (Local GPU)
+	if cfg.LlamaCppURL != "" {
+		model := cfg.LlamaCppModel
+		if model == "" {
+			model = "qwen2.5-1.5b-gpu"
+		}
+		llama := &adapter.LlamaCppAdapter{
+			BaseURL: cfg.LlamaCppURL,
+			Model:   model,
+			Client:  &http.Client{Timeout: 120 * time.Second},
+		}
+		adapters[model] = llama
+		models = append(models, adapter.ModelInfo{ID: model, Name: "llama.cpp (" + model + ")", Provider: "llamacpp"})
+		slog.Info("adapter registered", "adapter", "llamacpp", "url", cfg.LlamaCppURL, "model", model)
 	}
 
 	// 3. Claude (Optional cloud fallback)

@@ -24,11 +24,11 @@ created: "2026-06-05"
 - [x] Write failing unit test for `FallbackChain` fall-through — `054a293`
 - [x] Implement `internal/adapter/fallback.go` (`FallbackChain`) + `shouldFallback` classifier — `054a293`
 - [x] Add config `NanAPIKey`/`NanBaseURL`/`NanModels` + `POLLEX_NAN_*` overrides + tests — `0e59fd4`
-- [x] Wire `buildAdapters`: chain registered as `nous-cloud` / "Nous Cloud (auto)" / provider `nan` — `0897c22`
+- [x] Wire `buildAdapters`: chain registered as `nan-cloud` / "NaN Cloud (auto)" / provider `nan` — `0897c22`
 - [x] Integration test for each of mimo/qwen/gemma (tag `integration`, skips without key) — `c9fe978`
 - [x] `Throttle` decorator: concurrency semaphore over the chain + `nan_max_concurrent` config — `de148ef`
 - [ ] **dotfiles (cross-repo handoff): add `POLLEX_NAN_API_KEY=nan.api-key` to `sensitive/env-mapping.conf`** so `secrets_refresh` exports it for `make deploy-secrets`
-- [x] Extension renders `nous-cloud` from `/api/models` (already dynamic) + `nan` provider label — `484572f`
+- [x] Extension renders `nan-cloud` from `/api/models` (already dynamic) + `nan` provider label — `484572f`
 - [x] Docs: ADR-009 + `CLAUDE.md` + `README.md` — `877b3d2`
 
 ## Closing

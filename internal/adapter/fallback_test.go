@@ -168,9 +168,9 @@ func TestFallbackChain_Available(t *testing.T) {
 }
 
 func TestFallbackChain_Name(t *testing.T) {
-	chain := &FallbackChain{Label: "Nous Cloud (auto)"}
-	if chain.Name() != "Nous Cloud (auto)" {
-		t.Errorf("got %q, want %q", chain.Name(), "Nous Cloud (auto)")
+	chain := &FallbackChain{Label: "NaN Cloud (auto)"}
+	if chain.Name() != "NaN Cloud (auto)" {
+		t.Errorf("got %q, want %q", chain.Name(), "NaN Cloud (auto)")
 	}
 }
 

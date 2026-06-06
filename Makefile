@@ -49,7 +49,7 @@ quality-jetson: ## Run quality test against Jetson (via Cloudflare Tunnel)
 	go run ./cmd/benchmark --quality --url https://pollex.mlorente.dev --api-key $$POLLEX_API_KEY
 
 # ─── Deploy (Jetson) ────────────────────────────────────────
-.PHONY: deploy deploy-init deploy-secrets deploy-llamacpp deploy-tunnel _resolve-jetson
+.PHONY: deploy deploy-init deploy-llamacpp deploy-tunnel _resolve-jetson
 
 _resolve-jetson: ## (internal) probe JETSON_HOST, fall back to JETSON_FALLBACK with warning
 	$(eval EFFECTIVE_HOST := $(shell \
@@ -66,19 +66,15 @@ deploy-init: _resolve-jetson ## First-time Jetson setup (packages, CUDA, dirs, s
 	rsync -Pz deploy/systemd/jetson-clocks.service $(JETSON_USER)@$(EFFECTIVE_HOST):/tmp/jetson-clocks.service
 	ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'bash -s' < deploy/scripts/init.sh
 
-deploy: _resolve-jetson build-arm64 ## Build + deploy binary, config, prompt, and service to Jetson
+deploy: _resolve-jetson build-arm64 ## Build + deploy binary, config, prompt, secrets, and restart to Jetson
 	rsync -Pz dist/pollex-arm64 $(JETSON_USER)@$(EFFECTIVE_HOST):/tmp/pollex
 	rsync -Pz deploy/config.yaml $(JETSON_USER)@$(EFFECTIVE_HOST):/tmp/pollex-config.yaml
 	rsync -Pz prompts/polish.txt $(JETSON_USER)@$(EFFECTIVE_HOST):/tmp/pollex-polish.txt
 	rsync -Pz deploy/systemd/pollex-api.service $(JETSON_USER)@$(EFFECTIVE_HOST):/tmp/pollex-api.service
-	ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'sudo mv /tmp/pollex /usr/local/bin/pollex && sudo chmod +x /usr/local/bin/pollex && sudo mv /tmp/pollex-config.yaml /etc/pollex/config.yaml && sudo mv /tmp/pollex-polish.txt /etc/pollex/polish.txt && sudo cp /tmp/pollex-api.service /etc/systemd/system/pollex-api.service && sudo systemctl daemon-reload && sudo systemctl restart pollex-api'
-
-deploy-secrets: _resolve-jetson ## Deploy API key from dotfiles to Jetson
-	@test -n "$$POLLEX_API_KEY" || (echo "Error: POLLEX_API_KEY not set. Run: secrets_refresh" && exit 1)
-	@echo "Deploying secrets to Jetson..."
-	@ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'sudo mkdir -p /etc/pollex && echo "POLLEX_API_KEY='"$$POLLEX_API_KEY"'" | sudo tee /etc/pollex/secrets.env > /dev/null && sudo chmod 600 /etc/pollex/secrets.env'
-	@test -z "$$POLLEX_NAN_API_KEY" || (echo "Deploying NaN cloud key..." && ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'echo "POLLEX_NAN_API_KEY='"$$POLLEX_NAN_API_KEY"'" | sudo tee -a /etc/pollex/secrets.env > /dev/null')
-	@echo "Secrets deployed. Restarting pollex-api..."
+	ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'sudo mv /tmp/pollex /usr/local/bin/pollex && sudo chmod +x /usr/local/bin/pollex && sudo mv /tmp/pollex-config.yaml /etc/pollex/config.yaml && sudo mv /tmp/pollex-polish.txt /etc/pollex/polish.txt && sudo cp /tmp/pollex-api.service /etc/systemd/system/pollex-api.service && sudo systemctl daemon-reload'
+	@test -n "$$POLLEX_API_KEY" && ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'sudo mkdir -p /etc/pollex && echo "POLLEX_API_KEY='"$$POLLEX_API_KEY"'" | sudo tee /etc/pollex/secrets.env > /dev/null && sudo chmod 600 /etc/pollex/secrets.env' || true
+	@test -n "$$NAN_API_KEY" && ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'echo "NAN_API_KEY='"$$NAN_API_KEY"'" | sudo tee -a /etc/pollex/secrets.env > /dev/null' || true
+	@echo "Restarting pollex-api..."
 	@ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'sudo systemctl restart pollex-api'
 	@echo "Done."
 
@@ -91,6 +87,10 @@ deploy-tunnel: _resolve-jetson ## Setup Cloudflare Tunnel on Jetson (interactive
 	rsync -Pz deploy/scripts/setup-cloudflared.sh $(JETSON_USER)@$(EFFECTIVE_HOST):/tmp/setup-cloudflared.sh
 	rsync -Pz deploy/systemd/cloudflared.service $(JETSON_USER)@$(EFFECTIVE_HOST):/tmp/cloudflared.service
 	ssh -t $(JETSON_USER)@$(EFFECTIVE_HOST) 'bash /tmp/setup-cloudflared.sh'
+
+deploy-tunnel-route: _resolve-jetson ## Register tunnel DNS routes (pollex.mlorente.dev + pollex-home.mlorente.dev)
+	@ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'cloudflared tunnel route dns pollex pollex.mlorente.dev && cloudflared tunnel route dns pollex pollex-home.mlorente.dev'
+	@echo "DNS routes registered."
 
 # ─── Jetson Remote ──────────────────────────────────────────
 .PHONY: jetson-ssh jetson-logs jetson-status jetson-test jetson-tunnel-start jetson-tunnel-status jetson-tunnel-logs
