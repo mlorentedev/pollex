@@ -37,6 +37,23 @@ Live against `https://api.nan.builders/v1` (key from `nan.api-key` age-secret):
 - Manual smoke test: PENDING (AC6 cross-browser)
 - No regressions in existing suite: yes
 
+## Mutation testing (gremlins, 2026-06-05)
+
+Tool: `gremlins` (`go install github.com/go-gremlins/gremlins/cmd/gremlins@latest`). Command: `gremlins unleash --timeout-coefficient 5 <pkg>`.
+
+| Package | Mutator coverage | Survivors (Lived) |
+|---|---|---|
+| `internal/adapter` | 100% | 0 |
+| `internal/config` | 100% | 0 |
+| `cmd/pollex` | feature wiring covered; survivors 0 | 0 |
+
+Findings acted on (commit `1ca8032`):
+
+- 2 not-covered mutants in `FallbackChain.Name()` composed branch → added `TestFallbackChain_NameComposed` (adapter coverage 86.7% → 100%).
+- Manual-review hardening: `NousAdapter` now errors on a 200 with blank content (chain advances); covered `Polish` empty-adapters path and the `buildAdapters` key-but-no-models guard.
+
+Notes: `cmd/pollex` overall mutator coverage is low (~27%) because `main()`, the adapter-probe loop, and the pre-existing llama.cpp/Claude/Ollama branches are not unit-tested — **pre-existing debt, not introduced here**; the NaN wiring block is fully covered. The many gremlins "timed out" results in `internal/adapter` are an artifact of HTTP tests with real client timeouts/sleeps, not survivors.
+
 ## Decisions made during implementation
 
 - **FallbackChain error policy** (`shouldFallback`): advance to the next model on availability/quota errors (HTTP 429, 404, 5xx, network/timeout); fail fast on client errors (400, 401) and caller cancellation (`context.Canceled`/`DeadlineExceeded`). Errors carry HTTP status via a typed `*StatusError`.
