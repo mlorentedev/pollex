@@ -1,9 +1,12 @@
 // Pollex service worker — persists polish requests across popup lifecycle.
+// ES module (manifest "type": "module"): imports api.js and exports its
+// handlers so unit tests can exercise the job lifecycle directly.
 
-importScripts("api.js");
+import { fetchPolish } from "./api.js";
 
-const MAX_HISTORY = 7;
-const STALE_TIMEOUT_MS = 150000;
+export const MAX_HISTORY = 7;
+export const STALE_TIMEOUT_MS = 150000;
+export const MAX_TEXT_LENGTH = 1500;
 
 let abortController = null;
 let tickInterval = null;
@@ -19,9 +22,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   }
 });
 
-const MAX_TEXT_LENGTH = 1500;
-
-async function handleStart({ text, modelId }) {
+export async function handleStart({ text, modelId }) {
   if (!text || typeof text !== "string" || !text.trim()) {
     return { ok: false, error: "Text is required" };
   }
@@ -51,7 +52,7 @@ async function handleStart({ text, modelId }) {
   return { ok: true };
 }
 
-async function handleCancel() {
+export async function handleCancel() {
   if (abortController) {
     abortController.abort();
     abortController = null;
@@ -79,7 +80,7 @@ function stopTick() {
   }
 }
 
-async function doFetch(text, modelId) {
+export async function doFetch(text, modelId) {
   abortController = new AbortController();
   try {
     const result = await fetchPolish(text, modelId, abortController.signal);
@@ -115,7 +116,7 @@ async function doFetch(text, modelId) {
   }
 }
 
-async function appendHistory(inputText, result) {
+export async function appendHistory(inputText, result) {
   const { history = [] } = await chrome.storage.local.get("history");
   const entry = {
     id: `h_${Date.now()}`,
