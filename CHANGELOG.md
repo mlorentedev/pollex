@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.8.2](https://github.com/mlorentedev/pollex/compare/v1.8.1...v1.8.2) (2026-08-06)
+
+
+### Bug Fixes
+
+* **ci:** add PRs to bitácora board via gh CLI ([#39](https://github.com/mlorentedev/pollex/issues/39)) ([59dca56](https://github.com/mlorentedev/pollex/commit/59dca56e58ef7cf70e8e0a5b5f9aec0c283b31a7))
+* **ci:** add PRs to bitácora via GraphQL, not gh project CLI ([#46](https://github.com/mlorentedev/pollex/issues/46)) ([0eab527](https://github.com/mlorentedev/pollex/commit/0eab52769483c75eb4855f3e6b169daab559b9af))
+* **ci:** skip Dependabot PRs in add-to-project ([#51](https://github.com/mlorentedev/pollex/issues/51)) ([db8a1e4](https://github.com/mlorentedev/pollex/commit/db8a1e42d5b88675ee011a59e610bfd9317bc37c))
+* force auth off in mock mode so the extension connects out of the box ([#40](https://github.com/mlorentedev/pollex/issues/40)) ([08940fd](https://github.com/mlorentedev/pollex/commit/08940fdb4c201fea47a6f71f7bd6bba5395b824c))
+* make deploy-secrets resolve keys via dotf when not in shell ([#52](https://github.com/mlorentedev/pollex/issues/52)) ([ffce7bb](https://github.com/mlorentedev/pollex/commit/ffce7bb329c9dfd293a9f64c39aa2b171bb8decd))
+
 ## [1.8.1](https://github.com/mlorentedev/pollex/compare/v1.8.0...v1.8.1) (2026-06-06)
 
 
