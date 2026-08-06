@@ -1,0 +1,73 @@
+# Dependabot — keep dependencies current and vulnerabilities closed.
+# Grouped weekly updates so each ecosystem lands as ONE reviewable PR
+# instead of a flood. Merge stays human (AGENTS.md: no auto-merge).
+
+version: 2
+updates:
+  # Site documentation stack (Astro/Starlight)
+  - package-ecosystem: npm
+    directory: /site
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Madrid
+    open-pull-requests-limit: 5
+    groups:
+      npm-site-minor-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+        patterns: ["*"]
+      npm-site-major:
+        applies-to: version-updates
+        update-types: [major]
+        patterns: ["*"]
+    # Astro/starlight majors are coordinated breaking changes; they get
+    # reviewed individually, not lumped into the weekly batch.
+    ignore:
+      - dependency-name: "astro"
+        update-types: [version-update:semver-major]
+      - dependency-name: "@astrojs/starlight"
+        update-types: [version-update:semver-major]
+
+  # Extension test tooling (Vitest / Playwright)
+  - package-ecosystem: npm
+    directory: /extension
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Madrid
+    open-pull-requests-limit: 5
+    groups:
+      npm-extension:
+        applies-to: version-updates
+        update-types: [minor, patch]
+        patterns: ["*"]
+
+  # Go toolchain + actions
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Madrid
+    open-pull-requests-limit: 5
+    groups:
+      go-all:
+        applies-to: version-updates
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Madrid
+    open-pull-requests-limit: 5
+    groups:
+      actions-all:
+        applies-to: version-updates
+        patterns: ["*"]
