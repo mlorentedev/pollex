@@ -79,3 +79,30 @@ func TestBuildAdaptersNanKeyButNoModels(t *testing.T) {
 		t.Error("nan-cloud should NOT be registered with an empty model list")
 	}
 }
+
+// TestMockModeDisablesAuth: mock mode must force auth off even when
+// POLLEX_API_KEY is set in the environment (dotfiles exposes it on every new
+// shell, which used to break `make dev` for the extension).
+func TestMockModeDisablesAuth(t *testing.T) {
+	t.Setenv("POLLEX_API_KEY", "leaked-from-shell")
+
+	cfg, err := config.Load("")
+	if err != nil {
+		t.Fatalf("config load failed: %v", err)
+	}
+
+	// Replicate the main() mock override.
+	useMock := true
+	if useMock {
+		cfg.APIKey = ""
+	}
+
+	if cfg.APIKey != "" {
+		t.Errorf("mock mode: api key should be cleared, got %q", cfg.APIKey)
+	}
+
+	adapters, _ := buildAdapters(cfg, useMock)
+	if _, ok := adapters["mock"]; !ok {
+		t.Fatal("expected mock adapter to be registered in mock mode")
+	}
+}

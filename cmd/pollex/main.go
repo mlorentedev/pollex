@@ -35,6 +35,12 @@ func main() {
 	if *port > 0 {
 		cfg.Port = *port
 	}
+	// Mock mode is the dev loop: no auth, so the extension connects out of the
+	// box with an empty API key even when POLLEX_API_KEY leaks from the shell
+	// (dotfiles exposes it as an env var on every new shell).
+	if *useMock {
+		cfg.APIKey = ""
+	}
 
 	promptData, err := os.ReadFile(cfg.PromptPath)
 	if err != nil {
