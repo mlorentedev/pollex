@@ -4,9 +4,10 @@ on:
   push:
     branches: [master]
 
-permissions:
-  contents: write
-  pull-requests: write
+# Least privilege: each job declares its own permissions. release-please
+# authenticates as the fine-grained RELEASE_TOKEN (contents + pull-requests
+# write, repo-scoped); goreleaser uploads assets with the default GITHUB_TOKEN.
+permissions: {}
 
 jobs:
   release-please:
@@ -17,6 +18,9 @@ jobs:
     steps:
       - id: release
         uses: googleapis/release-please-action@v4
+        with:
+          # Fine-grained PAT: repo-scoped to mlorentedev/pollex, Contents + PR write.
+          token: ${{ secrets.RELEASE_TOKEN }}
 
   goreleaser:
     needs: release-please
