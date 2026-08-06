@@ -40,6 +40,27 @@ jobs:
           node-version: "22"
           cache: npm
           cache-dependency-path: extension/package-lock.json
+
+  audit:
+    name: npm audit (site + extension)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            site/package-lock.json
+            extension/package-lock.json
+      - name: Install deps
+        run: cd site && npm ci && cd ../extension && npm ci
+      # Gate: fail on any high/critical advisory. Dependabot keeps this green;
+      # a red here means a dependency needs an upgrade before merging.
+      - name: Audit site
+        run: cd site && npm audit --audit-level=high
+      - name: Audit extension
+        run: cd extension && npm audit --audit-level=high
       - name: Install extension test deps
         run: cd extension && npm ci
       - name: Install Playwright Chromium
