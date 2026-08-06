@@ -35,17 +35,31 @@ export default async function globalSetup() {
   if (await waitForHealth(url, 2000)) return;
 
   // Build once so we don't rely on `go run` wrapper or a shell PATH.
+  // Rebuild when the source changed since the last run (keep CI honest).
   const bin = path.join(repoRoot, "dist", "pollex-e2e");
   fs.mkdirSync(path.dirname(bin), { recursive: true });
-  execFileSync("go", ["build", "-o", bin, "./cmd/pollex"], {
-    cwd: repoRoot,
-    stdio: "inherit",
-  });
+  const source = path.join(repoRoot, "cmd", "pollex", "main.go");
+  const needsBuild =
+    !fs.existsSync(bin) ||
+    fs.statSync(source).mtimeMs > fs.statSync(bin).mtimeMs;
+  if (needsBuild) {
+    execFileSync("go", ["build", "-o", bin, "./cmd/pollex"], {
+      cwd: repoRoot,
+      stdio: "inherit",
+    });
+  }
 
+  // Run WITHOUT any POLLEX_*/NAN_* keys from the developer shell: the mock
+  // must behave as an unauthenticated dev loop regardless of which branch or
+  // environment the suite runs under. Only PORT is passed through.
+  const cleanEnv = { PATH: process.env.PATH };
+  for (const k of Object.keys(process.env)) {
+    if (!k.startsWith("POLLEX_") && k !== "NAN_API_KEY") cleanEnv[k] = process.env[k];
+  }
   const proc = spawn(bin, ["--mock", "--port", String(MOCK_API_PORT)], {
     cwd: repoRoot,
     stdio: "pipe",
-    env: { ...process.env },
+    env: cleanEnv,
   });
   proc.stdout?.on("data", (d) => process.stdout.write(`[pollex-e2e] ${d}`));
   proc.stderr?.on("data", (d) => process.stderr.write(`[pollex-e2e] ${d}`));
