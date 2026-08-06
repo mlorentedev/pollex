@@ -1,7 +1,8 @@
 // Pollex API client — shared HTTP layer for the extension.
+// ES module: imported by popup.js (page) and background.js (service worker).
 
-const DEFAULT_API_URL = "http://localhost:8090";
-const POLISH_TIMEOUT_MS = 125000;
+export const DEFAULT_API_URL = "http://localhost:8090";
+export const POLISH_TIMEOUT_MS = 125000;
 
 async function getApiUrl() {
   const result = await chrome.storage.local.get("apiUrl");
@@ -20,7 +21,7 @@ async function buildHeaders() {
   return headers;
 }
 
-async function fetchHealth(signal) {
+export async function fetchHealth(signal) {
   const base = await getApiUrl();
   const opts = signal ? { signal } : {};
   const resp = await fetch(`${base}/api/health`, opts);
@@ -28,7 +29,7 @@ async function fetchHealth(signal) {
   return resp.json();
 }
 
-async function fetchModels() {
+export async function fetchModels() {
   const base = await getApiUrl();
   const headers = await buildHeaders();
   const resp = await fetch(`${base}/api/models`, { headers });
@@ -36,7 +37,7 @@ async function fetchModels() {
   return resp.json();
 }
 
-async function fetchPolish(text, modelId, signal) {
+export async function fetchPolish(text, modelId, signal) {
   const base = await getApiUrl();
   const headers = await buildHeaders();
 

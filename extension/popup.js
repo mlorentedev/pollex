@@ -1,4 +1,8 @@
 // Pollex popup — wires UI to background service worker via messaging.
+// ES module: imports the shared API client instead of relying on a global
+// api.js script tag.
+
+import { fetchModels, fetchHealth } from "./api.js";
 
 const MAX_CHARS = 1500;
 const WARN_THRESHOLD = 0.9;

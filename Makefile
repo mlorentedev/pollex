@@ -14,6 +14,18 @@ dev: ## Start API with mock adapter on :$(API_PORT)
 test: ## Run all tests with race detector
 	go test -v -race ./...
 
+test-extension: ## Run extension tests (Vitest unit + Playwright e2e against local mock API)
+	cd extension && npm run test:all
+
+test-extension-unit: ## Run extension unit tests (Vitest, no browser needed)
+	cd extension && npm test
+
+test-extension-e2e: ## Run extension e2e tests (Playwright + Chromium, boots mock API on :8099)
+	cd extension && npm run test:e2e
+
+extension-deps: ## Install extension test tooling (npm install + Playwright Chromium)
+	cd extension && npm install && npx playwright install chromium
+
 lint: ## Run go vet + check formatting
 	go vet ./... && gofmt -l internal/ cmd/
 
