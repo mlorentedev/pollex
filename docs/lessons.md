@@ -740,3 +740,31 @@ created: "2026-03-28"
 **Why:** 400/401 are deterministic — retrying against a different model produces the same result. Availability/quota errors are transient and model-specific — the next model may succeed.
 
 **Tags:** `#go` `#fallback` `#error-handling` `#nan`
+
+---
+
+### [2026-06-06] gremlins v0.6.0 appends `...` internally — pass bare package paths in CI
+
+**Context:** Mutation-testing CI step (`gremlins unleash --timeout-coefficient 5 ...`) over `./internal/adapter` and `./internal/config` in `.github/workflows/ci.yml`.
+
+**Problem:** The job failed on master with `impossible to executeCoverage: exit status 1`. The command used Go-style wildcards (`./internal/adapter/...`), which resolved to no packages and aborted the run before any mutation ran.
+
+**Solution:** Pass the bare package path with **no** trailing `...`: `gremlins unleash --timeout-coefficient 5 ./internal/adapter`. A repo-root `.gremlins.toml` (`threshold = 80`, `excluding = ["_test.go"]`) drives both local and CI runs. Fixed in PR #33, released in v1.8.1.
+
+**Why:** gremlins v0.6.0 performs the recursive `...` expansion *internally*, so a caller-supplied `./internal/adapter/...` becomes `./internal/adapter/.../...`, which matches zero packages. Earlier versions passed `...` through verbatim, so the same invocation used to work — this is a silent behavioural change across versions. The CLI surfaces it only as a generic coverage failure with no hint that the path is the cause.
+
+**Tags:** `#gremlins` `#mutation-testing` `#ci` `#go`
+
+---
+
+### [2026-08-05] `--mock` must force auth off — dotfiles leaks POLLEX_API_KEY into every shell
+
+**Context:** Pollex dev loop: `make dev` runs `go run ./cmd/pollex --mock`, and the extension defaults to `http://localhost:8090` with an empty API key. dotfiles exposes `POLLEX_API_KEY` as a shell env var (age secret `pollex.api-key` → `expose.env`), so every new shell has it.
+
+**Problem:** `make dev` inherited `POLLEX_API_KEY`, `config.Load` applied the env override, auth came on, and the extension got `401 missing API key` on `/api/models` and `/api/polish` — popup showed "Cannot reach API — check Settings." The plugin looked broken out of the box in local dev.
+
+**Solution:** In `cmd/pollex/main.go`, mock mode clears `cfg.APIKey` (`if *useMock { cfg.APIKey = "" }`). Mock = dev loop = no auth, always. Regression test in `cmd/pollex/main_test.go` (`TestMockModeDisablesAuth`) simulates the leaked env var and asserts auth stays off.
+
+**Why:** The dev loop must work for the extension with zero configuration. Production (Jetson) runs without `--mock`, so real auth is unaffected. This also unblocks `docker-dev`, which uses `--mock` too.
+
+**Tags:** `#go` `#extension` `#dev-loop` `#auth` `#dotfiles`

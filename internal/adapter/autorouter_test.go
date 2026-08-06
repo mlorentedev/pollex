@@ -36,7 +36,7 @@ type captureAdapter struct {
 	called bool
 }
 
-func (c *captureAdapter) Name() string  { return c.name }
+func (c *captureAdapter) Name() string    { return c.name }
 func (c *captureAdapter) Available() bool { return true }
 func (c *captureAdapter) Polish(_ context.Context, _, _ string) (string, error) {
 	c.called = true
@@ -112,7 +112,7 @@ func TestAutoRouter_Name(t *testing.T) {
 // unavailableAdapter is an adapter that is always unavailable.
 type unavailableAdapter struct{}
 
-func (u *unavailableAdapter) Name() string  { return "unavail" }
+func (u *unavailableAdapter) Name() string    { return "unavail" }
 func (u *unavailableAdapter) Available() bool { return false }
 func (u *unavailableAdapter) Polish(_ context.Context, _, _ string) (string, error) {
 	return "", errors.New("unavailable")

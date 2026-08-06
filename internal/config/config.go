@@ -22,10 +22,10 @@ type Config struct {
 	NanBaseURL       string   `yaml:"nan_base_url"`
 	NanModels        []string `yaml:"nan_models"`
 	NanMaxConcurrent int      `yaml:"nan_max_concurrent"` // 0 => unlimited
-	PromptPath        string   `yaml:"prompt_path"`
-	PromptCloudPath   string   `yaml:"prompt_cloud_path"`
-	RoutingThreshold  int      `yaml:"routing_threshold"` // sentence count; 0 = disabled
-	APIKey            string   `yaml:"api_key"`
+	PromptPath       string   `yaml:"prompt_path"`
+	PromptCloudPath  string   `yaml:"prompt_cloud_path"`
+	RoutingThreshold int      `yaml:"routing_threshold"` // sentence count; 0 = disabled
+	APIKey           string   `yaml:"api_key"`
 }
 
 func defaults() Config {
