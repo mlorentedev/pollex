@@ -15,10 +15,11 @@ on:
 
 jobs:
   add-to-project:
-    # Fork PRs run without repository secrets — BITACORA_PAT would be empty and the
-    # job would fail (Codex review on kubelab#237). Skip them; fork PRs reach the
+    # Fork PRs and Dependabot PRs run without repository secrets — BITACORA_PAT
+    # would be empty and the job would fail (Codex review on kubelab#237; GitHub
+    # does not expose secrets to Dependabot PRs). Skip both; those PRs reach the
     # board via the rollout backfill or a manual item-add.
-    if: github.event_name == 'issues' || github.event.pull_request.head.repo.fork == false
+    if: github.event_name == 'issues' || (github.event.pull_request.head.repo.fork == false && github.actor != 'dependabot[bot]')
     runs-on: ubuntu-latest
     steps:
       # Issues: use the official action (works fine for issues).
