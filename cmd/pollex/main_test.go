@@ -1,10 +1,13 @@
 package main
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/mlorentedev/pollex/internal/adapter"
 	"github.com/mlorentedev/pollex/internal/config"
+	"github.com/mlorentedev/pollex/internal/server"
 )
 
 // TestBuildAdaptersNanCloud: with a NaN key configured, a single "NaN Cloud
@@ -83,6 +86,10 @@ func TestBuildAdaptersNanKeyButNoModels(t *testing.T) {
 // TestMockModeDisablesAuth: mock mode must force auth off even when
 // POLLEX_API_KEY is set in the environment (dotfiles exposes it on every new
 // shell, which used to break `make dev` for the extension).
+//
+// Exercises the real production path: config.Load (with the leaked env var) →
+// applyFlagOverrides → buildAdapters → server.SetupMux → an unauthenticated
+// request that must succeed.
 func TestMockModeDisablesAuth(t *testing.T) {
 	t.Setenv("POLLEX_API_KEY", "leaked-from-shell")
 
@@ -91,18 +98,21 @@ func TestMockModeDisablesAuth(t *testing.T) {
 		t.Fatalf("config load failed: %v", err)
 	}
 
-	// Replicate the main() mock override.
-	useMock := true
-	if useMock {
-		cfg.APIKey = ""
-	}
+	applyFlagOverrides(&cfg, 0, true) // the exact call main() makes for --mock
 
-	if cfg.APIKey != "" {
-		t.Errorf("mock mode: api key should be cleared, got %q", cfg.APIKey)
-	}
-
-	adapters, _ := buildAdapters(cfg, useMock)
+	adapters, models := buildAdapters(cfg, true)
 	if _, ok := adapters["mock"]; !ok {
 		t.Fatal("expected mock adapter to be registered in mock mode")
+	}
+
+	// Wire the real middleware chain with the (cleared) production key and
+	// assert an unauthenticated request gets through — proving auth is off.
+	h := server.SetupMux(adapters, models, func(string) string { return "" }, cfg.APIKey, "test")
+	req := httptest.NewRequest(http.MethodGet, "/api/models", nil)
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("unauthenticated GET /api/models: got %d, want 200 (auth should be off in mock mode)", rr.Code)
 	}
 }

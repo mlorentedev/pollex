@@ -32,15 +32,7 @@ func main() {
 		slog.Error("config load failed", "error", err)
 		os.Exit(1)
 	}
-	if *port > 0 {
-		cfg.Port = *port
-	}
-	// Mock mode is the dev loop: no auth, so the extension connects out of the
-	// box with an empty API key even when POLLEX_API_KEY leaks from the shell
-	// (dotfiles exposes it as an env var on every new shell).
-	if *useMock {
-		cfg.APIKey = ""
-	}
+	applyFlagOverrides(&cfg, *port, *useMock)
 
 	promptData, err := os.ReadFile(cfg.PromptPath)
 	if err != nil {
@@ -111,6 +103,20 @@ func main() {
 		os.Exit(1)
 	}
 	slog.Info("server stopped")
+}
+
+// applyFlagOverrides applies CLI-flag overrides that config.Load cannot see
+// (it only reads YAML + env). Mock mode is the dev loop: no auth, so the
+// extension connects out of the box with an empty API key even when
+// POLLEX_API_KEY leaks from the shell (dotfiles exposes it as an env var on
+// every new shell).
+func applyFlagOverrides(cfg *config.Config, port int, useMock bool) {
+	if port > 0 {
+		cfg.Port = port
+	}
+	if useMock {
+		cfg.APIKey = ""
+	}
 }
 
 func probeAdapters(adapters map[string]adapter.LLMAdapter) {
