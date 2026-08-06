@@ -768,3 +768,31 @@ created: "2026-03-28"
 **Why:** The dev loop must work for the extension with zero configuration. Production (Jetson) runs without `--mock`, so real auth is unaffected. This also unblocks `docker-dev`, which uses `--mock` too.
 
 **Tags:** `#go` `#extension` `#dev-loop` `#auth` `#dotfiles`
+
+---
+
+### [2026-08-05] `gh project item-add` fails with "unknown owner type" under a fine-grained PAT — use GraphQL in workflows
+
+**Context:** The bitácora `add-to-project` workflow used `gh project item-add 1 --owner mlorentedev` to add PRs to the board (the `actions/add-to-project` action only handles issues, not PRs).
+
+**Problem:** The step failed in CI with `unknown owner type` even though the PAT was valid and the project existed. Classic PATs resolve `--owner`; fine-grained PATs don't expose the owner type the CLI needs.
+
+**Solution:** Use `actions/github-script` with the Projects v2 GraphQL mutation instead — the same pattern `bitacora-status.yml` already used: `addProjectV2ItemById(input: { projectId, contentId })`. It's idempotent, so re-runs are safe.
+
+**Why:** The CLI path works interactively (classic PAT) but breaks in CI with a fine-grained PAT. GraphQL via github-script is the portable, proven path. Keep project ID (`PVT_kwHOAM7xJs4BZ6GY`) and content ID (`context.payload.pull_request.node_id`) in the script — never shell-expand URLs (template injection, zizmor flags it).
+
+**Tags:** `#ci` `#github-projects` `#fine-grained-pat` `#graphql` `#bitacora`
+
+---
+
+### [2026-08-05] Astro build artifacts (`site/.astro/`) must not be committed
+
+**Context:** The docs site is a Starlight/Astro project. `site/.astro/` (content types, schema, modules) is regenerated on every `astro build`.
+
+**Problem:** The directory was accidentally committed since the initial docs-site PR. Every local build changes it, producing noisy working-tree diffs and stale committed files.
+
+**Solution:** `git rm -r --cached site/.astro/` + add `site/.astro/` to `.gitignore`. Builds regenerate it locally; CI builds don't need it tracked.
+
+**Why:** Generated artifacts pollute diffs and drift from reality. The deploy flow (GitHub Pages via `pages.yml`) builds from source anyway.
+
+**Tags:** `#astro` `#docs-site` `#gitignore` `#generated-artifacts`
