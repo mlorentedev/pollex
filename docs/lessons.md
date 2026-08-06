@@ -796,3 +796,31 @@ created: "2026-03-28"
 **Why:** Generated artifacts pollute diffs and drift from reality. The deploy flow (GitHub Pages via `pages.yml`) builds from source anyway.
 
 **Tags:** `#astro` `#docs-site` `#gitignore` `#generated-artifacts`
+
+---
+
+### [2026-08-06] GitHub does not expose secrets to Dependabot PRs — skip them in workflows that need secrets
+
+**Context:** The `add-to-project` workflow (bitácora board) failed on Dependabot PRs (#48/#49) with "Bad credentials"-style errors even after the PAT was fixed.
+
+**Problem:** GitHub deliberately does not provide repository secrets to workflows triggered by Dependabot PRs (same rule as fork PRs). `secrets.BITACORA_PAT` arrives empty, so any step using it fails. Re-running the workflow or fixing the PAT does not help — the PR type itself is the blocker.
+
+**Solution:** Add `&& github.actor != 'dependabot[bot]'` to the job condition (skip Dependabot PRs; issues and normal PRs unaffected). Dependabot PRs reach the board via the rollout backfill or a manual item-add.
+
+**Why:** Secrets are intentionally withheld from Dependabot PRs to prevent a compromised dependency file from exfiltrating credentials. Detect the pattern early: a workflow that needs secrets should gate on `github.actor`.
+
+**Tags:** `#ci` `#dependabot` `#secrets` `#github-actions` `#bitacora`
+
+---
+
+### [2026-08-06] `make deploy-secrets` failed with "POLLEX_API_KEY not set" in a plain shell — auto-resolve via `dotf secrets run`
+
+**Context:** Deployment to the Jetson from a fresh terminal: `make deploy && make deploy-secrets`. The second target aborted with `POLLEX_API_KEY not set` because the keys only exist inside the dotfiles environment (`dotf secrets run`), not in a plain shell.
+
+**Problem:** The Makefile assumed the keys were exported in the ambient shell. On a machine/shell without dotfiles env loaded, the target fails with a confusing message — and the user cannot know how to proceed.
+
+**Solution:** `deploy-secrets` now checks if either key is missing and, if so, re-invokes an internal `_deploy-secrets` target under `dotf secrets run` (injects keys into the child process only, never the ambient shell). SSOT stays the dotfiles registry (`secrets/registry.yaml`).
+
+**Why:** Deployment targets should never assume ambient env that only exists in one setup. Auto-resolving from the canonical source (dotf) makes the command work identically everywhere and documents the fallback path in the Makefile itself.
+
+**Tags:** `#makefile` `#deploy` `#secrets` `#dotf` `#jetson`
