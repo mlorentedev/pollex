@@ -16,6 +16,9 @@ test-results/
 playwright-report/
 coverage/
 
+# Astro build artifacts (regenerated on every site build)
+site/.astro/
+
 # Environment / Secrets
 .env
 .env.*
