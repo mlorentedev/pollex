@@ -51,7 +51,7 @@ bench-jetson: ## Run benchmark against Jetson (via Cloudflare Tunnel)
 	go run ./cmd/benchmark --url https://pollex.mlorente.dev --api-key $$POLLEX_API_KEY $(BENCH_ARGS)
 
 # ─── Deploy (Jetson) ────────────────────────────────────────
-.PHONY: deploy deploy-init deploy-llamacpp deploy-tunnel deploy-secrets _resolve-jetson
+.PHONY: deploy deploy-init deploy-llamacpp deploy-tunnel deploy-secrets _deploy-secrets _resolve-jetson
 
 # Internal: probe JETSON_HOST, fall back to JETSON_FALLBACK with warning
 _resolve-jetson:
@@ -80,7 +80,15 @@ deploy: _resolve-jetson build-arm64 ## Build + deploy binary, config, prompts, a
 	@ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'sudo systemctl restart pollex-api'
 	@echo "Done."
 
-deploy-secrets: _resolve-jetson ## Deploy API keys from env to Jetson secrets.env
+deploy-secrets: _resolve-jetson ## Deploy API keys to Jetson secrets.env (auto-resolves via dotf when not in shell)
+	@if [ -z "$$POLLEX_API_KEY" ] || [ -z "$$NAN_API_KEY" ]; then \
+	  echo "Keys not in shell — resolving via dotf secrets run..."; \
+	  dotf secrets run -- $(MAKE) _deploy-secrets EFFECTIVE_HOST=$(EFFECTIVE_HOST) JETSON_USER=$(JETSON_USER); \
+	else \
+	  $(MAKE) _deploy-secrets EFFECTIVE_HOST=$(EFFECTIVE_HOST) JETSON_USER=$(JETSON_USER); \
+	fi
+
+_deploy-secrets: ## (internal) writes secrets.env on Jetson; requires POLLEX_API_KEY + NAN_API_KEY in env
 	@test -n "$$POLLEX_API_KEY" || (echo "POLLEX_API_KEY not set" && exit 1)
 	@ssh $(JETSON_USER)@$(EFFECTIVE_HOST) 'sudo mkdir -p /etc/pollex && \
 	  echo "POLLEX_API_KEY='"$$POLLEX_API_KEY"'" | sudo tee /etc/pollex/secrets.env > /dev/null && \
