@@ -15,19 +15,39 @@ owner: manu
 
 Triggers: push to `master`, any PR.
 
-Steps:
-1. `go vet ./...` + `gofmt -l` (lint)
-2. `go test -v -race ./...` (80+ tests with subtests)
-3. `go build` for `linux/amd64` + `linux/arm64`
+| Job | Does | Depends on |
+|---|---|---|
+| `lint` | `go vet ./...` + `gofmt -l` | — |
+| `test` | `go test -v -race ./...` (80+ tests with subtests) | — |
+| `test-extension` | Vitest unit tests + Playwright e2e against the mock API | `test` |
+| `audit` | `npm audit --audit-level=high` on `site/` and `extension/` | — |
+| `build` | `go build` for `linux/amd64` + `linux/arm64` | `lint`, `test` |
+| `mutation` | `gremlins` on the `adapter` + `config` packages | `test` |
+
+**`test-extension` gotcha:** the e2e suite needs a *headed* Chromium — Playwright's
+headless shell cannot load browser extensions. The job therefore runs
+`npx playwright install chromium --with-deps` (full browser + runner system libs)
+and wraps the suite in `xvfb-run --auto-servernum`. See `docs/lessons.md` (2026-08-05).
+
+**`audit` gate:** fails the PR on any high/critical advisory. Dependabot
+(`.github/dependabot.yml`, weekly grouped updates) keeps it green; a red here means
+a dependency needs upgrading before merge.
 
 ### Release (`release-please.yml`) — runs on merge to master
 
 Two chained jobs:
 
+Workflow-level `permissions: {}` — each job declares its own (least privilege).
+
 **Job 1: release-please**
 - Maintains a release PR with auto-generated changelog (conventional commits)
 - On merge of the release PR: creates a GitHub tag + release
 - Syncs extension version: `extra-files` with jsonpath on `extension/manifest.json`
+- **Authenticates with `secrets.RELEASE_TOKEN`** — a repo-scoped fine-grained PAT
+  (Contents + Pull requests: write), *not* the default `GITHUB_TOKEN`. Events made
+  with `GITHUB_TOKEN` do not trigger other workflows, so CI would never run on the
+  release PR and required status checks would block it forever. The PAT needs
+  periodic rotation — see `docs/lessons.md` (2026-08-05).
 
 **Job 2: goreleaser** (triggered by release-please tag creation)
 - Builds binaries: `linux/amd64` + `linux/arm64`
