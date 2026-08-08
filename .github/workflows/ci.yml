@@ -40,6 +40,16 @@ jobs:
           node-version: "22"
           cache: npm
           cache-dependency-path: extension/package-lock.json
+      - name: Install extension test deps
+        run: cd extension && npm ci
+      - name: Install Playwright Chromium
+        run: cd extension && npx playwright install chromium --with-deps
+      - name: Run unit tests
+        run: cd extension && npm test
+      # Extension e2e needs a headed Chromium (no headless-shell support);
+      # xvfb provides the virtual display on the runner.
+      - name: Run e2e tests (xvfb)
+        run: cd extension && xvfb-run --auto-servernum npm run test:e2e
 
   audit:
     name: npm audit (site + extension)
@@ -61,16 +71,6 @@ jobs:
         run: cd site && npm audit --audit-level=high
       - name: Audit extension
         run: cd extension && npm audit --audit-level=high
-      - name: Install extension test deps
-        run: cd extension && npm ci
-      - name: Install Playwright Chromium
-        run: cd extension && npx playwright install chromium --with-deps
-      - name: Run unit tests
-        run: cd extension && npm test
-      # Extension e2e needs a headed Chromium (no headless-shell support);
-      # xvfb provides the virtual display on the runner.
-      - name: Run e2e tests (xvfb)
-        run: cd extension && xvfb-run --auto-servernum npm run test:e2e
 
   build:
     runs-on: ubuntu-latest
