@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.3](https://github.com/mlorentedev/pollex/compare/v1.8.2...v1.8.3) (2026-08-08)
+
+
+### Bug Fixes
+
+* **ci:** restore test-extension job steps lost in a job-boundary splice ([#64](https://github.com/mlorentedev/pollex/issues/64)) ([eb1e7a4](https://github.com/mlorentedev/pollex/commit/eb1e7a40b561cd70e84f49140ac65cf8c64483f9))
+
 ## [1.8.2](https://github.com/mlorentedev/pollex/compare/v1.8.1...v1.8.2) (2026-08-06)
 
 
