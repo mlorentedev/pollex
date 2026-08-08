@@ -824,3 +824,32 @@ created: "2026-03-28"
 **Why:** Deployment targets should never assume ambient env that only exists in one setup. Auto-resolving from the canonical source (dotf) makes the command work identically everywhere and documents the fallback path in the Makefile itself.
 
 **Tags:** `#makefile` `#deploy` `#secrets` `#dotf` `#jetson`
+
+---
+
+### [2026-08-05] Extension e2e in CI needs a headed Chromium under `xvfb-run`
+
+**Context:** Wiring the extension's Playwright e2e suite into `ci.yml` as a `test-extension` job (unit tests with Vitest, e2e against the mock API).
+
+**Problem:** Playwright's default Chromium is the *headless shell* build, which cannot load browser extensions at all — `--load-extension` / `launchPersistentContext` silently gives you a context with no extension. Switching to a headed Chromium then fails on a clean GitHub runner: no display, and missing system libraries.
+
+**Solution:** Three coupled steps in the job:
+`npx playwright install chromium --with-deps` (installs the full Chromium *and* the system libs the runner lacks), then run the suite under `xvfb-run --auto-servernum npm run test:e2e` (virtual display; `--auto-servernum` picks a free display number so parallel jobs don't collide).
+
+**Why:** Extension support is a full-browser feature — the headless shell is a stripped Chromium without the extension subsystem. Once headed is mandatory, a display becomes mandatory too, and CI runners have none. Any repo testing a browser extension end-to-end hits this same three-part fix.
+
+**Tags:** `#ci` `#playwright` `#extension` `#e2e` `#github-actions`
+
+---
+
+### [2026-08-05] `release-please` needs a PAT, not `GITHUB_TOKEN`, once CI is a required check
+
+**Context:** Hardening the release pipeline (`release-please.yml`) ahead of enabling branch protection with required status checks.
+
+**Problem:** By GitHub design, events produced with the default `GITHUB_TOKEN` do not trigger other workflows. release-please pushes its release branch with that token, so CI never runs on the release PR — with required checks enabled, the PR is blocked forever on "Waiting for status to be reported".
+
+**Solution:** Authenticate the release-please action with a repo-scoped **fine-grained PAT** (`secrets.RELEASE_TOKEN`, Contents + Pull requests: write). Its pushes are real user events, so `ci.yml` fires normally. Workflow-level `permissions:` dropped to `{}` with each job declaring its own (goreleaser keeps `contents: write` for asset upload).
+
+**Why:** The PAT fixes the root cause instead of working around it — the alternative is running the test matrix inside the release workflow and reporting results through the Statuses API, which is far more plumbing. The cost is a stored secret with a rotation obligation. Relevant to SEC-002 (branch protection): required checks only work if the release PR can actually get them.
+
+**Tags:** `#ci` `#release-please` `#fine-grained-pat` `#branch-protection` `#github-actions`
