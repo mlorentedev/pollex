@@ -27,7 +27,7 @@ Triggers: push to `master`, any PR.
 **`test-extension` gotcha:** the e2e suite needs a *headed* Chromium — Playwright's
 headless shell cannot load browser extensions. The job therefore runs
 `npx playwright install chromium --with-deps` (full browser + runner system libs)
-and wraps the suite in `xvfb-run --auto-servernum`. See `docs/lessons.md` (2026-08-05).
+and wraps the suite in `xvfb-run --auto-servernum`. See [lesson-068](../lessons/lesson-068-extension-e2e-in-ci-needs-a-headed-chromium-u.md).
 
 **`audit` gate:** fails the PR on any high/critical advisory. Dependabot
 (`.github/dependabot.yml`, weekly grouped updates) keeps it green; a red here means
@@ -47,7 +47,7 @@ Workflow-level `permissions: {}` — each job declares its own (least privilege)
   (Contents + Pull requests: write), *not* the default `GITHUB_TOKEN`. Events made
   with `GITHUB_TOKEN` do not trigger other workflows, so CI would never run on the
   release PR and required status checks would block it forever. The PAT needs
-  periodic rotation — see `docs/lessons.md` (2026-08-05).
+  periodic rotation — see [lesson-069](../lessons/lesson-069-release-please-needs-a-pat-not-github-token-o.md).
 
 **Job 2: goreleaser** (triggered by release-please tag creation)
 - Builds binaries: `linux/amd64` + `linux/arm64`
