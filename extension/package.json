@@ -10,7 +10,7 @@
     "test:all": "vitest run && playwright test"
   },
   "devDependencies": {
-    "@playwright/test": "^1.49.1",
+    "@playwright/test": "^1.63.0",
     "vitest": "^5.0.0"
   }
 }
