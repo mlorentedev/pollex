@@ -45,8 +45,8 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.NanBaseURL != "" {
 		t.Errorf("default nan_base_url: got %q, want empty", cfg.NanBaseURL)
 	}
-	if len(cfg.NanModels) != 3 || cfg.NanModels[0] != "mimo-v2.5" || cfg.NanModels[1] != "qwen3.6" || cfg.NanModels[2] != "gemma4" {
-		t.Errorf("default nan_models: got %v, want [mimo-v2.5 qwen3.6 gemma4]", cfg.NanModels)
+	if len(cfg.NanModels) != 3 || cfg.NanModels[0] != "mimo-v2.6-flash" || cfg.NanModels[1] != "qwen3.6" || cfg.NanModels[2] != "gemma4" {
+		t.Errorf("default nan_models: got %v, want [mimo-v2.6-flash qwen3.6 gemma4]", cfg.NanModels)
 	}
 	if cfg.NanMaxConcurrent != 3 {
 		t.Errorf("default nan_max_concurrent: got %d, want 3", cfg.NanMaxConcurrent)

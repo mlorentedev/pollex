@@ -58,8 +58,8 @@ func (c *FallbackChain) Available() bool {
 
 // shouldFallback reports whether an error from one adapter is worth retrying on
 // the next adapter in the chain. It advances on availability/quota failures
-// (network/timeout, HTTP 429, 404, 5xx) and stops on errors another model cannot
-// fix (HTTP 400/401, which recur identically) or when the caller cancelled.
+// (network/timeout, HTTP 401, 404, 408, 429, 5xx) and stops on errors another
+// model cannot fix (HTTP 400, which recurs identically) or when the caller cancelled.
 func shouldFallback(err error) bool {
 	// The caller gave up (request cancelled or overall deadline hit) — trying
 	// more models is pointless and would only burn the shared rate limit.
@@ -74,6 +74,7 @@ func shouldFallback(err error) bool {
 		switch se.Code {
 		case http.StatusTooManyRequests, // 429 — rate limit / quota saturated
 			http.StatusNotFound,       // 404 — model absent from the catalog
+			http.StatusUnauthorized,   // 401 — NaN's answer for a retired model (#106)
 			http.StatusRequestTimeout: // 408 — upstream timeout
 			return true
 		}

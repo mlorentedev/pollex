@@ -154,7 +154,7 @@ func buildAdapters(cfg config.Config, useMock bool) (map[string]adapter.LLMAdapt
 
 	// 1. NaN cloud (nan.builders) — default selection: a single "NaN Cloud (auto)"
 	// entry backed by an ordered fallback chain over the configured models
-	// (default mimo-v2.5 -> qwen3.6 -> gemma4). The user selects the engine via
+	// (default mimo-v2.6-flash -> qwen3.6 -> gemma4). The user selects the engine via
 	// the existing model_id.
 	if cfg.NanAPIKey != "" && len(cfg.NanModels) > 0 {
 		chain := make([]adapter.LLMAdapter, 0, len(cfg.NanModels))
