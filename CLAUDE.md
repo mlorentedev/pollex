@@ -92,5 +92,8 @@ Single Jetson Nano 4GB (`kubelab-jet1`, headscale `100.64.0.8`, LAN `172.16.1.4`
 
 Project-bound docs (architecture, ADRs, runbooks, troubleshooting, benchmarks, lessons) live in the repo `docs/`. The vault `~/Projects/knowledge/10_projects/pollex/` holds only strategic context (roadmap, tasks) and session memory.
 
-Key files: `_index.md` (overview + status), `architecture.md` (diagrams), `extension.md`,
-`02-runbooks/deploy-jetson.md`, `02-runbooks/cicd.md`, `01-adrs/` (ADR-001–008).
+Vault key files: `_index.md` (overview + status), `context.md` (agent orientation), `sessions/`.
+
+Repo key files: `docs/architecture/system-overview.md`, `docs/architecture/browser-extension.md`,
+`docs/runbooks/deploy-jetson.md`, `docs/runbooks/cicd.md`, `docs/adr/` (ADR-001–010),
+`docs/lessons/_index.md`.
