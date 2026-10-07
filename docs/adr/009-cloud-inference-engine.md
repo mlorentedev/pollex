@@ -43,7 +43,7 @@ The `nan.builders` gateway is already part of this ecosystem (consumed by the He
 
 - "Cloud" still depends on the Go API host (the Jetson) being up; this mitigates GPU/`llama-server` failure, not total host loss. (Automatic Jetson→cloud failover is explicitly out of scope — see Alternatives.)
 - Pollex shares the account-wide NaN rate limit with the user's interactive tooling; an extension traffic burst can contend (429). Mitigated for the *concurrency* cap by the `Throttle` semaphore (default 3); the ~100 RPM *rate* cap is not yet bounded (token-bucket = future work). The cloud path stays API-key gated.
-- Default `mimo-v2.5` trades latency for a quality ceiling (~2–3× slower; capped pool). The chain absorbs quota/availability hits by falling to the unlimited tail.
+- Default `mimo-v2.5` (since 2026-10-06 `mimo-v2.6-flash`, see the amendment below) trades latency for a quality ceiling (~2–3× slower; capped pool). The chain absorbs quota/availability hits by falling to the unlimited tail.
 
 ## Amendment (2026-10-06): 401 fails over; default primary is `mimo-v2.6-flash`
 
