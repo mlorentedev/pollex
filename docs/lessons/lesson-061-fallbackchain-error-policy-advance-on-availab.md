@@ -20,3 +20,5 @@ tags: [pollex, lesson, go, fallback, error-handling, nan]
 **Tags:** `#go` `#fallback` `#error-handling` `#nan`
 
 ---
+
+> **Superseded in part (2026-10-06):** 401 now fails over too: NaN uses it for a retired model. See [lesson 072](./lesson-072-retired-model-401-killed-fallback-chain.md).

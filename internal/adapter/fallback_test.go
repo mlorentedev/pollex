@@ -103,6 +103,32 @@ func TestFallbackChain_FailFastOnClientError(t *testing.T) {
 	}
 }
 
+// NaN answers a retired model with 401 "does not have access to the requested
+// model" (#106): the 401 is per model, so the chain must advance past it.
+func TestFallbackChain_AdvancesOnUnauthorized(t *testing.T) {
+	var c1, c2 int
+	s1 := nousTestServer(http.StatusUnauthorized, "", &c1)
+	s2 := nousTestServer(http.StatusOK, "polished text", &c2)
+	defer s1.Close()
+	defer s2.Close()
+
+	chain := &FallbackChain{Adapters: []LLMAdapter{
+		chainAdapter(s1.URL, "mimo-v2.5"),
+		chainAdapter(s2.URL, "qwen3.6"),
+	}}
+
+	got, err := chain.Polish(context.Background(), "x", "p")
+	if err != nil {
+		t.Fatalf("Polish: %v", err)
+	}
+	if got != "polished text" {
+		t.Errorf("got %q, want %q", got, "polished text")
+	}
+	if c1 != 1 || c2 != 1 {
+		t.Errorf("call counts: retired=%d qwen=%d, want 1/1", c1, c2)
+	}
+}
+
 // All models failing returns a wrapped error after trying every one.
 func TestFallbackChain_AllFail(t *testing.T) {
 	var c1, c2, c3 int

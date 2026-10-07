@@ -32,7 +32,7 @@ func defaults() Config {
 	return Config{
 		Port:             8090,
 		ClaudeModel:      "claude-sonnet-4-5-20250929",
-		NanModels:        []string{"mimo-v2.5", "qwen3.6", "gemma4"},
+		NanModels:        []string{"mimo-v2.6-flash", "qwen3.6", "gemma4"},
 		NanMaxConcurrent: 3, // stay under the gateway's 5-concurrent cap, leave headroom
 		PromptPath:       "prompts/polish.txt",
 		PromptCloudPath:  "prompts/polish-cloud.txt",

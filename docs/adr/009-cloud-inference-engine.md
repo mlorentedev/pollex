@@ -9,7 +9,7 @@ owner: manu
 
 # ADR-009: Cloud Inference Engine (NaN) with Fixed Fallback Chain
 
-> **Status:** Accepted — implemented in FEAT-001.
+> **Status:** Accepted — implemented in FEAT-001. Amended 2026-10-06 (fallback on 401, new default primary).
 
 ## Context
 
@@ -43,7 +43,14 @@ The `nan.builders` gateway is already part of this ecosystem (consumed by the He
 
 - "Cloud" still depends on the Go API host (the Jetson) being up; this mitigates GPU/`llama-server` failure, not total host loss. (Automatic Jetson→cloud failover is explicitly out of scope — see Alternatives.)
 - Pollex shares the account-wide NaN rate limit with the user's interactive tooling; an extension traffic burst can contend (429). Mitigated for the *concurrency* cap by the `Throttle` semaphore (default 3); the ~100 RPM *rate* cap is not yet bounded (token-bucket = future work). The cloud path stays API-key gated.
-- Default `mimo-v2.5` trades latency for a quality ceiling (~2–3× slower; capped pool). The chain absorbs quota/availability hits by falling to the unlimited tail.
+- Default `mimo-v2.5` (since 2026-10-06 `mimo-v2.6-flash`, see the amendment below) trades latency for a quality ceiling (~2–3× slower; capped pool). The chain absorbs quota/availability hits by falling to the unlimited tail.
+
+## Amendment (2026-10-06): 401 fails over; default primary is `mimo-v2.6-flash`
+
+NaN retired `mimo-v2.5` on 2026-09-30 and answers it with `401 auth_error, param: model` ("This API key does not have access to the requested model"). Decision 4 treated 401 as a per-key error that "would recur identically", so the chain stopped at the first model and `nan-cloud` returned 502 for a week while `/api/health` reported it available (#106, lesson 072).
+
+- **Policy change:** 401 now advances the chain, like 404. On this gateway a 401 can be per model, and the asymmetry decides it: a genuinely bad key costs two extra fast calls before the same error, while not failing over turns one retired model into a dead engine. 400 still fails fast.
+- **Default chain:** `mimo-v2.6-flash` → `qwen3.6` → `gemma4` (the successor the rest of the fleet already uses). Decision 2's ordering rationale is unchanged.
 
 ## Alternatives considered
 

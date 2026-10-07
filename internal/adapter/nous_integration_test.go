@@ -46,7 +46,7 @@ func TestNousIntegrationModels(t *testing.T) {
 	const systemPrompt = "You are an English text polisher. Return only the corrected text, no commentary."
 	const input = "i has went to the store yesterday and buyed two breads."
 
-	for _, model := range []string{"mimo-v2.5", "qwen3.6", "gemma4"} {
+	for _, model := range []string{"mimo-v2.6-flash", "qwen3.6", "gemma4"} {
 		t.Run(model, func(t *testing.T) {
 			a := &NousAdapter{
 				BaseURL: baseURL,

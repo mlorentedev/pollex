@@ -51,7 +51,7 @@ graph LR
 | Tunnel | Cloudflare Tunnel | Zero-config ingress (Jetson behind NAT) |
 | API | Go 1.26, stdlib `net/http` | Routes text to LLM backends |
 | LLM (local) | llama.cpp + Qwen 2.5 1.5B Q4_0 | GPU inference (~3s short, ~16s medium) |
-| LLM (cloud) | NaN gateway (`nan.builders`) | "NaN Cloud (auto)" — failover chain `mimo-v2.5` → `qwen3.6` → `gemma4` (ADR-009) |
+| LLM (cloud) | NaN gateway (`nan.builders`) | "NaN Cloud (auto)" — failover chain `mimo-v2.6-flash` → `qwen3.6` → `gemma4` (ADR-009) |
 | Monitoring | Prometheus + Alertmanager + Grafana | SLO tracking, alerting, dashboards |
 
 ## API
