@@ -50,7 +50,7 @@ graph LR
 | Extension | Chrome Manifest V3 | Paste text, select model, copy result |
 | Tunnel | Cloudflare Tunnel | Zero-config ingress (Jetson behind NAT) |
 | API | Go 1.26, stdlib `net/http` | Routes text to LLM backends |
-| LLM (local) | llama.cpp + Qwen 2.5 1.5B Q4_0 | GPU inference (p50 6.4 s single-user, see [benchmarks](docs/benchmarks/jetson-nano-baseline.md)) |
+| LLM (local) | llama.cpp + Qwen 2.5 1.5B Q4_0 | GPU inference (p50 6.4 s single-user, ~53 ms per input character, see [benchmarks](docs/benchmarks/jetson-nano-baseline.md)) |
 | LLM (cloud) | NaN gateway (`nan.builders`) | "NaN Cloud (auto)" — failover chain `mimo-v2.6-flash` → `qwen3.6` → `gemma4` (ADR-009) |
 | Monitoring | Prometheus + Alertmanager + Grafana | SLO tracking, alerting, dashboards |
 
