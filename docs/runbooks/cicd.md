@@ -29,8 +29,8 @@ headless shell cannot load browser extensions. The job therefore runs
 `npx playwright install chromium --with-deps` (full browser + runner system libs)
 and wraps the suite in `xvfb-run --auto-servernum`. See [lesson-068](../lessons/lesson-068-extension-e2e-in-ci-needs-a-headed-chromium-u.md).
 
-**`audit` gate:** fails the PR on any high/critical advisory. Dependabot
-(`.github/dependabot.yml`, weekly grouped updates) keeps it green; a red here means
+**`audit` gate:** fails the PR on any high/critical advisory. Renovate
+(`renovate.json`, weekly grouped updates) keeps it green; a red here means
 a dependency needs upgrading before merge.
 
 ### Release (`release-please.yml`) — runs on merge to master
