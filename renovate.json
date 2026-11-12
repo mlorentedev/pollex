@@ -1,0 +1,22 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "github>mlorentedev/ci-workflows//renovate/default#v0.6.0"
+  ],
+  "packageRules": [
+    {
+      "description": "Astro and Starlight majors in the site are coordinated breaking changes, carried over from the Dependabot ignore. The preset already keeps every major in its own PR, so this rule may be redundant; see the PR that added it.",
+      "matchFileNames": [
+        "site/**"
+      ],
+      "matchPackageNames": [
+        "astro",
+        "@astrojs/starlight"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "enabled": false
+    }
+  ]
+}
