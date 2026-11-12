@@ -1,7 +1,8 @@
 ---
-id: lesson-059-nan-gateway-reasoning-lives-in-reasoning-cont
+id: "lesson-059-nan-gateway-reasoning-lives-in-reasoning-cont"
 type: lesson
 status: active
+title: "NaN gateway: reasoning lives in `reasoning_content`, suppress with `enable_thinking:false`"
 created: "2026-06-05"
 owner: manu
 tags: [pollex, lesson, nan, llm, api, performance]

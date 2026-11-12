@@ -1,7 +1,8 @@
 ---
-id: lesson-016-scp-to-protected-paths-fails-due-to-permissio
+id: "lesson-016-scp-to-protected-paths-fails-due-to-permissio"
 type: lesson
 status: active
+title: "SCP to protected paths fails due to permissions"
 created: "2026-04-15"
 owner: manu
 tags: [pollex, lesson, deployment, scp, permissions]

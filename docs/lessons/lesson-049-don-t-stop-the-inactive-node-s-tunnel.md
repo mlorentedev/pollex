@@ -1,7 +1,8 @@
 ---
-id: lesson-049-don-t-stop-the-inactive-node-s-tunnel
+id: "lesson-049-don-t-stop-the-inactive-node-s-tunnel"
 type: lesson
 status: active
+title: "Don't stop the inactive node's tunnel"
 created: "2026-06-05"
 owner: manu
 tags: [pollex, lesson, cloudflare, tunnel, multi-node]

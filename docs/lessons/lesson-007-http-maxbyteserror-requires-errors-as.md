@@ -1,7 +1,8 @@
 ---
-id: lesson-007-http-maxbyteserror-requires-errors-as
+id: "lesson-007-http-maxbyteserror-requires-errors-as"
 type: lesson
 status: active
+title: "`http.MaxBytesError` requires `errors.As()`"
 created: "2026-03-28"
 owner: manu
 tags: [pollex, lesson, go, error-handling]

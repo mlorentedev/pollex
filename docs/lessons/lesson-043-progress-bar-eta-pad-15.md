@@ -1,7 +1,8 @@
 ---
-id: lesson-043-progress-bar-eta-pad-15
+id: "lesson-043-progress-bar-eta-pad-15"
 type: lesson
 status: active
+title: "Progress bar ETA: pad +15%"
 created: "2026-05-01"
 owner: manu
 tags: [pollex, lesson, chrome-extension, ux]

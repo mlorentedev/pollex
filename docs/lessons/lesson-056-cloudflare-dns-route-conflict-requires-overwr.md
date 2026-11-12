@@ -1,7 +1,8 @@
 ---
-id: lesson-056-cloudflare-dns-route-conflict-requires-overwr
+id: "lesson-056-cloudflare-dns-route-conflict-requires-overwr"
 type: lesson
 status: active
+title: "Cloudflare DNS route conflict requires --overwrite-dns"
 created: "2026-06-05"
 owner: manu
 tags: [pollex, lesson, cloudflare, dns, tunnel]

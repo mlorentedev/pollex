@@ -1,7 +1,8 @@
 ---
-id: lesson-042-prompt-injection-defense
+id: "lesson-042-prompt-injection-defense"
 type: lesson
 status: active
+title: "Prompt injection defense"
 created: "2026-05-01"
 owner: manu
 tags: [pollex, lesson, security, llm, prompt-injection]

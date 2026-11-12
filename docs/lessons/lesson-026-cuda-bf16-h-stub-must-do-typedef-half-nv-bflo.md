@@ -1,7 +1,8 @@
 ---
-id: lesson-026-cuda-bf16-h-stub-must-do-typedef-half-nv-bflo
+id: "lesson-026-cuda-bf16-h-stub-must-do-typedef-half-nv-bflo"
 type: lesson
 status: active
+title: "`cuda_bf16.h` stub must do `typedef half nv_bfloat16`"
 created: "2026-04-15"
 owner: manu
 tags: [pollex, lesson, cuda, jetson]

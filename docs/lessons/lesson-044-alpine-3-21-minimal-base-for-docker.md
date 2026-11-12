@@ -1,7 +1,8 @@
 ---
-id: lesson-044-alpine-3-21-minimal-base-for-docker
+id: "lesson-044-alpine-3-21-minimal-base-for-docker"
 type: lesson
 status: active
+title: "`alpine:3.21` minimal base for Docker"
 created: "2026-05-01"
 owner: manu
 tags: [pollex, lesson, docker, alpine]

@@ -1,7 +1,8 @@
 ---
-id: lesson-017-zstd-required-for-ollama
+id: "lesson-017-zstd-required-for-ollama"
 type: lesson
 status: active
+title: "`zstd` required for Ollama"
 created: "2026-04-15"
 owner: manu
 tags: [pollex, lesson, ollama, dependencies]

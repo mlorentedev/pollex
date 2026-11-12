@@ -1,7 +1,8 @@
 ---
-id: lesson-025-wmma-fattn-wmma-f16-cu-requires-volta-compute
+id: "lesson-025-wmma-fattn-wmma-f16-cu-requires-volta-compute"
 type: lesson
 status: active
+title: "WMMA (fattn-wmma-f16.cu) requires Volta+ (compute 7.0)"
 created: "2026-04-15"
 owner: manu
 tags: [pollex, lesson, cuda, wmma, jetson]

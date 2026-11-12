@@ -1,7 +1,8 @@
 ---
-id: lesson-063-mock-must-force-auth-off-dotfiles-leaks-polle
+id: "lesson-063-mock-must-force-auth-off-dotfiles-leaks-polle"
 type: lesson
 status: active
+title: "`--mock` must force auth off — dotfiles leaks POLLEX_API_KEY into every shell"
 created: "2026-08-05"
 owner: manu
 tags: [pollex, lesson, go, extension, dev-loop, auth, dotfiles]

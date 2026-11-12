@@ -1,7 +1,8 @@
 ---
-id: lesson-003-default-prompt-path-is-relative-to-working-di
+id: "lesson-003-default-prompt-path-is-relative-to-working-di"
 type: lesson
 status: active
+title: "Default prompt path is relative to working directory, not binary"
 created: "2026-03-28"
 owner: manu
 tags: [pollex, lesson, go, paths, deployment]

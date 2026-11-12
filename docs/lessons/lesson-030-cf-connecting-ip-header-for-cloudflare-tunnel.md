@@ -1,7 +1,8 @@
 ---
-id: lesson-030-cf-connecting-ip-header-for-cloudflare-tunnel
+id: "lesson-030-cf-connecting-ip-header-for-cloudflare-tunnel"
 type: lesson
 status: active
+title: "`Cf-Connecting-Ip` header for Cloudflare Tunnel"
 created: "2026-04-15"
 owner: manu
 tags: [pollex, lesson, cloudflare, tunnel, rate-limiting]

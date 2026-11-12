@@ -1,7 +1,8 @@
 ---
-id: lesson-019-test-with-real-docker-before-deploying
+id: "lesson-019-test-with-real-docker-before-deploying"
 type: lesson
 status: active
+title: "Test with real Docker before deploying"
 created: "2026-04-15"
 owner: manu
 tags: [pollex, lesson, testing, llama]

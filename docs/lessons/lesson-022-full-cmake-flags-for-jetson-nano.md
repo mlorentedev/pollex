@@ -1,7 +1,8 @@
 ---
-id: lesson-022-full-cmake-flags-for-jetson-nano
+id: "lesson-022-full-cmake-flags-for-jetson-nano"
 type: lesson
 status: active
+title: "Full cmake flags for Jetson Nano"
 created: "2026-04-15"
 owner: manu
 tags: [pollex, lesson, cmake, jetson, arm64]

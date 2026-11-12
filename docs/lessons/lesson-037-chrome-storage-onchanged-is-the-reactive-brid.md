@@ -1,7 +1,8 @@
 ---
-id: lesson-037-chrome-storage-onchanged-is-the-reactive-brid
+id: "lesson-037-chrome-storage-onchanged-is-the-reactive-brid"
 type: lesson
 status: active
+title: "`chrome.storage.onChanged` is the reactive bridge"
 created: "2026-05-01"
 owner: manu
 tags: [pollex, lesson, chrome-extension, storage]

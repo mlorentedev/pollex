@@ -1,7 +1,8 @@
 ---
-id: lesson-005-httptest-newserver-httptest-newrecorder-for-e
+id: "lesson-005-httptest-newserver-httptest-newrecorder-for-e"
 type: lesson
 status: active
+title: "`httptest.NewServer` > `httptest.NewRecorder` for E2E"
 created: "2026-03-28"
 owner: manu
 tags: [pollex, lesson, go, testing]

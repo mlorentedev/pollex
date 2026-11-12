@@ -1,7 +1,8 @@
 ---
-id: lesson-066-github-does-not-expose-secrets-to-dependabot-
+id: "lesson-066-github-does-not-expose-secrets-to-dependabot-"
 type: lesson
 status: active
+title: "GitHub does not expose secrets to Dependabot PRs — skip them in workflows that need secrets"
 created: "2026-08-06"
 owner: manu
 tags: [pollex, lesson, ci, dependabot, secrets, github-actions, bitacora]

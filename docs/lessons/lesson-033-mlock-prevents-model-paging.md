@@ -1,7 +1,8 @@
 ---
-id: lesson-033-mlock-prevents-model-paging
+id: "lesson-033-mlock-prevents-model-paging"
 type: lesson
 status: active
+title: "`--mlock` prevents model paging"
 created: "2026-05-01"
 owner: manu
 tags: [pollex, lesson, jetson, llama, performance]

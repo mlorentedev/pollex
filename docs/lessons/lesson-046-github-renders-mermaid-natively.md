@@ -1,7 +1,8 @@
 ---
-id: lesson-046-github-renders-mermaid-natively
+id: "lesson-046-github-renders-mermaid-natively"
 type: lesson
 status: active
+title: "GitHub renders Mermaid natively"
 created: "2026-05-01"
 owner: manu
 tags: [pollex, lesson, docs, mermaid]

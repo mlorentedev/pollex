@@ -1,7 +1,8 @@
 ---
-id: lesson-028-don-t-blanket-replace-static-constexpr-in-fun
+id: "lesson-028-don-t-blanket-replace-static-constexpr-in-fun"
 type: lesson
 status: active
+title: "Don't blanket-replace `static constexpr` in functions"
 created: "2026-04-15"
 owner: manu
 tags: [pollex, lesson, sed, llama]

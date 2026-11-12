@@ -1,7 +1,8 @@
 ---
-id: lesson-041-error-truncation-200-chars
+id: "lesson-041-error-truncation-200-chars"
 type: lesson
 status: active
+title: "Error truncation (200 chars)"
 created: "2026-05-01"
 owner: manu
 tags: [pollex, lesson, chrome-extension, errors]

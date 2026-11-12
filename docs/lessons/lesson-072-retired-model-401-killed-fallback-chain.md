@@ -1,7 +1,8 @@
 ---
-id: lesson-072-retired-model-401-killed-fallback-chain
+id: "lesson-072-retired-model-401-killed-fallback-chain"
 type: lesson
 status: active
+title: "A retired model answering 401 silently killed the whole fallback chain"
 created: "2026-10-06"
 owner: manu
 tags: [pollex, lesson, nan, fallback, error-handling, health-check, observability]

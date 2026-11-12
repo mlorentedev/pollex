@@ -1,7 +1,8 @@
 ---
-id: lesson-055-nan-cloud-branding-nan-cloud-auto-not-nous-cl
+id: "lesson-055-nan-cloud-branding-nan-cloud-auto-not-nous-cl"
 type: lesson
 status: active
+title: "NaN Cloud branding: \"NaN Cloud (auto)\" — not \"Nous Cloud\""
 created: "2026-06-05"
 owner: manu
 tags: [pollex, lesson, branding, nan, cloud]

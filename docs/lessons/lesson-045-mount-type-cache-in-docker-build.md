@@ -1,7 +1,8 @@
 ---
-id: lesson-045-mount-type-cache-in-docker-build
+id: "lesson-045-mount-type-cache-in-docker-build"
 type: lesson
 status: active
+title: "`--mount=type=cache` in Docker build"
 created: "2026-05-01"
 owner: manu
 tags: [pollex, lesson, docker, performance]

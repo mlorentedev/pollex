@@ -1,7 +1,8 @@
 ---
-id: lesson-069-release-please-needs-a-pat-not-github-token-o
+id: "lesson-069-release-please-needs-a-pat-not-github-token-o"
 type: lesson
 status: active
+title: "`release-please` needs a PAT, not `GITHUB_TOKEN`, once CI is a required check"
 created: "2026-08-05"
 owner: manu
 tags: [pollex, lesson, ci, release-please, fine-grained-pat, branch-protection, github-actions]

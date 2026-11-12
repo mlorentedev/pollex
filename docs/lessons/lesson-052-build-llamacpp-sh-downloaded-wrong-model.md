@@ -1,7 +1,8 @@
 ---
-id: lesson-052-build-llamacpp-sh-downloaded-wrong-model
+id: "lesson-052-build-llamacpp-sh-downloaded-wrong-model"
 type: lesson
 status: active
+title: "`build-llamacpp.sh` downloaded wrong model"
 created: "2026-06-05"
 owner: manu
 tags: [pollex, lesson, deployment, llama]

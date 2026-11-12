@@ -1,7 +1,8 @@
 ---
-id: lesson-050-restarting-cloudflared-kills-your-ssh
+id: "lesson-050-restarting-cloudflared-kills-your-ssh"
 type: lesson
 status: active
+title: "Restarting cloudflared kills your SSH"
 created: "2026-06-05"
 owner: manu
 tags: [pollex, lesson, cloudflare, tunnel, ssh]

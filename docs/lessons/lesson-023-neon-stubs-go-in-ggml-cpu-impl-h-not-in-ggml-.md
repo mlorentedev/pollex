@@ -1,7 +1,8 @@
 ---
-id: lesson-023-neon-stubs-go-in-ggml-cpu-impl-h-not-in-ggml-
+id: "lesson-023-neon-stubs-go-in-ggml-cpu-impl-h-not-in-ggml-"
 type: lesson
 status: active
+title: "NEON stubs go in `ggml-cpu-impl.h`, NOT in `ggml-cpu-quants.c`"
 created: "2026-04-15"
 owner: manu
 tags: [pollex, lesson, arm, neon, llama]

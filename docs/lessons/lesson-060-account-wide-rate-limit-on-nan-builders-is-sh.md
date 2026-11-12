@@ -1,7 +1,8 @@
 ---
-id: lesson-060-account-wide-rate-limit-on-nan-builders-is-sh
+id: "lesson-060-account-wide-rate-limit-on-nan-builders-is-sh"
 type: lesson
 status: active
+title: "Account-wide rate limit on nan.builders is shared with all tooling"
 created: "2026-06-05"
 owner: manu
 tags: [pollex, lesson, nan, rate-limiting, concurrency, cloud]

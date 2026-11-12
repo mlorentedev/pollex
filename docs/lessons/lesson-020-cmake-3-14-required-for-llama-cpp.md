@@ -1,7 +1,8 @@
 ---
-id: lesson-020-cmake-3-14-required-for-llama-cpp
+id: "lesson-020-cmake-3-14-required-for-llama-cpp"
 type: lesson
 status: active
+title: "CMake 3.14+ required for llama.cpp"
 created: "2026-04-15"
 owner: manu
 tags: [pollex, lesson, cmake, jetson]

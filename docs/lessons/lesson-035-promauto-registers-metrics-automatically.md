@@ -1,7 +1,8 @@
 ---
-id: lesson-035-promauto-registers-metrics-automatically
+id: "lesson-035-promauto-registers-metrics-automatically"
 type: lesson
 status: active
+title: "`promauto` registers metrics automatically"
 created: "2026-05-01"
 owner: manu
 tags: [pollex, lesson, prometheus, metrics]

@@ -1,7 +1,8 @@
 ---
-id: lesson-054-prompt-language-detection-polish-in-the-same-
+id: "lesson-054-prompt-language-detection-polish-in-the-same-"
 type: lesson
 status: active
+title: "Prompt language detection — polish in the same language as input"
 created: "2026-06-05"
 owner: manu
 tags: [pollex, lesson, llm, prompt, i18n]

@@ -1,7 +1,8 @@
 ---
-id: lesson-008-rate-limiter-sliding-window-with-time-time
+id: "lesson-008-rate-limiter-sliding-window-with-time-time"
 type: lesson
 status: active
+title: "Rate limiter sliding window with `[]time.Time`"
 created: "2026-03-28"
 owner: manu
 tags: [pollex, lesson, go, rate-limiting]

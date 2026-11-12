@@ -1,7 +1,8 @@
 ---
-id: lesson-070-a-job-inserted-mid-job-in-actions-yaml-silent
+id: "lesson-070-a-job-inserted-mid-job-in-actions-yaml-silent"
 type: lesson
 status: active
+title: "A job inserted mid-job in Actions YAML silently steals the trailing steps"
 created: "2026-08-08"
 owner: manu
 tags: [pollex, lesson, ci, github-actions, yaml, false-green, branch-protection]

@@ -1,7 +1,8 @@
 ---
-id: lesson-061-fallbackchain-error-policy-advance-on-availab
+id: "lesson-061-fallbackchain-error-policy-advance-on-availab"
 type: lesson
 status: active
+title: "FallbackChain error policy: advance on availability, fail fast on client errors"
 created: "2026-06-05"
 owner: manu
 tags: [pollex, lesson, go, fallback, error-handling, nan]

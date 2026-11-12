@@ -1,7 +1,8 @@
 ---
-id: lesson-048-cloudflared-tunnel-route-dns-doesn-t-overwrit
+id: "lesson-048-cloudflared-tunnel-route-dns-doesn-t-overwrit"
 type: lesson
 status: active
+title: "`cloudflared tunnel route dns` doesn't overwrite"
 created: "2026-06-05"
 owner: manu
 tags: [pollex, lesson, cloudflare, tunnel, dns]

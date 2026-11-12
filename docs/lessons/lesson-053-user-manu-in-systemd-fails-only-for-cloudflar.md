@@ -1,7 +1,8 @@
 ---
-id: lesson-053-user-manu-in-systemd-fails-only-for-cloudflar
+id: "lesson-053-user-manu-in-systemd-fails-only-for-cloudflar"
 type: lesson
 status: active
+title: "`User=manu` in systemd fails only for cloudflared"
 created: "2026-06-05"
 owner: manu
 tags: [pollex, lesson, systemd, jetson, cloudflare]
