@@ -1,7 +1,8 @@
 ---
-id: lesson-065-astro-build-artifacts-site-astro-must-not-be-
+id: "lesson-065-astro-build-artifacts-site-astro-must-not-be-"
 type: lesson
 status: active
+title: "Astro build artifacts (`site/.astro/`) must not be committed"
 created: "2026-08-05"
 owner: manu
 tags: [pollex, lesson, astro, docs-site, gitignore, generated-artifacts]

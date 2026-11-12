@@ -1,7 +1,8 @@
 ---
-id: lesson-009-signal-notify-needs-buffer-1
+id: "lesson-009-signal-notify-needs-buffer-1"
 type: lesson
 status: active
+title: "`signal.Notify` needs buffer 1"
 created: "2026-03-28"
 owner: manu
 tags: [pollex, lesson, go, signals]

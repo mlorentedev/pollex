@@ -1,7 +1,8 @@
 ---
-id: lesson-024-gcc-8-on-aarch64-provides-vld1q-x2-but-not-x4
+id: "lesson-024-gcc-8-on-aarch64-provides-vld1q-x2-but-not-x4"
 type: lesson
 status: active
+title: "gcc-8 on aarch64 provides `vld1q_*_x2` but NOT `_x4`"
 created: "2026-04-15"
 owner: manu
 tags: [pollex, lesson, arm, gcc, llama]

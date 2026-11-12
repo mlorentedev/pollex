@@ -1,7 +1,8 @@
 ---
-id: lesson-039-timer-ticks-best-effort
+id: "lesson-039-timer-ticks-best-effort"
 type: lesson
 status: active
+title: "Timer ticks best-effort"
 created: "2026-05-01"
 owner: manu
 tags: [pollex, lesson, chrome-extension, timer]

@@ -1,7 +1,8 @@
 ---
-id: lesson-067-make-deploy-secrets-failed-with-pollex-api-ke
+id: "lesson-067-make-deploy-secrets-failed-with-pollex-api-ke"
 type: lesson
 status: active
+title: "`make deploy-secrets` failed with \"POLLEX_API_KEY not set\" in a plain shell — auto-resolve via `dotf secrets run`"
 created: "2026-08-06"
 owner: manu
 tags: [pollex, lesson, makefile, deploy, secrets, dotf, jetson]

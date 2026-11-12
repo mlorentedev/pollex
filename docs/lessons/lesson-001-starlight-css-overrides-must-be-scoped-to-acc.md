@@ -1,7 +1,8 @@
 ---
-id: lesson-001-starlight-css-overrides-must-be-scoped-to-acc
+id: "lesson-001-starlight-css-overrides-must-be-scoped-to-acc"
 type: lesson
 status: active
+title: "Starlight CSS overrides must be scoped to accent variables only"
 created: "2026-03-04"
 owner: manu
 tags: [pollex, lesson, starlight, astro, css, accessibility, docs-site]

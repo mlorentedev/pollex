@@ -1,7 +1,8 @@
 ---
-id: lesson-051-ssh-multiplexing-controlmaster-critical-for-c
+id: "lesson-051-ssh-multiplexing-controlmaster-critical-for-c"
 type: lesson
 status: active
+title: "SSH multiplexing (`ControlMaster`) critical for Cloudflare Tunnel"
 created: "2026-06-05"
 owner: manu
 tags: [pollex, lesson, ssh, cloudflare, performance]

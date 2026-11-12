@@ -1,7 +1,8 @@
 ---
-id: lesson-031-host-permissions-all-urls-required-in-manifes
+id: "lesson-031-host-permissions-all-urls-required-in-manifes"
 type: lesson
 status: active
+title: "`host_permissions: [\"<all_urls>\"]` required in Manifest V3"
 created: "2026-04-15"
 owner: manu
 tags: [pollex, lesson, chrome-extension, manifest-v3]

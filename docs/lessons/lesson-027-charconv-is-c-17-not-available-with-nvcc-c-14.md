@@ -1,7 +1,8 @@
 ---
-id: lesson-027-charconv-is-c-17-not-available-with-nvcc-c-14
+id: "lesson-027-charconv-is-c-17-not-available-with-nvcc-c-14"
 type: lesson
 status: active
+title: "`<charconv>` is C++17, not available with nvcc C++14"
 created: "2026-04-15"
 owner: manu
 tags: [pollex, lesson, cuda, c, jetson]

@@ -1,7 +1,8 @@
 ---
-id: lesson-002-light-mode-starlight-buttons-need-accent-6-1-
+id: "lesson-002-light-mode-starlight-buttons-need-accent-6-1-"
 type: lesson
 status: active
+title: "Light-mode Starlight buttons need accent ≥ 6:1 contrast vs white"
 created: "2026-03-04"
 owner: manu
 tags: [pollex, lesson, starlight, wcag, contrast, design-system, docs-site]

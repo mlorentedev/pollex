@@ -1,7 +1,8 @@
 ---
-id: lesson-057-makefile-deploy-tunnel-route-had-argument-ord
+id: "lesson-057-makefile-deploy-tunnel-route-had-argument-ord"
 type: lesson
 status: active
+title: "Makefile `deploy-tunnel-route` had argument order wrong"
 created: "2026-06-05"
 owner: manu
 tags: [pollex, lesson, makefile, cloudflare]

@@ -96,4 +96,4 @@ Vault key files: `_index.md` (overview + status), `context.md` (agent orientatio
 
 Repo key files: `docs/architecture/system-overview.md`, `docs/architecture/browser-extension.md`,
 `docs/runbooks/deploy-jetson.md`, `docs/runbooks/cicd.md`, `docs/adr/` (ADR-001–010),
-`docs/lessons/_index.md`.
+`docs/lessons/` (index rendered by `dotf lessons index`, not committed).

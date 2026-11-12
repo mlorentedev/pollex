@@ -1,7 +1,8 @@
 ---
-id: lesson-015-ssh-to-jetson-requires-jump-host
+id: "lesson-015-ssh-to-jetson-requires-jump-host"
 type: lesson
 status: active
+title: "SSH to Jetson requires jump host"
 created: "2026-04-15"
 owner: manu
 tags: [pollex, lesson, ssh, proxmox]

@@ -1,7 +1,8 @@
 ---
-id: lesson-012-sshd-doesn-t-start-until-oem-setup-is-complet
+id: "lesson-012-sshd-doesn-t-start-until-oem-setup-is-complet"
 type: lesson
 status: active
+title: "sshd doesn't start until OEM setup is complete"
 created: "2026-04-15"
 owner: manu
 tags: [pollex, lesson, jetson, ssh]

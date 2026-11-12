@@ -1,7 +1,8 @@
 ---
-id: lesson-071-audit-gate-dependabot-deadlock
+id: "lesson-071-audit-gate-dependabot-deadlock"
 type: lesson
 status: active
+title: "A required npm-audit gate deadlocks per-finding Dependabot security PRs"
 created: "2026-09-27"
 owner: manu
 tags: [pollex, lesson, ci, npm-audit, dependabot, deadlock, security]

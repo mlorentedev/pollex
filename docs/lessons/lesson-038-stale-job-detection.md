@@ -1,7 +1,8 @@
 ---
-id: lesson-038-stale-job-detection
+id: "lesson-038-stale-job-detection"
 type: lesson
 status: active
+title: "Stale job detection"
 created: "2026-05-01"
 owner: manu
 tags: [pollex, lesson, chrome-extension, stale-jobs]

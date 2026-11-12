@@ -1,7 +1,8 @@
 ---
-id: lesson-064-gh-project-item-add-fails-with-unknown-owner-
+id: "lesson-064-gh-project-item-add-fails-with-unknown-owner-"
 type: lesson
 status: active
+title: "`gh project item-add` fails with \"unknown owner type\" under a fine-grained PAT — use GraphQL in workflows"
 created: "2026-08-05"
 owner: manu
 tags: [pollex, lesson, ci, github-projects, fine-grained-pat, graphql, bitacora]

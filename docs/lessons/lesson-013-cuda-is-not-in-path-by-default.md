@@ -1,7 +1,8 @@
 ---
-id: lesson-013-cuda-is-not-in-path-by-default
+id: "lesson-013-cuda-is-not-in-path-by-default"
 type: lesson
 status: active
+title: "CUDA is not in PATH by default"
 created: "2026-04-15"
 owner: manu
 tags: [pollex, lesson, jetson, cuda, path]

@@ -1,7 +1,8 @@
 ---
-id: lesson-068-extension-e2e-in-ci-needs-a-headed-chromium-u
+id: "lesson-068-extension-e2e-in-ci-needs-a-headed-chromium-u"
 type: lesson
 status: active
+title: "Extension e2e in CI needs a headed Chromium under `xvfb-run`"
 created: "2026-08-05"
 owner: manu
 tags: [pollex, lesson, ci, playwright, extension, e2e, github-actions]

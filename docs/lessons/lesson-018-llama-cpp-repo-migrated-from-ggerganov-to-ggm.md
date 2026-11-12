@@ -1,7 +1,8 @@
 ---
-id: lesson-018-llama-cpp-repo-migrated-from-ggerganov-to-ggm
+id: "lesson-018-llama-cpp-repo-migrated-from-ggerganov-to-ggm"
 type: lesson
 status: active
+title: "llama.cpp repo migrated from `ggerganov` to `ggml-org`"
 created: "2026-04-15"
 owner: manu
 tags: [pollex, lesson, llama, docker]

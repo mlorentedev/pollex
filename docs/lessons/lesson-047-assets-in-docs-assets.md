@@ -1,7 +1,8 @@
 ---
-id: lesson-047-assets-in-docs-assets
+id: "lesson-047-assets-in-docs-assets"
 type: lesson
 status: active
+title: "Assets in `docs/assets/`"
 created: "2026-05-01"
 owner: manu
 tags: [pollex, lesson, docs, organization]

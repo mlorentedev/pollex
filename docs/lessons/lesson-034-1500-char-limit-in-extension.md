@@ -1,7 +1,8 @@
 ---
-id: lesson-034-1500-char-limit-in-extension
+id: "lesson-034-1500-char-limit-in-extension"
 type: lesson
 status: active
+title: "1500 char limit in extension"
 created: "2026-05-01"
 owner: manu
 tags: [pollex, lesson, extension, limits]

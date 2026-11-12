@@ -1,7 +1,8 @@
 ---
-id: lesson-011-first-boot-takes-45-min-on-sd-card
+id: "lesson-011-first-boot-takes-45-min-on-sd-card"
 type: lesson
 status: active
+title: "First boot takes ~45 min on SD card"
 created: "2026-04-15"
 owner: manu
 tags: [pollex, lesson, jetson, sd-card]

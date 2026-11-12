@@ -1,7 +1,8 @@
 ---
-id: lesson-004-extracting-functions-from-main-enables-testab
+id: "lesson-004-extracting-functions-from-main-enables-testab"
 type: lesson
 status: active
+title: "Extracting functions from `main()` enables testability"
 created: "2026-03-28"
 owner: manu
 tags: [pollex, lesson, go, testing, architecture]

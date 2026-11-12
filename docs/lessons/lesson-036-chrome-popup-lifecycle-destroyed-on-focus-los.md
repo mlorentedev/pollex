@@ -1,7 +1,8 @@
 ---
-id: lesson-036-chrome-popup-lifecycle-destroyed-on-focus-los
+id: "lesson-036-chrome-popup-lifecycle-destroyed-on-focus-los"
 type: lesson
 status: active
+title: "Chrome popup lifecycle — destroyed on focus loss"
 created: "2026-05-01"
 owner: manu
 tags: [pollex, lesson, chrome-extension, service-worker]

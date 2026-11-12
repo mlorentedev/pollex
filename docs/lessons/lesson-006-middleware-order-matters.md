@@ -1,7 +1,8 @@
 ---
-id: lesson-006-middleware-order-matters
+id: "lesson-006-middleware-order-matters"
 type: lesson
 status: active
+title: "Middleware order matters"
 created: "2026-03-28"
 owner: manu
 tags: [pollex, lesson, go, http, middleware]

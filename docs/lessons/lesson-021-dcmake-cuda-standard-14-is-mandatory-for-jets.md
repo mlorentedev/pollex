@@ -1,7 +1,8 @@
 ---
-id: lesson-021-dcmake-cuda-standard-14-is-mandatory-for-jets
+id: "lesson-021-dcmake-cuda-standard-14-is-mandatory-for-jets"
 type: lesson
 status: active
+title: "`-DCMAKE_CUDA_STANDARD=14` is mandatory for Jetson Nano"
 created: "2026-04-15"
 owner: manu
 tags: [pollex, lesson, cmake, cuda, jetson]

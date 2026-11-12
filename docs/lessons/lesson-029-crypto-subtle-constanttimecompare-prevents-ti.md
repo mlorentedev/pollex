@@ -1,7 +1,8 @@
 ---
-id: lesson-029-crypto-subtle-constanttimecompare-prevents-ti
+id: "lesson-029-crypto-subtle-constanttimecompare-prevents-ti"
 type: lesson
 status: active
+title: "`crypto/subtle.ConstantTimeCompare` prevents timing attacks"
 created: "2026-04-15"
 owner: manu
 tags: [pollex, lesson, security, go]

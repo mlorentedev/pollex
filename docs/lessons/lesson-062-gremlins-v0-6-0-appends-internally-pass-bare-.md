@@ -1,7 +1,8 @@
 ---
-id: lesson-062-gremlins-v0-6-0-appends-internally-pass-bare-
+id: "lesson-062-gremlins-v0-6-0-appends-internally-pass-bare-"
 type: lesson
 status: active
+title: "gremlins v0.6.0 appends `...` internally — pass bare package paths in CI"
 created: "2026-06-06"
 owner: manu
 tags: [pollex, lesson, gremlins, mutation-testing, ci, go]

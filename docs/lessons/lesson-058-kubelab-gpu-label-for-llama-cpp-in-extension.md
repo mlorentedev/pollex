@@ -1,7 +1,8 @@
 ---
-id: lesson-058-kubelab-gpu-label-for-llama-cpp-in-extension
+id: "lesson-058-kubelab-gpu-label-for-llama-cpp-in-extension"
 type: lesson
 status: active
+title: "Kubelab (GPU) label for llama.cpp in extension"
 created: "2026-06-05"
 owner: manu
 tags: [pollex, lesson, extension, ui]

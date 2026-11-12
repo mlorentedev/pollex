@@ -1,7 +1,8 @@
 ---
-id: lesson-014-passwordless-sudo-required-for-remote-deploy-
+id: "lesson-014-passwordless-sudo-required-for-remote-deploy-"
 type: lesson
 status: active
+title: "Passwordless sudo required for remote deploy scripts"
 created: "2026-04-15"
 owner: manu
 tags: [pollex, lesson, deployment, sudo, ssh]

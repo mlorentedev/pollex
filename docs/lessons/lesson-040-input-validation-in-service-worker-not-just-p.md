@@ -1,7 +1,8 @@
 ---
-id: lesson-040-input-validation-in-service-worker-not-just-p
+id: "lesson-040-input-validation-in-service-worker-not-just-p"
 type: lesson
 status: active
+title: "Input validation in service worker, not just popup"
 created: "2026-05-01"
 owner: manu
 tags: [pollex, lesson, chrome-extension, validation]

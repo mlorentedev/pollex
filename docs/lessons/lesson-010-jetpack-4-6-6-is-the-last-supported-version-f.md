@@ -1,7 +1,8 @@
 ---
-id: lesson-010-jetpack-4-6-6-is-the-last-supported-version-f
+id: "lesson-010-jetpack-4-6-6-is-the-last-supported-version-f"
 type: lesson
 status: active
+title: "JetPack 4.6.6 is the last supported version for Jetson Nano 4GB"
 created: "2026-04-15"
 owner: manu
 tags: [pollex, lesson, jetson, jetpack, cuda]
