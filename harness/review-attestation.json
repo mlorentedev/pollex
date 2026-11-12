@@ -50,7 +50,8 @@
       "login": "github-actions",
       "declined_markers": [],
       "review_markers": [
-        "## PR Reviewer Guide"
+        "## PR Reviewer Guide",
+        "## Incremental PR Reviewer Guide"
       ],
       "why": "PR-Agent (see .github/workflows/pr-agent.yml) runs under GITHUB_TOKEN and publishes through the COMMENTS api, so its reviews never enter reviews[] and a classifier that looked only at reviews would read every PR-Agent-reviewed PR as unattested. The marker is the `review` command's own heading. `## PR Code Suggestions` is deliberately NOT here — suggestions are not a review, which is also why auto_improve is off on the automatic path. MARKER PROVENANCE: verified in the sibling ports before being declared here — kubelab has 215 PR comments carrying '## PR Reviewer Guide' posted by github-actions[bot] and dotfiles has 172. It has NEVER been observed in pollex, because this workflow has not run here, and it cannot run until the NAN_API_KEY secret is set (`dotf secrets sync ci --repo mlorentedev/pollex`): the first green run of pr-agent on a pollex PR is the verification, and until then this entry is a declaration of intent, not of an actor."
     }
