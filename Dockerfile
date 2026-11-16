@@ -1,4 +1,4 @@
-FROM golang:1.26-alpine AS builder
+FROM golang:1.27-alpine AS builder
 
 ARG VERSION=dev
 ARG VCS_REF=unknown
@@ -11,7 +11,7 @@ COPY . .
 RUN --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 go build -ldflags="-s -w -X main.version=${VERSION}" -o /pollex ./cmd/pollex
 
-FROM alpine:3.21
+FROM alpine:3.24
 
 ARG VERSION=dev
 ARG VCS_REF=unknown
